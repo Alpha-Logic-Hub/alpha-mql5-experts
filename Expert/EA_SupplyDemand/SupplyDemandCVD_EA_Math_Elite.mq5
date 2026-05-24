@@ -122,6 +122,7 @@ input bool     InpShowHUD         = true;
 #include "..\..\Shared\SupplyDemandCVD\Execution\ExitManagement.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Execution\EntryScanner.mqh"
 #include "..\..\Shared\SupplyDemandCVD\UI\HUD.mqh"
+#include "..\..\Shared\SupplyDemandCVD\UI\ControlPanel.mqh"
 
 //+------------------------------------------------------------------+
 //| GLOBAL VARIABLES                                                 |
@@ -220,6 +221,7 @@ int OnInit()
    ScanHistory(300);
 
    DrawHUD();
+   InitControlPanel();
 
    ChartRedraw(0);
    return INIT_SUCCEEDED;
@@ -250,8 +252,9 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
          if(HistoryDealGetString(dealTicket, DEAL_SYMBOL) != _Symbol) return;
          if(HistoryDealGetInteger(dealTicket, DEAL_ENTRY) != DEAL_ENTRY_OUT) return;
 
-         double profit = HistoryDealGetDouble(dealTicket, DEAL_PROFIT);
-      }
+          double profit = HistoryDealGetDouble(dealTicket, DEAL_PROFIT);
+          RecordTrade(profit);
+       }
    }
 }
 
@@ -277,6 +280,7 @@ void OnTick()
    UpdateTrailingStop();
 
    DrawHUD();
+   RefreshControlPanel();
 
    datetime currentBar = iTime(_Symbol, _Period, 0);
    if(currentBar == lastBarTime) return;
@@ -292,4 +296,16 @@ void OnTick()
 
    CheckMitigation();
    DetectZones();
+}
+
+//+------------------------------------------------------------------+
+//| CHART EVENT HANDLER (Control Panel buttons)                      |
+//+------------------------------------------------------------------+
+void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
+{
+   if(id == CHARTEVENT_OBJECT_CLICK) {
+      if(HandleButtonClick(sparam)) {
+         ChartRedraw(0);
+      }
+   }
 }
