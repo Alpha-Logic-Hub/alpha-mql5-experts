@@ -1,7 +1,7 @@
-# PROJECT_CONTEXT.md - Contexto Compartilhado para Todos os Agentes
+# PROJECT_CONTEXT.md - Alpha Logic Hub
 
 > **TODOS OS SKILLS DEVEM LER ESTE ARQUIVO ANTES DE QUALQUER ACAO**
-> Atualizado: 2025-11-30
+> Atualizado: 2026-05-23
 
 ---
 
@@ -9,57 +9,60 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Nome** | EA_SCALPER_XAUUSD |
-| **Versao** | v3.30 - Singularity Order Flow Edition |
-| **Mercado** | XAUUSD (Gold) |
-| **Timeframes** | H1 (direcao) → M15 (zonas) → M5 (execucao) |
-| **Objetivo** | FTMO $100k Challenge |
+| **Nome** | Alpha Logic Hub |
+| **Versao** | v1.0 — Multi-Strategy Trading Ecosystem |
+| **Mercado** | XAUUSD (Gold) — Multi-Timeframe SMC + Order Flow |
+| **Estrutura** | Expert/ (EAs autonmos) + Shared/ (modulos reutilizaveis) |
+| **Objetivo** | FTMO $100k Challenge + Apex Trading |
 | **Owner** | Franco |
+| **GitHub** | https://github.com/Alpha-Logic-Hub/alpha-mql5-experts |
 
 ---
 
 ## 2. ESTRUTURA DE ARQUIVOS PRINCIPAL
 
 ```
-EA_SCALPER_XAUUSD/
+Alpha_Logic_Hub/
 │
-├── MQL5/                          # ⭐ PASTA PRINCIPAL DO CODIGO
-│   ├── Experts/
-│   │   └── EA_SCALPER_XAUUSD.mq5  # ⭐⭐⭐ EA PRINCIPAL (v3.30)
-│   │
-│   ├── Include/EA_SCALPER/        # Modulos do EA
-│   │   ├── INDEX.md               # 📖 Documentacao completa (1997 linhas)
-│   │   ├── Analysis/              # CMTFManager, CRegimeDetector, etc.
-│   │   ├── Backtest/              # CBacktestRealism.mqh
-│   │   ├── Bridge/                # PythonBridge, COnnxBrain
-│   │   ├── Core/                  # Definitions, CState, CEngine
-│   │   ├── Execution/             # CTradeManager, TradeExecutor
-│   │   ├── Risk/                  # FTMO_RiskManager
-│   │   ├── Signal/                # CConfluenceScorer
-│   │   └── Strategy/
-│   │
-│   ├── Models/                    # Modelos ONNX
-│   │   ├── direction_model.onnx   # ⭐ Modelo de direcao atual
-│   │   └── scaler_params_final.json
-│   │
-│   └── Scripts/                   # Scripts de teste
+├── Expert/                          # ⭐ EAs AUTONOMOS
+│   ├── EA_SupplyDemand/             # SupplyDemandCVD_EA_Math_Elite (SMC + CVD + VP)
+│   ├── EA_MA_RSI_Trend/             # EMA 9 / SMA 21 + RSI 14
+│   ├── EA_MultiSignal_Composite/    # MA + RSI + MACD Weighted Voting
+│   └── EA_SMC_Scalper/              # SMC OB retest + Order Flow
 │
-├── Python_Agent_Hub/              # Backend Python (FastAPI)
-│   ├── requirements.txt           # Dependencias Python
-│   └── ml_pipeline/               # Pipeline ML para ONNX
+├── Shared/                          # ⭐ MODULOS REUTILIZAVEIS
+│   ├── Core/Definitions.mqh         # ENUM_SIGNAL_TYPE + RiskState
+│   ├── Risk/RiskGuardrail.mqh       # Lot sizing, daily shield, risk profiles
+│   ├── Risk/GlobalRiskManager.mqh   # Circuit Breaker global
+│   ├── Execution/TradeExecutor.mqh  # OrderSend, exit management
+│   ├── UI/HUD.mqh                   # On-chart display (OBJ_LABEL)
+│   ├── Network/TelegramBot.mqh      # Alertas Telegram
+│   ├── Network/WebAPIClient.mqh     # APIs externas
+│   ├── Database/LocalLogger.mqh     # Postmortems YAML
+│   └── SupplyDemandCVD/             # Modulos do EA Elite (SMC + CVD + VP)
 │
-├── .factory/                      # Configuracoes Factory
-│   ├── skills/                    # Skills dos agentes
-│   └── PROJECT_CONTEXT.md         # ⭐ ESTE ARQUIVO
+├── .skills/                         # Skills IA (4 ativas)
+│   ├── mql5-enterprise-coder/       # Padroes de codificacao MQL5
+│   ├── mql5-risk-guardrail/         # Risk guardrails SoulzBTC
+│   ├── trader-memory-loop/          # Postmortems de sessao
+│   └── alpha-commit-push/           # Auto commit + push ao GitHub
 │
-├── DOCS/                          # Documentacao
-│   ├── _INDEX.md                  # Indice geral
-│   ├── 02_IMPLEMENTATION/         # Plano e progresso
-│   └── 04_REPORTS/                # Backtests e decisoes
+├── .sdd/                            # System Design Documents
+│   ├── config.yaml                  # Config do ecossistema
+│   ├── sdd_master.md                # Regras macro e contratos
+│   ├── sdd-trading-profile.json     # Perfil SoulzBTC MQL5
+│   └── specs/                       # Especificacoes
 │
-└── scripts/                       # Scripts Python auxiliares
-    ├── baseline_backtest.py       # Backtest baseline
-    └── validate_data.py           # Validacao de dados
+├── .factory/                        # Factory: skills, droids, commands
+│   ├── PROJECT_CONTEXT.md           # ⭐ ESTE ARQUIVO
+│   ├── skills/                      # Skills herdadas do EA_SCALPER
+│   ├── droids/                      # Agentes (crucible, forge, sentinel, oracle...)
+│   └── commands/                    # Comandos (backtest, optimize, strategy...)
+│
+├── .atl/skill-registry.md           # Indice de skills ativas
+├── CLAUDE.md                        # Memoria permanente
+├── AGENTS.md                        # Routing de agentes
+└── README.md                        # Daily Routine + workflows
 ```
 
 ---
@@ -69,40 +72,40 @@ EA_SCALPER_XAUUSD/
 ### 🔮 ORACLE (Backtest/Validacao)
 | Arquivo | Caminho | Uso |
 |---------|---------|-----|
-| **EA Principal** | `MQL5/Experts/EA_SCALPER_XAUUSD.mq5` | Robo a testar |
-| **CBacktestRealism** | `MQL5/Include/EA_SCALPER/Backtest/CBacktestRealism.mqh` | Realism simulation |
-| **Modelo ONNX** | `MQL5/Models/direction_model.onnx` | Validar modelo ML |
-| **Scaler Params** | `MQL5/Models/scaler_params_final.json` | Params de normalizacao |
-| **INDEX.md** | `MQL5/Include/EA_SCALPER/INDEX.md` | Arquitetura completa |
+| **EA SupplyDemand** | `Expert/EA_SupplyDemand/SupplyDemandCVD_EA_Math_Elite.mq5` | EA principal SMC + CVD |
+| **EA MA_RSI_Trend** | `Expert/EA_MA_RSI_Trend/EA_MA_RSI_Trend.mq5` | EA tendencial |
+| **RiskGuardrail** | `Shared/Risk/RiskGuardrail.mqh` | Risk compliance |
+| **GlobalRiskManager** | `Shared/Risk/GlobalRiskManager.mqh` | Circuit breaker |
 
 ### 🔥 CRUCIBLE (Estrategia)
 | Arquivo | Caminho | Uso |
 |---------|---------|-----|
-| **CMTFManager** | `MQL5/Include/EA_SCALPER/Analysis/CMTFManager.mqh` | Multi-timeframe |
-| **CStructureAnalyzer** | `MQL5/Include/EA_SCALPER/Analysis/CStructureAnalyzer.mqh` | SMC BOS/CHoCH |
-| **CFootprintAnalyzer** | `MQL5/Include/EA_SCALPER/Analysis/CFootprintAnalyzer.mqh` | Order Flow |
-| **EliteOrderBlock** | `MQL5/Include/EA_SCALPER/Analysis/EliteOrderBlock.mqh` | Order Blocks |
-| **EliteFVG** | `MQL5/Include/EA_SCALPER/Analysis/EliteFVG.mqh` | Fair Value Gaps |
+| **SupplyDemandCVD** | `Shared/SupplyDemandCVD/` | Modulos SMC (PivotZone, CVD, MathFilters, SREngine) |
+| **VolumeProfile** | `Shared/SupplyDemandCVD/Analysis/VolumeProfile.mqh` | VA/VAL/POC |
+| **SMC_Signals** | `Expert/EA_SMC_Scalper/Signals/SMC_Signals.mqh` | OB retest + Order Flow |
+| **MA_RSI_Signals** | `Expert/EA_MA_RSI_Trend/Signals/MA_RSI_Signals.mqh` | Crossover + RSI |
 
 ### 🛡️ SENTINEL (Risco)
 | Arquivo | Caminho | Uso |
 |---------|---------|-----|
-| **FTMO_RiskManager** | `MQL5/Include/EA_SCALPER/Risk/FTMO_RiskManager.mqh` | Risk compliance |
-| **CDynamicRiskManager** | `MQL5/Include/EA_SCALPER/Risk/` | Risco dinamico |
-| **EA Inputs** | `MQL5/Experts/EA_SCALPER_XAUUSD.mq5` (linhas 60-90) | Params de risco |
+| **RiskGuardrail** | `Shared/Risk/RiskGuardrail.mqh` | Lot sizing, shield, risk profiles |
+| **GlobalRiskManager** | `Shared/Risk/GlobalRiskManager.mqh` | Circuit breaker global |
+| **FTMO_RiskManager** | `MQL5/Include/EA_SCALPER/Risk/FTMO_RiskManager.mqh` | Risk FTMO (em EA_SCALPER_XAUUSD) |
 
 ### ⚒️ FORGE (Codigo)
 | Arquivo | Caminho | Uso |
 |---------|---------|-----|
-| **INDEX.md** | `MQL5/Include/EA_SCALPER/INDEX.md` | Arquitetura completa |
-| **Definitions.mqh** | `MQL5/Include/EA_SCALPER/Core/Definitions.mqh` | Enums e structs |
-| **Todos os .mqh** | `MQL5/Include/EA_SCALPER/**/*.mqh` | Modulos para editar |
+| **Shared/Core** | `Shared/Core/Definitions.mqh` | ENUM_SIGNAL_TYPE + RiskState |
+| **Shared/Risk** | `Shared/Risk/RiskGuardrail.mqh` | Funcoes de risco reutilizaveis |
+| **Shared/Execution** | `Shared/Execution/TradeExecutor.mqh` | OrderSend padronizado |
+| **Shared/UI** | `Shared/UI/HUD.mqh` | HUD compartilhado |
 
 ### 🔍 ARGUS (Pesquisa)
 | Arquivo | Caminho | Uso |
 |---------|---------|-----|
-| **ORDER_FLOW_README** | `MQL5/Include/EA_SCALPER/Analysis/ORDER_FLOW_README.md` | Refs Order Flow |
-| **INDEX.md** | `MQL5/Include/EA_SCALPER/INDEX.md` | Estado atual |
+| **SDD Master** | `.sdd/sdd_master.md` | Contratos tecnicos do ecossistema |
+| **Skill Registry** | `.atl/skill-registry.md` | Indice de skills ativas |
+| **CLAUDE.md** | `CLAUDE.md` | Memoria permanente |
 
 ---
 
