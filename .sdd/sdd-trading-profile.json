@@ -1,0 +1,139 @@
+{
+  "profile_name": "SoulzBTC — MQL5 Quantitative Trading",
+  "description": "SDD orchestrator profile para desarrollo de Expert Advisors en MQL5 con arquitectura modular, guardarraíles de riesgo y auditoría de compilación.",
+  "version": "1.0.0",
+
+  "stack": {
+    "language": "mql5",
+    "extensions": [".mq5", ".mqh"],
+    "detect_files": ["*.mq5", "*.mqh"],
+    "test_command": "metatrader5-compile-check"
+  },
+
+  "models": {
+    "sdd-init": "google/gemini-2.5-flash",
+    "sdd-explore": "google/gemini-2.5-flash",
+    "sdd-propose": "google/gemini-2.5-flash",
+    "sdd-spec": "google/gemini-1.5-pro",
+    "sdd-design": "google/gemini-1.5-pro",
+    "sdd-apply": "google/gemini-1.5-pro",
+    "sdd-verify": "google/gemini-2.5-flash",
+    "sdd-archive": "google/gemini-2.5-flash"
+  },
+
+  "soulzbtc_directives": {
+
+    "modular_architecture": {
+      "rule": "ARCHITECTURE_MODULAR_CRITICAL",
+      "severity": "error",
+      "description": "Prohibido generar archivos monolíticos gigantes. Toda señal de cálculo debe vivir en un .mqh separado de las funciones de ejecución nativas de MetaTrader.",
+      "enforcement": [
+        "Siempre separar lógica de cálculo de señales (RSI, Medias Móviles, indicadores personalizados) en archivos de inclusión .mqh",
+        "Las funciones de ejecución de órdenes (OrderSend, PositionOpen, SL/TP) deben estar en módulos .mqh específicos de trading",
+        "El .mq5 principal solo orquesta la lógica: llama a los módulos, no los implementa inline",
+        "Archivo mínimo por módulo, cada .mqh con una única responsabilidad"
+      ]
+    },
+
+    "risk_guardrails": {
+      "rule": "RISK_GUARDRAILS_INQUEBRANTABLES",
+      "severity": "error",
+      "description": "Reglas de gestión de riesgo obligatorias en toda estrategia generada.",
+      "enforcement": [
+        {
+          "id": "RISK-001",
+          "rule": "Máximo 1% de riesgo por operación sobre el balance de la cuenta",
+          "implementation": "Calcular riesgo como fracción del balance actual (AccountBalance() * risk_percent / 100). El porcentaje debe ser configurable mediante input parameter con default <= 1.0",
+          "validation": "Verificar que max_risk_pct <= 1.0 en el init. Si supera, devolver INIT_PARAMETERS_INCORRECT"
+        },
+        {
+          "id": "RISK-002",
+          "rule": "Cálculo dinámico de lotaje — prohibido hardcodear lotes fijos o números mágicos",
+          "implementation": "Usar funciones de cálculo de lote basado en riesgo, volatilidad y tamaño de cuenta. Magic number debe ser input parameter expuesto en ventana de propiedades",
+          "validation": "Escaneo de código: rechazar hardcodeo de lotes fijos (lotes = 0.01, etc.) en el cuerpo del EA"
+        },
+        {
+          "id": "RISK-003",
+          "rule": "Stop Loss obligatorio y explícito en cada orden enviada al bróker",
+          "implementation": "Toda llamada a OrderSend/PositionOpen DEBE incluir sl y tp calculados. No se aceptan órdenes con sl=0",
+          "validation": "Verificar que no exista OrderSend con sl=0 o tp=0 en el código fuente"
+        },
+        {
+          "id": "RISK-004",
+          "rule": "Prohibido implementar estrategias de Martingala, grids infinitos o promediación a la baja sin salida controlada",
+          "implementation": "No permitir duplicación de lotes en pérdidas, grids sin límite de niveles, ni promediación sin trailing stop o take profit definido",
+          "validation": "Escaneo de patrones: detectar multiplicación de lotes en secuencia de pérdidas, loops de apertura sin max_positions"
+        }
+      ]
+    },
+
+    "error_handling": {
+      "rule": "ERROR_CONTROL_STRATEGY_TESTER",
+      "severity": "warning",
+      "description": "Validación obligatoria de cada ticket de orden devuelto por el servidor.",
+      "enforcement": [
+        {
+          "id": "ERR-001",
+          "rule": "Auditar cada ticket devuelto por OrderSend/PositionOpen",
+          "implementation": "Verificar return code != -1, usar GetLastError() para traducir el código de error, y loguear con Print() el resultado",
+          "validation": "Cada bloque OrderSend debe tener post-validación con SelectTicket + GetLastError"
+        },
+        {
+          "id": "ERR-002",
+          "rule": "Manejo de spreads altos y requotes",
+          "implementation": "Antes de enviar orden, verificar que el spread actual esté dentro del máximo permitido (input parameter). En caso de requote, reintentar hasta N veces con backoff",
+          "validation": "Verificar que exista chequeo de spread previo a OrderSend y lógica de re-intento configurable"
+        },
+        {
+          "id": "ERR-003",
+          "rule": "Logs detallados con Print() para depuración en Strategy Tester",
+          "implementation": "Cada acción crítica (apertura, cierre, modificación, error) debe generar un Print() con timestamp, símbolo, ticket, precio, sl, tp, y resultado",
+          "validation": "El código debe contener suficientes Print() para reconstruir la secuencia de eventos en el log del tester"
+        }
+      ]
+    },
+
+    "coding_standards": {
+      "naming_conventions": {
+        "inputs": "prefix inp_ (ej: inp_RiskPercent, inp_MagicNumber)",
+        "globals": "prefix g_ (ej: g_Ticket, g_LastError)",
+        "functions": "PascalCase con verbo (ej: CalculateLotSize, OpenPosition, CheckMargin)",
+        "modules_mqh": "prefijo del módulo (ej: Signals_RSI.mqh, Trade_Execution.mqh)"
+      },
+      "patterns_prohibited": [
+        "Lotes fijos hardcodeados en el cuerpo del EA",
+        "Magic number hardcodeado sin input parameter",
+        "OrderSend sin validación de resultado",
+        "Loops infinitos sin max_trades guard",
+        "GlobalVariables sin ResetLastError() previo",
+        "Estrategias martingala (multiplicación de lote en pérdida)"
+      ],
+      "patterns_required": [
+        "Input parameters documentados con comentario de descripción",
+        "INIT_PARAMETERS_INCORRECT en validaciones de inputs fallidas",
+        "OnTick() delegando a funciones modulares, no implementando lógica inline",
+        "Sl y TP calculados dinámicamente antes de cada orden",
+        "Manejo de errores TRADE_RETCODE_* en cada envío de orden"
+      ]
+    }
+  },
+
+  "phase_overrides": {
+    "sdd-spec": {
+      "model": "google/gemini-1.5-pro",
+      "prompt_suffix": "Recordá las reglas del perfil SoulzBTC: modularidad estricta .mq5/.mqh, guardarraíles de riesgo (RISK-001 a RISK-004), y control de errores (ERR-001 a ERR-003). Incluí escenarios de validación para spread alto, requote, y límite de riesgo."
+    },
+    "sdd-design": {
+      "model": "google/gemini-1.5-pro",
+      "prompt_suffix": "Asegurate de que el diseño respete la separación modular: señales en .mqh, ejecución en .mqh, orquestación en .mq5. El diagrama de dependencias debe reflejar esta estructura."
+    },
+    "sdd-apply": {
+      "model": "google/gemini-1.5-pro",
+      "prompt_suffix": "STRICT TDD MODE. Implementá cada módulo .mqh por separado, probando con Print() logs y validación de errores post-OrderSend. No generes archivos monolíticos. Usá los naming conventions del perfil."
+    },
+    "sdd-verify": {
+      "model": "google/gemini-2.5-flash",
+      "prompt_suffix": "Auditá contra las reglas del perfil SoulzBTC: (1) verificar separación modular, (2) escanear risk guardrails, (3) validar error handling post-orden. Reportá violaciones como CRITICAL."
+    }
+  }
+}
