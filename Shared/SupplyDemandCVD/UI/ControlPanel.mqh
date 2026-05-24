@@ -14,7 +14,14 @@ double g_avgWin       = 0;
 double g_avgLoss      = 0;
 double g_sumWins      = 0;
 double g_sumLosses    = 0;
-int    g_profCycle    = 1;
+
+// --- Runtime toggles (mirrors of inputs, modifiable at runtime) ---
+bool   g_useSMC       = true;
+bool   g_useShark     = true;
+bool   g_useVP        = true;
+bool   g_useSR        = true;
+double g_riskPercent  = 0.15;
+int    g_riskProfile  = 1;
 
 // --- Button names ---
 string g_btns[8] = {
@@ -59,6 +66,14 @@ void UpdateButtonText(string name, string text, bool active)
 //+------------------------------------------------------------------+
 void InitControlPanel()
 {
+   // Sync runtime vars from inputs
+   g_useSMC    = InpUseOTE;
+   g_useShark  = InpUseMomentumBreakout;
+   g_useVP     = InpUseVolumeProfile;
+   g_useSR     = InpUseSupportResistance;
+   g_riskPercent = InpRiskPercent;
+   g_riskProfile = InpRiskProfile;
+
    int x = 295;  // right of HUD panel
    int y = 12;
    int bw = 80;
@@ -84,14 +99,14 @@ void InitControlPanel()
 //+------------------------------------------------------------------+
 void RefreshControlPanel()
 {
-   UpdateButtonText(g_btns[0], InpUseOTE ? "SMC ON" : "SMC OFF", InpUseOTE);
-   UpdateButtonText(g_btns[1], InpUseMomentumBreakout ? "TIBURON ON" : "TIBURON OFF", InpUseMomentumBreakout);
-   UpdateButtonText(g_btns[2], InpUseVolumeProfile ? "VP ON" : "VP OFF", InpUseVolumeProfile);
-   UpdateButtonText(g_btns[3], InpUseSupportResistance ? "SR ON" : "SR OFF", InpUseSupportResistance);
+   UpdateButtonText(g_btns[0], g_useSMC ? "SMC ON" : "SMC OFF", g_useSMC);
+   UpdateButtonText(g_btns[1], g_useShark ? "TIBURON ON" : "TIBURON OFF", g_useShark);
+   UpdateButtonText(g_btns[2], g_useVP ? "VP ON" : "VP OFF", g_useVP);
+   UpdateButtonText(g_btns[3], g_useSR ? "SR ON" : "SR OFF", g_useSR);
 
    // Update profile button
    string profName = "";
-   switch(InpRiskProfile) { case 0: profName = "CONS"; break; case 1: profName = "BAL"; break; case 2: profName = "AGRO"; break; default: profName = "MAN"; }
+   switch(g_riskProfile) { case 0: profName = "CONS"; break; case 1: profName = "BAL"; break; case 2: profName = "AGRO"; break; default: profName = "MAN"; }
    ObjectSetString(0, g_btns[7], OBJPROP_TEXT, "PERFIL: " + profName);
 
    // Update metrics labels
@@ -111,7 +126,7 @@ void RefreshControlPanel()
    ObjectSetInteger(0, met0, OBJPROP_COLOR, mc);
    ObjectSetString(0, met1, OBJPROP_TEXT, StringFormat("MaxDD: %.2f%% | AvgW: $%.0f | AvgL: $%.0f", g_maxDD, g_avgWin, g_avgLoss));
    ObjectSetInteger(0, met1, OBJPROP_COLOR, clrLightGray);
-   ObjectSetString(0, met2, OBJPROP_TEXT, StringFormat("Risk: %.3f%% | P&L: $%.2f", InpRiskPercent, g_totalPnL));
+   ObjectSetString(0, met2, OBJPROP_TEXT, StringFormat("Risk: %.3f%% | P&L: $%.2f", g_riskPercent, g_totalPnL));
    ObjectSetInteger(0, met2, OBJPROP_COLOR, clrSandyBrown);
 }
 
@@ -142,10 +157,10 @@ void RecordTrade(double pnl)
 //+------------------------------------------------------------------+
 bool HandleButtonClick(string objName)
 {
-   if(objName == g_btns[0]) { InpUseOTE = !InpUseOTE; return true; }
-   if(objName == g_btns[1]) { InpUseMomentumBreakout = !InpUseMomentumBreakout; return true; }
-   if(objName == g_btns[2]) { InpUseVolumeProfile = !InpUseVolumeProfile; return true; }
-   if(objName == g_btns[3]) { InpUseSupportResistance = !InpUseSupportResistance; return true; }
+   if(objName == g_btns[0]) { g_useSMC   = !g_useSMC;   return true; }
+   if(objName == g_btns[1]) { g_useShark = !g_useShark; return true; }
+   if(objName == g_btns[2]) { g_useVP    = !g_useVP;    return true; }
+   if(objName == g_btns[3]) { g_useSR    = !g_useSR;    return true; }
 
    if(objName == g_btns[4]) {
       for(int i = PositionsTotal() - 1; i >= 0; i--) {
@@ -156,9 +171,9 @@ bool HandleButtonClick(string objName)
       return true;
    }
 
-   if(objName == g_btns[5]) { InpRiskPercent = MathMin(1.0, InpRiskPercent + 0.05); return true; }
-   if(objName == g_btns[6]) { InpRiskPercent = MathMax(0.05, InpRiskPercent - 0.05); return true; }
-   if(objName == g_btns[7]) { InpRiskProfile = (InpRiskProfile + 1) % 4; ApplyRiskProfile(g_state); return true; }
+   if(objName == g_btns[5]) { g_riskPercent = MathMin(1.0, g_riskPercent + 0.05); return true; }
+   if(objName == g_btns[6]) { g_riskPercent = MathMax(0.05, g_riskPercent - 0.05); return true; }
+   if(objName == g_btns[7]) { g_riskProfile = (g_riskProfile + 1) % 4; ApplyRiskProfile(g_state); return true; }
 
    return false;
 }

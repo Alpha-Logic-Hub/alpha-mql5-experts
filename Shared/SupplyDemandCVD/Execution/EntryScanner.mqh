@@ -24,7 +24,7 @@ void ScanForEntries()
          double oteLow  = demandZones[i].bottom + zoneRange * InpFib30;
          bool inZone = (ask <= demandZones[i].top && ask >= demandZones[i].bottom);
          bool inOTE  = (ask <= oteHigh && ask >= oteLow);
-         bool trigger = InpUseOTE ? inOTE : inZone;
+         bool trigger = g_useSMC ? inOTE : inZone;
          if(trigger) {
             if(useTrend && ask < ema[0]) continue;
 
@@ -43,7 +43,7 @@ void ScanForEntries()
          double oteHigh2 = supplyZones[i].top - zoneRange * InpFib30;
          bool inZone2 = (bid >= supplyZones[i].bottom && bid <= supplyZones[i].top);
          bool inOTE2  = (bid >= oteLow2 && bid <= oteHigh2);
-         bool trigger2 = InpUseOTE ? inOTE2 : inZone2;
+         bool trigger2 = g_useSMC ? inOTE2 : inZone2;
          if(trigger2) {
             if(useTrend && bid > ema[0]) continue;
 

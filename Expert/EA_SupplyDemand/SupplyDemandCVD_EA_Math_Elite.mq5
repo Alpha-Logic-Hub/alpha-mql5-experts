@@ -267,11 +267,11 @@ void OnTick()
 
    ScanForEntries();
 
-   if(InpUseMomentumBreakout) {
+   if(g_useShark) {
       CheckInstitutionalMomentum();
    }
 
-   if(InpUseVolumeProfile) {
+   if(g_useVP) {
       CheckVolumeProfileInjection();
    }
 
@@ -290,7 +290,7 @@ void OnTick()
       HTF_Evaluate();
    }
 
-   if(InpUseVolumeProfile) {
+   if(g_useVP) {
       CalculateVolumeProfile();
    }
 
