@@ -55,9 +55,8 @@ void DrawHUD(RiskState         &s,
              double            maFast,
              double            maSlow,
              ENUM_SIGNAL_TYPE  lastSignal,
-             bool              shieldBlocked)
+              bool              shieldBlocked)
 {
-   string g_hudPrefix = HUD_PREFIX;
 
    // --- Account ---
    double equity  = AccountInfoDouble(ACCOUNT_EQUITY);
