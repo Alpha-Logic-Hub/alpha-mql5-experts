@@ -11,7 +11,7 @@ bool     htf_initialized = false;
 //+------------------------------------------------------------------+
 void HTF_Init()
 {
-   int tf = PERIOD_M15;
+   ENUM_TIMEFRAMES tf = PERIOD_M15;
    if(_Period == PERIOD_M15) tf = PERIOD_H1;
 
    h_htf_ema = iMA(_Symbol, tf, dynTrendEMA, 0, MODE_EMA, PRICE_CLOSE);
