@@ -3,13 +3,6 @@
 //| Market session detection (Asia/London/NY)                        |
 //+------------------------------------------------------------------+
 
-enum ENUM_MARKET_SESSION {
-   SESSION_OFF,
-   SESSION_ASIA,
-   SESSION_LONDON,
-   SESSION_NY
-};
-
 ENUM_MARKET_SESSION GetMarketSession()
 {
    MqlDateTime dt;

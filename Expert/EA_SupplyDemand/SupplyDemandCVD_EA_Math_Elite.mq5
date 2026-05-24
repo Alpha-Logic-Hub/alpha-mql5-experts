@@ -105,6 +105,25 @@ input color    InpSupplyColor     = clrTomato;
 input bool     InpShowHUD         = true;
 
 //+------------------------------------------------------------------+
+//| MODULE INCLUDES                                                  |
+//+------------------------------------------------------------------+
+#include "..\..\Shared\SupplyDemandCVD\Core\Definitions.mqh"
+#include "..\..\Shared\SupplyDemandCVD\UI\ChartDrawing.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Analysis\MathFilters.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Analysis\CVD.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Analysis\PivotZone.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Risk\RiskGuardrail.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Analysis\Indicators.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Analysis\Session.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Analysis\HTFFilter.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Analysis\VolumeProfile.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Analysis\SREngine.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Execution\TradeExecutor.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Execution\ExitManagement.mqh"
+#include "..\..\Shared\SupplyDemandCVD\Execution\EntryScanner.mqh"
+#include "..\..\Shared\SupplyDemandCVD\UI\HUD.mqh"
+
+//+------------------------------------------------------------------+
 //| GLOBAL VARIABLES                                                 |
 //+------------------------------------------------------------------+
 Zone demandZones[];
@@ -137,25 +156,6 @@ double   vpAvgVol = 0;
 
 static double supportLevels[];
 static double resistanceLevels[];
-
-//+------------------------------------------------------------------+
-//| MODULE INCLUDES                                                  |
-//+------------------------------------------------------------------+
-#include "..\..\Shared\SupplyDemandCVD\Core\Definitions.mqh"
-#include "..\..\Shared\SupplyDemandCVD\UI\ChartDrawing.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Analysis\MathFilters.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Analysis\CVD.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Analysis\PivotZone.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Risk\RiskGuardrail.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Analysis\Indicators.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Analysis\Session.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Analysis\HTFFilter.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Analysis\VolumeProfile.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Analysis\SREngine.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Execution\TradeExecutor.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Execution\ExitManagement.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Execution\EntryScanner.mqh"
-#include "..\..\Shared\SupplyDemandCVD\UI\HUD.mqh"
 
 //+------------------------------------------------------------------+
 //| PARAMETER ADAPTATION                                             |
