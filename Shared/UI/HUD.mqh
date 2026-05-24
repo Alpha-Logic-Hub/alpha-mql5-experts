@@ -1,16 +1,14 @@
 //+------------------------------------------------------------------+
-//| HUD.mqh                                                          |
-//| On-chart display — OBJ_LABEL for equity, risk, signals, shields  |
+//| HUD.mqh — Shared on-chart display                                |
 //+------------------------------------------------------------------+
 #include "../Core/Definitions.mqh"
 
-// --- Label prefix for HUD objects (used in OnDeinit cleanup) ---
-#define HUD_PREFIX "MA_RSI_HUD_"
+string g_hudPrefix = "ALH_";
 
 //+------------------------------------------------------------------+
 //| InitHUD — create all OBJ_LABEL objects once                      |
 //+------------------------------------------------------------------+
-void InitHUD(string symbol, int magic, double riskPercent, double shieldPercent)
+void InitHUD(string eaName, string symbol, int magic, double riskPercent, double shieldPercent)
 {
    int    xBase = 15;
    int    yPos  = 30;
@@ -19,17 +17,17 @@ void InitHUD(string symbol, int magic, double riskPercent, double shieldPercent)
    string font  = "Consolas";
    int    size  = 9;
 
-   string pre = HUD_PREFIX;
+   g_hudPrefix = eaName + "_";
 
    // --- Header ---
-   ObjectCreate(0, pre + "header", OBJ_LABEL, 0, 0, 0);
-   ObjectSetInteger(0, pre + "header", OBJPROP_CORNER, CORNER_LEFT_UPPER);
-   ObjectSetInteger(0, pre + "header", OBJPROP_XDISTANCE, xBase);
-   ObjectSetInteger(0, pre + "header", OBJPROP_YDISTANCE, yPos);
-   ObjectSetString(0,  pre + "header", OBJPROP_TEXT, "=== MA RSI Trend EA ===");
-   ObjectSetInteger(0, pre + "header", OBJPROP_COLOR, clrGold);
-   ObjectSetString(0,  pre + "header", OBJPROP_FONT, font);
-   ObjectSetInteger(0, pre + "header", OBJPROP_FONTSIZE, size + 1);
+   ObjectCreate(0, g_hudPrefix + "header", OBJ_LABEL, 0, 0, 0);
+   ObjectSetInteger(0, g_hudPrefix + "header", OBJPROP_CORNER, CORNER_LEFT_UPPER);
+   ObjectSetInteger(0, g_hudPrefix + "header", OBJPROP_XDISTANCE, xBase);
+   ObjectSetInteger(0, g_hudPrefix + "header", OBJPROP_YDISTANCE, yPos);
+   ObjectSetString(0,  g_hudPrefix + "header", OBJPROP_TEXT, "=== " + eaName + " ===");
+   ObjectSetInteger(0, g_hudPrefix + "header", OBJPROP_COLOR, clrGold);
+   ObjectSetString(0,  g_hudPrefix + "header", OBJPROP_FONT, font);
+   ObjectSetInteger(0, g_hudPrefix + "header", OBJPROP_FONTSIZE, size + 1);
 
    // --- Labels — create once, update on each tick ---
    string labels[12] = {
@@ -39,13 +37,13 @@ void InitHUD(string symbol, int magic, double riskPercent, double shieldPercent)
    };
 
    for(int i = 0; i < 12; i++) {
-      ObjectCreate(0, pre + labels[i], OBJ_LABEL, 0, 0, 0);
-      ObjectSetInteger(0, pre + labels[i], OBJPROP_CORNER, CORNER_LEFT_UPPER);
-      ObjectSetInteger(0, pre + labels[i], OBJPROP_XDISTANCE, xBase);
-      ObjectSetInteger(0, pre + labels[i], OBJPROP_YDISTANCE, yPos + (i + 1) * lineH);
-      ObjectSetInteger(0, pre + labels[i], OBJPROP_COLOR, c);
-      ObjectSetString(0,  pre + labels[i], OBJPROP_FONT, font);
-      ObjectSetInteger(0, pre + labels[i], OBJPROP_FONTSIZE, size);
+      ObjectCreate(0, g_hudPrefix + labels[i], OBJ_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, g_hudPrefix + labels[i], OBJPROP_CORNER, CORNER_LEFT_UPPER);
+      ObjectSetInteger(0, g_hudPrefix + labels[i], OBJPROP_XDISTANCE, xBase);
+      ObjectSetInteger(0, g_hudPrefix + labels[i], OBJPROP_YDISTANCE, yPos + (i + 1) * lineH);
+      ObjectSetInteger(0, g_hudPrefix + labels[i], OBJPROP_COLOR, c);
+      ObjectSetString(0,  g_hudPrefix + labels[i], OBJPROP_FONT, font);
+      ObjectSetInteger(0, g_hudPrefix + labels[i], OBJPROP_FONTSIZE, size);
    }
 }
 
@@ -59,12 +57,12 @@ void DrawHUD(RiskState         &s,
              ENUM_SIGNAL_TYPE  lastSignal,
              bool              shieldBlocked)
 {
-   string pre = HUD_PREFIX;
+   string g_hudPrefix = HUD_PREFIX;
 
    // --- Account ---
    double equity  = AccountInfoDouble(ACCOUNT_EQUITY);
    double balance = AccountInfoDouble(ACCOUNT_BALANCE);
-   ObjectSetString(0, pre + "account", OBJPROP_TEXT,
+   ObjectSetString(0, g_hudPrefix + "account", OBJPROP_TEXT,
       "Eq: $" + DoubleToString(equity, 2) +
       " | Bal: $" + DoubleToString(balance, 2));
 
@@ -72,36 +70,36 @@ void DrawHUD(RiskState         &s,
    string plSign = (s.dailyPL >= 0) ? "+" : "";
    double plPct  = MathAbs(s.dailyPL) * 100.0 / MathMax(s.startOfDayEquity, 0.01);
    color  plColor = (s.dailyPL >= 0) ? clrMediumSpringGreen : clrTomato;
-   ObjectSetString(0, pre + "pnl", OBJPROP_TEXT,
+   ObjectSetString(0, g_hudPrefix + "pnl", OBJPROP_TEXT,
       "P&L: " + plSign + "$" + DoubleToString(s.dailyPL, 2) +
       " (" + DoubleToString(plPct, 2) + "%)");
-   ObjectSetInteger(0, pre + "pnl", OBJPROP_COLOR, plColor);
+   ObjectSetInteger(0, g_hudPrefix + "pnl", OBJPROP_COLOR, plColor);
 
    // --- Shield status ---
    color shieldColor = shieldBlocked ? clrTomato : clrMediumSpringGreen;
    string shieldText  = shieldBlocked
       ? "SHIELD ACTIVE — No new trades"
       : "Shield: " + DoubleToString(s.effShieldPercent, 2) + "% (OK)";
-   ObjectSetString(0, pre + "shield", OBJPROP_TEXT, shieldText);
-   ObjectSetInteger(0, pre + "shield", OBJPROP_COLOR, shieldColor);
+   ObjectSetString(0, g_hudPrefix + "shield", OBJPROP_TEXT, shieldText);
+   ObjectSetInteger(0, g_hudPrefix + "shield", OBJPROP_COLOR, shieldColor);
 
    // --- Risk profile ---
    string riskText = "Risk: " + DoubleToString(s.effRiskPercent, 3) + "%";
-   ObjectSetString(0, pre + "risk", OBJPROP_TEXT, riskText);
+   ObjectSetString(0, g_hudPrefix + "risk", OBJPROP_TEXT, riskText);
 
    // --- RSI ---
    color rsiColor = clrWhite;
    if(rsi >= 70)      rsiColor = clrTomato;
    else if(rsi <= 30) rsiColor = clrMediumSpringGreen;
-   ObjectSetString(0, pre + "rsi", OBJPROP_TEXT,
+   ObjectSetString(0, g_hudPrefix + "rsi", OBJPROP_TEXT,
       "RSI(14): " + DoubleToString(rsi, 2));
-   ObjectSetInteger(0, pre + "rsi", OBJPROP_COLOR, rsiColor);
+   ObjectSetInteger(0, g_hudPrefix + "rsi", OBJPROP_COLOR, rsiColor);
 
    // --- MAs ---
    int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
-   ObjectSetString(0, pre + "maFast", OBJPROP_TEXT,
+   ObjectSetString(0, g_hudPrefix + "maFast", OBJPROP_TEXT,
       "EMA(9): "  + DoubleToString(maFast, digits));
-   ObjectSetString(0, pre + "maSlow", OBJPROP_TEXT,
+   ObjectSetString(0, g_hudPrefix + "maSlow", OBJPROP_TEXT,
       "SMA(21): " + DoubleToString(maSlow, digits));
 
    // --- Signal ---
@@ -120,13 +118,13 @@ void DrawHUD(RiskState         &s,
          sigText  = "Signal: NONE";
          sigColor = clrDarkGray;
    }
-   ObjectSetString(0, pre + "signal", OBJPROP_TEXT, sigText);
-   ObjectSetInteger(0, pre + "signal", OBJPROP_COLOR, sigColor);
+   ObjectSetString(0, g_hudPrefix + "signal", OBJPROP_TEXT, sigText);
+   ObjectSetInteger(0, g_hudPrefix + "signal", OBJPROP_COLOR, sigColor);
 
    // --- Status ---
    string openPos = IntegerToString(CountActivePositions(InpMagicNumber, _Symbol, g_pos));
-   ObjectSetString(0, pre + "status", OBJPROP_TEXT,
-      "Open: " + openPos + " | Spread: " +
+   ObjectSetString(0, g_hudPrefix + "status", OBJPROP_TEXT,
+      "Open: " + openPos + " | Sg_hudPrefixad: " +
       DoubleToString((SymbolInfoDouble(_Symbol, SYMBOL_ASK) -
                        SymbolInfoDouble(_Symbol, SYMBOL_BID)) / _Point, 1) + " pts");
 }
@@ -136,5 +134,5 @@ void DrawHUD(RiskState         &s,
 //+------------------------------------------------------------------+
 void ClearHUD()
 {
-   ObjectsDeleteAll(0, HUD_PREFIX);
+   ObjectsDeleteAll(0, g_hudPrefix);
 }

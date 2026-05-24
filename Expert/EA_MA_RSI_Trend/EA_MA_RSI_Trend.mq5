@@ -115,7 +115,7 @@ int OnInit()
 
    // === Init HUD ===
    if(InpShowHUD) {
-      InitHUD(_Symbol, InpMagicNumber, g_state.effRiskPercent, g_state.effShieldPercent);
+      InitHUD("MA RSI Trend", _Symbol, InpMagicNumber, g_state.effRiskPercent, g_state.effShieldPercent);
    }
 
    Print("[MA_RSI] EA initialized — Risk=", g_state.effRiskPercent, "%, ",

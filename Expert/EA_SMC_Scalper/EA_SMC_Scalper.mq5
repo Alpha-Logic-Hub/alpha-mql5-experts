@@ -105,7 +105,7 @@ int OnInit()
    g_trade.SetExpertMagicNumber(InpMagicNumber);
 
    if(InpShowHUD) {
-      InitHUD(_Symbol, InpMagicNumber, g_state.effRiskPercent, g_state.effShieldPercent);
+      InitHUD("SMC Scalper", _Symbol, InpMagicNumber, g_state.effRiskPercent, g_state.effShieldPercent);
    }
 
    Print("[SMC] EA initialized — Risk=", g_state.effRiskPercent, "%, ",

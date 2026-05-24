@@ -109,7 +109,7 @@ int OnInit()
 
    // === Init HUD ===
    if(InpShowHUD) {
-      InitHUD(_Symbol, InpMagicNumber, g_state.effRiskPercent, g_state.effShieldPercent);
+      InitHUD("MultiSignal", _Symbol, InpMagicNumber, g_state.effRiskPercent, g_state.effShieldPercent);
    }
 
    Print("[MultiSignal] EA initialized — Risk=", g_state.effRiskPercent, "%, ",
