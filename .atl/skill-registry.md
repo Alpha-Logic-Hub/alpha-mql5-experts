@@ -7,6 +7,7 @@
 | mql5-enterprise-coder | .skills/mql5-enterprise-coder/ | codificar, nuevo EA, compilar, include | ✅ Active |
 | mql5-risk-guardrail | .skills/mql5-risk-guardrail/ | risk, lote, shield, SoulzBTC, guardrail | ✅ Active |
 | trader-memory-loop | .skills/trader-memory-loop/ | postmortem, sesion, diario, journal | ✅ Active |
+| alpha-commit-push | .skills/alpha-commit-push/ | commit, push, subir, guardar, github, deploy | ✅ Active |
 
 ## Active EAs
 
