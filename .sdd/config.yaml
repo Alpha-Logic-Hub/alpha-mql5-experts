@@ -1,0 +1,54 @@
+# Alpha Logic Hub — SDD Master Config
+project: Alpha_Logic_Hub
+version: 1.0.0
+stack: mql5
+market: XAUUSD (primary), multi-asset
+
+models:
+  sdd-explore: gemini-2.5-flash
+  sdd-propose: gemini-2.5-flash
+  sdd-init: gemini-2.5-flash
+  sdd-spec: gemini-1.5-pro
+  sdd-design: gemini-1.5-pro
+  sdd-apply: gemini-1.5-pro
+  sdd-verify: gemini-2.5-flash
+  sdd-archive: gemini-2.5-flash
+
+soulzbtc_guardrails:
+  RISK-001:
+    rule: Max 1% risk per trade
+    enforcement: InpRiskPercent > 1.0 -> INIT_PARAMETERS_INCORRECT
+  RISK-002:
+    rule: Dynamic lot sizing only
+    enforcement: SymbolInfoDouble for step/min/max; no literal lot values
+  RISK-003:
+    rule: Mandatory SL + daily shield
+    enforcement: GetMinStopDistance triple MathMax; IsShieldTriggered <=
+  RISK-004:
+    rule: No martingale/grids
+    enforcement: Zero lot multiplier logic; CountActivePositions exposure cap
+  ERR-001:
+    rule: Audit OrderSend ticket
+    enforcement: ResultRetcode + GetLastError post-order
+  ERR-002:
+    rule: Spread check pre-trade
+    enforcement: Max spread threshold before OrderSend
+  ERR-003:
+    rule: Print() logging
+    enforcement: Every critical action logged
+
+architecture:
+  pattern: modular (.mq5 orchestrates, .mqh by responsibility)
+  include_convention: relative paths from Expert directory
+  naming: PascalCase (InpRiskPercent, CalculateLotSize)
+
+delivery:
+  review_budget: 400
+  pr_strategy: ask-always
+  execution_mode: interactive
+
+artifacts:
+  mode: openspec
+  base_path: .sdd/
+  specs_path: .sdd/specs/
+  changes_path: .sdd/changes/

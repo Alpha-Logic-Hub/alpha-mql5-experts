@@ -1,0 +1,18 @@
+# Executables compilados
+*.ex5
+
+# Logs temporales
+*.log
+logs/
+
+# Backups de MetaEditor
+*.bak
+*.backup
+
+# Archivos de sistema
+Thumbs.db
+Desktop.ini
+
+# Dependencias externas (si las hubiera)
+.venv/
+node_modules/
