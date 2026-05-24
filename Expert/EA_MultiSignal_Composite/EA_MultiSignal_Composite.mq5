@@ -67,6 +67,7 @@ RiskState    g_state;
 CTrade       g_trade;
 CPositionInfo g_pos;
 
+int      h_atr;
 ENUM_SIGNAL_TYPE g_lastSignal = SIGNAL_NONE;
 
 //+------------------------------------------------------------------+
@@ -89,7 +90,13 @@ int OnInit()
    // === Init trade context ===
    g_trade.SetExpertMagicNumber(InpMagicNumber);
 
-   // === Init signal engine ===
+   // === Init signals + ATR handle ===
+   h_atr = iATR(_Symbol, _Period, 14);
+   if(h_atr == INVALID_HANDLE) {
+      Print("[MultiSignal] ATR handle failed");
+      return INIT_FAILED;
+   }
+
    if(!InitCompositeSignals(_Symbol, _Period,
                              InpFastMAPeriod, InpSlowMAPeriod,
                              InpRSIPeriod,
@@ -98,10 +105,7 @@ int OnInit()
       return INIT_FAILED;
    }
 
-   // === Customize weights (override defaults) ===
-   g_sigMA.Weight(InpMA_Weight);
-   g_sigRSI.Weight(InpRSI_Weight);
-   g_sigMACD.Weight(InpMACD_Weight);
+   SetCompositeWeights(InpMA_Weight, InpRSI_Weight, InpMACD_Weight, InpSignalThreshold);
 
    // === Init HUD ===
    if(InpShowHUD) {
@@ -124,6 +128,7 @@ void OnDeinit(const int reason)
 {
    ClearHUD();
    DeinitCompositeSignals();
+   if(h_atr != INVALID_HANDLE) IndicatorRelease(h_atr);
    Print("[MultiSignal] EA deinitialized — reason=", reason);
 }
 
@@ -172,11 +177,8 @@ void OnTick()
 
    // === 4. HUD — refresh display ===
    if(InpShowHUD) {
-      // For multi-signal, show composite data
-      double rsiVal = 50.0;  // placeholder — standard lib handles internals
-      double maVal  = 0.0;
-      double macdVal = 0.0;
-      DrawHUD(g_state, rsiVal, maVal, macdVal,
+      double rsiVal = GetCompositeRSI();
+      DrawHUD(g_state, rsiVal, 0.0, 0.0,
               g_lastSignal, shieldBlocked);
    }
 }
