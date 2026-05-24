@@ -26,13 +26,3 @@ struct SSwingPoint {
    int      bar_index;
    bool     is_high;   // true=high, false=low
 };
-
-// --- Risk State (SoulzBTC) ---
-struct RiskState {
-   double   effRiskPercent;
-   double   effRR;
-   double   effShieldPercent;
-   datetime lastShieldResetDay;
-   double   startOfDayEquity;
-   double   dailyPL;
-};
