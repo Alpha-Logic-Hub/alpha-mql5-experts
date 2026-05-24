@@ -14,13 +14,13 @@
 #include <Trade\SymbolInfo.mqh>
 
 //+------------------------------------------------------------------+
-//| MODULE INCLUDES (locales al EA)                                  |
+//| MODULE INCLUDES                                                   |
 //+------------------------------------------------------------------+
 #include "Core\Definitions.mqh"
-#include "Risk\RiskGuardrail.mqh"
 #include "Signals\MA_RSI_Signals.mqh"
-#include "Execution\TradeExecutor.mqh"
-#include "UI\HUD.mqh"
+#include "..\..\Shared\Risk\RiskGuardrail.mqh"
+#include "..\..\Shared\Execution\TradeExecutor.mqh"
+#include "..\..\Shared\UI\HUD.mqh"
 
 //+------------------------------------------------------------------+
 //| INFRASTRUCTURE (Alpha Logic Hub Shared)                          |
