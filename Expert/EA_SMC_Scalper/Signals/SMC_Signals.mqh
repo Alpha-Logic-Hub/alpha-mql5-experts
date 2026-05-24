@@ -39,7 +39,6 @@ void InitSMC(int lookback=300, int swingStrength=3, double obDisplacement=2.0,
    g_cfgUseImbalance   = useImbalance;
    g_cfgImbalanceRatio = imbalanceRatio;
    g_cfgMinDelta       = minDelta;
-   ArrayResize(g_activeOBs, 0);
    g_obCount = 0;
    Print("[SMC] Initialized — Lookback=", lookback, " Swings=", swingStrength);
 }
@@ -126,10 +125,10 @@ void UpdateMarketStructure(string symbol, ENUM_TIMEFRAMES period)
 //+------------------------------------------------------------------+
 //| UpdateOrderBlocks — detect OBs from the last opposite swing      |
 //+------------------------------------------------------------------+
-void UpdateOrderBlocks(string symbol, ENUM_TIMEFRAMES period, int h_atr)
+void UpdateOrderBlocks(string symbol, ENUM_TIMEFRAMES period, int hAtr)
 {
    double atr[1];
-   if(CopyBuffer(h_atr, 0, 0, 1, atr) < 1) return;
+   if(CopyBuffer(hAtr, 0, 0, 1, atr) < 1) return;
 
    MqlRates rates[];
    ArraySetAsSeries(rates, true);

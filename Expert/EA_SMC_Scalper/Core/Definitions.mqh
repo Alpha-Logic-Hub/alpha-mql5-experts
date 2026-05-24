@@ -8,6 +8,9 @@ enum ENUM_TREND { TREND_BULLISH, TREND_BEARISH, TREND_NEUTRAL };
 
 enum ENUM_SMC_SIGNAL { SMC_NONE, SMC_BUY_OB, SMC_SELL_OB, SMC_SWEEP_BUY, SMC_SWEEP_SELL };
 
+// --- Universal signal type (required by shared TradeExecutor, HUD) ---
+enum ENUM_SIGNAL_TYPE { SIGNAL_NONE, SIGNAL_BUY, SIGNAL_SELL };
+
 // --- Order Block ---
 struct SOrderBlock {
    double   price_high;
