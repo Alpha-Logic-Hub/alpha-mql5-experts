@@ -39,12 +39,17 @@ class SMAcrossover(Strategy):
     name = "sma_crossover"
     lookback = 200
 
+    def min_bars(self, params: Dict[str, Any]) -> int:
+        fast = params.get("fast_period", 20)
+        slow = params.get("slow_period", 50)
+        return max(slow, fast) + 2
+
     def generate_signals(self, data: pd.DataFrame, params: Dict[str, Any]) -> Signal:
         params = self.validate_params(params)
         fast = params.get("fast_period", 20)
         slow = params.get("slow_period", 50)
 
-        if len(data) < slow + 1:
+        if len(data) < self.min_bars(params):
             return Signal()
 
         close = data["close"]
@@ -70,10 +75,15 @@ class EMAcrossover(Strategy):
     name = "ema_crossover"
     lookback = 200
 
+    def min_bars(self, params: Dict[str, Any]) -> int:
+        fast = params.get("fast_period", 12)
+        slow = params.get("slow_period", 26)
+        return max(slow, fast) + 2
+
     def generate_signals(self, data: pd.DataFrame, params: Dict[str, Any]) -> Signal:
         fast = params.get("fast_period", 12)
         slow = params.get("slow_period", 26)
-        if len(data) < slow + 1:
+        if len(data) < self.min_bars(params):
             return Signal()
 
         close = data["close"]

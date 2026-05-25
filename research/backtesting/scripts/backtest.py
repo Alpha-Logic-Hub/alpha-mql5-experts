@@ -112,7 +112,32 @@ def run_backtest(
     position = None
     position_size = 0
 
-    for i in range(strategy.lookback, len(data)):
+    data_len = len(data)
+    lookback = strategy.lookback
+
+    # Use dynamic lookback if strategy has min_bars method
+    if hasattr(strategy, 'min_bars') and callable(strategy.min_bars):
+        try:
+            lookback = max(lookback, strategy.min_bars(params))
+        except Exception:
+            pass
+
+    if lookback >= data_len:
+        # Not enough data — return empty result
+        result = BacktestResult(
+            strategy=strategy_name,
+            symbol=data.attrs.get('symbol', 'Unknown'),
+            start_date=data.index[0] if len(data) > 0 else None,
+            end_date=data.index[-1] if len(data) > 0 else None,
+            initial_capital=initial_capital,
+            final_capital=initial_capital,
+            trades=[],
+            equity_curve=pd.Series([initial_capital], index=data.index[:1] if len(data) > 0 else [0]),
+            parameters=params,
+        )
+        return calculate_all_metrics(result)
+
+    for i in range(lookback, data_len):
         slice_data = data.iloc[:i+1].copy()
         current_bar = data.iloc[i]
         current_price = current_bar['close']
@@ -245,7 +270,10 @@ def run_backtest(
         trades.append(trade)
         equity[-1] = cash
 
-    equity_curve = pd.Series(equity, index=data.index[strategy.lookback-1:])
+    eq_index = data.index[max(0, lookback-1):]
+    if len(equity) != len(eq_index):
+        eq_index = eq_index[:len(equity)]
+    equity_curve = pd.Series(equity, index=eq_index)
 
     result = BacktestResult(
         strategy=strategy_name,
