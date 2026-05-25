@@ -87,7 +87,7 @@ Archivos que NUNCA deben committearse:
 ### 4. Formato de Commit (Conventional Commits)
 
 ```
-<tipo>: <descripción breve en inglés>
+<tipo>: <descripción breve en ESPAÑOL>
 
 - bullet point con detalle si es necesario
 ```
@@ -132,7 +132,7 @@ git add scripts/ config/ README.md
 # o si es más seguro:
 git add --all :!research/backtesting/data/ :!research/backtesting/reports/ :!__pycache__/
 
-git commit -m "feat: EA_TrendReversal — double bottom/top pattern with RSI confirmation"
+git commit -m "feat: EA_TrendReversal — patrón doble piso/techo con confirmación RSI"
 git push origin master
 Pop-Location
 
@@ -147,7 +147,7 @@ Write-Output "✅ Pushed to https://github.com/Alpha-Logic-Hub/alpha-mql5-expert
 - ❌ Pushear sin hacer `fetch` + `pull --rebase` primero
 - ❌ `git add -A` sin filtrar archivos generados (data/, reports/, __pycache__/)
 - ❌ Commits con mensajes vagos ("update", "fix", "changes")
-- ❌ Commits en español (usar inglés para conventional commits)
+- ❌ Commits en inglés (usar español, el proyecto es en español)
 - ❌ Un solo commit enorme con 20 archivos no relacionados (split en commits lógicos)
 - ❌ Resolver conflictos de rebase sin avisar al usuario
 
