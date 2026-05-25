@@ -18,7 +18,7 @@ Después de cada tarea completada — ya sea un nuevo EA, un fix, una skill, o
 documentación — el agente DEBE ejecutar el ciclo completo:
 
 ```
-git add -A → git commit → git push
+git status → git fetch → git pull --rebase → git add → git commit → git push
 ```
 
 ## Organización Objetivo
@@ -39,9 +39,52 @@ https://github.com/Alpha-Logic-Hub
 
 El agente debe identificar qué repo(s) fueron modificados:
 - Código MQL5 (EAs, includes, skills, SDD) → `alpha-mql5-experts`
+- Cambios en la instalación MQL5 local (MT5 terminal) → solo si el repo remoto lo requiere
 - Si el cambio toca múltiples repos, commitear en cada uno.
 
-### 2. Formato de Commit (Conventional Commits)
+### 2. Verificar estado de GitHub ANTES de commitear
+
+Antes de cualquier commit, sincronizar con remote:
+
+```powershell
+Push-Location "<ruta-del-repo>"
+# 1. Ver qué cambió
+git status
+
+# 2. Traer estado remoto
+git fetch origin master
+
+# 3. Rebase: aplica nuestros cambios ENCIMA de lo que haya en remote
+#    (evita merge commits y conflictos manuales)
+git pull --rebase origin master
+Pop-Location
+```
+
+Si `git pull --rebase` falla por conflictos:
+- DETENER y avisar al usuario en vez de resolver automáticamente
+- Mostrar `git status` con los archivos en conflicto
+- No pushear hasta que el usuario resuelva
+
+### 3. Staging inteligente
+
+NO usar `git add -A` ciegamente. Excluir archivos generados:
+
+```powershell
+Push-Location "<ruta-del-repo>"
+git add <archivos-del-cambio>         # específicos, no todo
+# O si el cambio es grande y seguro:
+git add --all :!research/backtesting/data/ :!research/backtesting/reports/ :!__pycache__/
+git status                              # verificar que entró lo correcto
+Pop-Location
+```
+
+Archivos que NUNCA deben committearse:
+- `__pycache__/` y `*.pyc`
+- `research/backtesting/data/` (datos cacheados de yfinance/MT5)
+- `research/backtesting/reports/` (resultados de backtest, CSVs, PNGs)
+- `*.log`, `logs/`
+
+### 4. Formato de Commit (Conventional Commits)
 
 ```
 <tipo>: <descripción breve en inglés>
@@ -60,17 +103,15 @@ Tipos estándar:
 | `chore:` | Tareas de mantenimiento, gitignore, config |
 | `style:` | Cambios de formato (espacios, nombres, etc.) |
 
-### 3. Ejecución del Push
+### 5. Push
 
 ```powershell
 Push-Location "<ruta-del-repo>"
-git add -A
-git commit -m "<tipo>: <descripción>"
 git push origin master
 Pop-Location
 ```
 
-### 4. Verificación Post-Push
+### 6. Verificación Post-Push
 
 Después del push, confirmar:
 - [ ] `git log --oneline -1` muestra el commit
@@ -80,9 +121,17 @@ Después del push, confirmar:
 ## Ejemplo Completo
 
 ```powershell
-# Después de crear un nuevo EA o skill:
+# Después de implementar un cambio:
 Push-Location "C:\Users\inven\.gemini\antigravity\scratch\Alpha-Logic-Hub\alpha-mql5-experts"
-git add -A
+
+git status
+git fetch origin master
+git pull --rebase origin master
+
+git add scripts/ config/ README.md
+# o si es más seguro:
+git add --all :!research/backtesting/data/ :!research/backtesting/reports/ :!__pycache__/
+
 git commit -m "feat: EA_TrendReversal — double bottom/top pattern with RSI confirmation"
 git push origin master
 Pop-Location
@@ -95,9 +144,12 @@ Write-Output "✅ Pushed to https://github.com/Alpha-Logic-Hub/alpha-mql5-expert
 
 - ❌ Dejar cambios sin commitear al final de una sesión
 - ❌ Hacer commit sin push ("después lo subo")
+- ❌ Pushear sin hacer `fetch` + `pull --rebase` primero
+- ❌ `git add -A` sin filtrar archivos generados (data/, reports/, __pycache__/)
 - ❌ Commits con mensajes vagos ("update", "fix", "changes")
 - ❌ Commits en español (usar inglés para conventional commits)
 - ❌ Un solo commit enorme con 20 archivos no relacionados (split en commits lógicos)
+- ❌ Resolver conflictos de rebase sin avisar al usuario
 
 ## Integración con CI/CD
 
