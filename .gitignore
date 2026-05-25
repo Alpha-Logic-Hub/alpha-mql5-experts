@@ -5,6 +5,14 @@
 *.log
 logs/
 
+# Python
+__pycache__/
+*.pyc
+
+# Backtesting generated files
+research/backtesting/data/
+research/backtesting/reports/
+
 # Backups de MetaEditor
 *.bak
 *.backup
