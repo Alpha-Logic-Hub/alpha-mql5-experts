@@ -1,0 +1,63 @@
+# Risk Audit — EA_MultiSignal_Composite
+# Audited by: RISK_GUARDIAN
+# Date: 2026-05-26
+# Commit: 4fc76f2
+# Skills: mql5-risk-guardrail v1.0 (bloqueante)
+
+verdict: PASS
+
+archivos_revisados:
+  - Expert/EA_MultiSignal_Composite/EA_MultiSignal_Composite.mq5
+  - Shared/Risk/RiskGuardrail.mqh
+  - Shared/Execution/TradeExecutor.mqh
+
+reglas_verificadas:
+  - SL/TP
+  - Riesgo por trade
+  - Spread check
+  - Daily shield
+  - Auditoría de operaciones
+  - Anti-martingala/grid
+  - Unidades
+
+hallazgos_criticos: []
+
+hallazgos_informativos:
+  - rule: RISK-001
+    detalle: "InpRiskPercent=0.15% validado en OnInit (>1.0 → INIT_PARAMETERS_INCORRECT)"
+    estado: OK
+  - rule: RISK-002
+    detalle: "Lot sizing dinámico via CalculateLotSize() con SYMBOL_VOLUME_STEP/MIN/MAX"
+    estado: OK
+  - rule: RISK-003
+    detalle: "SL obligatorio via GetMinStopDistance() (precio, no puntos). slDistancePrice correcto."
+    estado: OK
+  - rule: RISK-004
+    detalle: "Sin martingala ni grid en código"
+    estado: OK
+  - rule: ERR-001
+    detalle: "TradeExecutor audita ResultRetcode() tras cada OrderSend"
+    estado: OK
+  - rule: ERR-002
+    detalle: "Spread check centralizado en OpenTrade() con InpMaxSpread=30 configurable"
+    estado: OK
+  - rule: ERR-003
+    detalle: "Print() en OnInit, OnDeinit, TradeExecutor"
+    estado: OK
+  - rule: DEINIT
+    detalle: "IndicatorRelease(h_atr) + DeinitCompositeSignals() en OnDeinit — handles liberados"
+    estado: OK
+  - rule: CIRCUIT_BREAKER
+    detalle: "UpdateGlobalRisk() + g_globalHalt en OnTick"
+    estado: OK
+  - rule: SHIELD
+    detalle: "UpdateDailyShield + IsShieldTriggered con InpShieldPercent=4.0%"
+    estado: OK
+  - rule: SINGLE_POSITION
+    detalle: "CountActivePositions >= 1 → no abre nueva posición"
+    estado: OK
+  - rule: WEIGHTED_VOTING
+    detalle: "MA(0.4) + RSI(0.3) + MACD(0.3) = 1.0. Threshold 40% para disparar señal"
+    estado: OK
+
+next_step: "backtest → review → paper validation"
