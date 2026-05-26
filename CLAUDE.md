@@ -51,14 +51,19 @@ Leer SIEMPRE estos archivos al comenzar una sesión antes de cualquier operació
 3. `.sdd/specs/` — Especificaciones detalladas por componente
 4. `.atl/skill-registry.md` — Índice de skills disponibles. Antes de codificar, revisar si existe una skill para la tarea y cargarla.
 
-### Carga dinámica de skills
+### Antes de cada tarea (automático)
 
-Antes de escribir código MQL5, modificar configuraciones o ejecutar git operations:
+Consultar `.atl/skill-registry.md`, cargar la skill que corresponda y ejecutar sus reglas. No preguntar, ejecutar.
 
-1. Consultar `.atl/skill-registry.md` para ver si existe una skill que corresponda a la tarea
-2. Si existe → leer el archivo `SKILL.md` dentro de `.skills/[skill-name]/`
-3. Seguir las reglas, checklists y referencias de la skill
-4. Si no existe → proceder sin skill, pero considerar si vale la pena crear una
+### Después de cada tarea con cambios (automático — sin preguntar)
+
+Siempre que se haya modificado archivos en el repo:
+
+1. Cargar la skill `alpha-commit-push` automáticamente
+2. Ejecutar: `git fetch` → `git pull --rebase` → `git add` selectivo → `git commit` → `git push`
+3. **No preguntar**. Solo frenar y avisar si hay: conflictos de rebase, secretos, o cambios no relacionados mezclados
+
+La skill `alpha-commit-push/SKILL.md` tiene los comandos exactos. No improvisar.
 
 ## Handoff Chain
 
