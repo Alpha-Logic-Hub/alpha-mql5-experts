@@ -165,10 +165,10 @@ void OnTick()
    double maFastBuf[1]; CopyBuffer(h_maFast, 0, 0, 1, maFastBuf);
    double maSlowBuf[1]; CopyBuffer(h_maSlow, 0, 0, 1, maSlowBuf);
 
-   // === 3. Execution — check entry signal ===
+   // === 3. Execution — check entry signal (only on new bar to avoid flickering) ===
    ENUM_SIGNAL_TYPE signal = SIGNAL_NONE;
 
-   if(!shieldBlocked && CountActivePositions(InpMagicNumber, _Symbol, g_pos) == 0) {
+   if(IsNewBar() && !shieldBlocked && CountActivePositions(InpMagicNumber, _Symbol, g_pos) == 0) {
       signal = CheckEntrySignal(h_maFast, h_maSlow, h_rsi,
                                 InpRSIOverbought, InpRSIOversold,
                                 InpRSIMidHigh, InpRSIMidLow);
