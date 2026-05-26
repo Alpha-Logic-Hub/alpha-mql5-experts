@@ -158,7 +158,9 @@ double GetMinStopDistance() {
 //| RISK-002: no hardcoded lots — uses SymbolInfoDouble for step/min  |
 //| ERR-003: Print() log with computed lot and risk amount           |
 //+------------------------------------------------------------------+
-double CalculateLotSize(double slPoints, double maxLot, double fixedLot,
+// NOTA: slDistancePrice debe llegar en PRECIO (NO en puntos).
+// GetMinStopDistance() la devuelve en precio: InpStopLoss * _Point.
+double CalculateLotSize(double slDistancePrice, double maxLot, double fixedLot,
                         double riskPercent, string symbol) {
    double lot        = 0;
    double riskAmount = 0;
@@ -179,14 +181,14 @@ double CalculateLotSize(double slPoints, double maxLot, double fixedLot,
       double entryPrice = SymbolInfoDouble(symbol, SYMBOL_ASK);
 
       if(OrderCalcProfit(ORDER_TYPE_BUY, symbol, 1.0,
-                         entryPrice, entryPrice - slPoints, profit)) {
+                         entryPrice, entryPrice - slDistancePrice, profit)) {
          lossPerLot = -profit;
       } else {
          //--- Fallback: tick-value calculation
          double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
          double tickSize  = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
          if(tickSize > 0) {
-            lossPerLot = (slPoints / tickSize) * tickValue;
+            lossPerLot = (slDistancePrice / tickSize) * tickValue;
          }
       }
 

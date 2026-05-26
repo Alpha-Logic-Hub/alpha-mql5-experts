@@ -9,9 +9,11 @@
 //| OpenTrade — send market order with SL and TP                     |
 //| Returns true on success, false on failure                        |
 //+------------------------------------------------------------------+
+// NOTA: slDistancePrice ya viene en PRECIO desde GetMinStopDistance().
+// NO multiplicar por _Point — eso duplicaría la conversión.
 bool OpenTrade(ENUM_SIGNAL_TYPE signal,
                double            lot,
-               double            slPoints,
+               double            slDistancePrice,
                double            rr,
                int               magic,
                string            comment)
@@ -22,8 +24,8 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
       return false;
    }
 
-   if(slPoints <= 0) {
-      Print("[TradeExecutor] RISK-003 VIOLATION: slPoints=", slPoints, " must be > 0. Trade blocked.");
+   if(slDistancePrice <= 0) {
+      Print("[TradeExecutor] RISK-003 VIOLATION: slDistancePrice=", slDistancePrice, " must be > 0. Trade blocked.");
       return false;
    }
 
@@ -36,10 +38,10 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
       return false;
    }
 
-   // --- Calculate prices ---
+   // --- Calculate prices (slDistancePrice ya está en precio) ---
    double entryPrice, slPrice, tpPrice;
-   double slDistance = slPoints * _Point;
-   double tpDistance = slPoints * rr * _Point;
+   double slDistance = slDistancePrice;     // ya en precio, NO multiplicar por _Point
+   double tpDistance = slDistancePrice * rr; // ya en precio, NO multiplicar por _Point
 
    ENUM_ORDER_TYPE orderType;
 
@@ -66,7 +68,7 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
    string dir = (signal == SIGNAL_BUY) ? "BUY" : "SELL";
    Print("[TradeExecutor] Opening ", dir, " | Entry=", entryPrice,
          " | SL=", slPrice, " | TP=", tpPrice,
-         " | Lot=", lot, " | SL pips=", slPoints, " | RR=", rr);
+         " | Lot=", lot, " | SL dist=", slDistancePrice, " | RR=", rr);
 
    // --- Send order ---
    CTrade trade;
