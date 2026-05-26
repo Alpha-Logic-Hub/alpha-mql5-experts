@@ -37,29 +37,37 @@ Alpha_Logic_Hub/
 4. **Include paths locales**: Todo `#include` dentro de un Expert usa paths relativos (`"Core\..."`).
 5. **Skills antes que código**: Si existe una skill para la tarea, cargarla antes de codificar.
 
-## Carga obligatoria al inicio de cada sesión
+## Carga al inicio de sesión (lazy, no eager)
 
-Leer SIEMPRE estos archivos al comenzar una sesión antes de cualquier operación:
+Leer SIEMPRE al comenzar:
+1. `CLAUDE.md` — este archivo (reglas mínimas)
+2. `AGENTS.md` — router de agentes y governance
 
-1. `.sdd/plan-actualizado/README.md` — Plan maestro: pipeline operativo, skills, subagentes, roadmap, principios no negociables
-2. `.sdd/sdd_master.md` — Contratos de EA, skill, módulos Shared y flujo SDD
-3. `.sdd/specs/` — Especificaciones detalladas por componente
-4. `.atl/skill-registry.md` — Índice de skills disponibles. Antes de codificar, revisar si existe una skill para la tarea y cargarla.
-5. `.sdd/changes/` — Cambios activos del SDD: proposal, spec, design, tasks por implementar.
+Cargar bajo demanda:
+- `.sdd/plan-actualizado/README.md` — solo si la tarea toca arquitectura o workflow
+- `.atl/skill-registry.md` — solo para elegir skills relevantes, NO para cargar todo
+- `.sdd/specs/` — solo si la tarea modifica un componente con spec existente
+- `.sdd/changes/` — solo si hay un cambio SDD activo en progreso
 
-### Antes de cada tarea (automático)
+### Después de cada tarea con cambios
 
-Consultar `.atl/skill-registry.md`, cargar la skill que corresponda y ejecutar sus reglas. No preguntar, ejecutar.
+1. `git status` — ver qué cambió
+2. `git diff --stat` — revisar alcance
+3. Secret scan: revisar archivos sensibles (keys, tokens, credenciales)
+4. Compilar si tocó `.mq5` o `.mqh`
+5. Correr checks disponibles
+6. Preparar commit sugerido con mensaje convencional
+7. **Pedir confirmación antes de push**
 
-### Después de cada tarea con cambios (automático — sin preguntar)
-
-Siempre que se haya modificado archivos en el repo:
-
-1. Cargar la skill `git-safety-release` automáticamente
-2. Ejecutar su contrato: `git fetch` → `git pull --rebase` → `git add` selectivo → `git commit` → `git push`
-3. **No preguntar**. Solo frenar y avisar si hay: conflictos de rebase, secretos, o cambios no relacionados mezclados
-
-La skill `git-safety-release/SKILL.md` tiene los comandos exactos y el playbook de seguridad. No improvisar.
+Solo auto commit+push si `AUTO_GIT_MODE=true` está explícitamente configurado, y aun así bloquear si:
+- no compiló;
+- hay `.ex5` en el diff;
+- hay logs pesados o datos de backtest;
+- hay secretos detectados;
+- hay cambios no relacionados mezclados;
+- hay conflicto de rebase;
+- hay branch divergente;
+- no se corrió validación mínima.
 
 ## Handoff Chain
 

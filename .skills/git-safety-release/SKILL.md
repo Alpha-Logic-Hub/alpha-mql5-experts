@@ -52,6 +52,29 @@ Antes de `git push`:
 - [ ] `git fetch origin` + `git pull --rebase` ejecutados
 - [ ] No hay conflictos sin resolver
 - [ ] Los commits locales están encima de remote (fast-forward)
+- [ ] **Confirmación del humano obtenida antes de push** (salvo AUTO_GIT_MODE=true)
+
+## Modo de Git
+
+### Modo por defecto (confirmación requerida)
+Después de cada tarea:
+1. `git status`
+2. `git diff --stat`
+3. Secret scan
+4. Compilar si tocó MQL5
+5. Preparar commit sugerido
+6. **Pedir confirmación antes de push**
+
+### Modo automático (AUTO_GIT_MODE=true)
+Solo si está explícitamente habilitado, y aun así bloquear si:
+- no compiló;
+- hay `.ex5` en el diff;
+- hay logs pesados o datos de backtest;
+- hay secretos detectados;
+- hay cambios no relacionados mezclados;
+- hay conflicto de rebase;
+- hay branch divergente;
+- no se corrió validación mínima.
 
 ## Flujo Completo
 
@@ -78,8 +101,10 @@ git push origin master
 - ❌ Commits con archivos generados (.ex5, logs, data)
 - ❌ Un commit con 20 archivos no relacionados
 - ❌ Mensaje vago o en inglés (el proyecto es en español)
+- ❌ Pushear sin confirmación del humano (salvo AUTO_GIT_MODE=true)
 - ❌ Pushear sin hacer fetch + pull --rebase primero
 - ❌ Ignorar warnings de compilación
+- ❌ Auto push sin validación mínima
 
 ## Output Contract
 
