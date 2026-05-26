@@ -1,3 +1,7 @@
+> ⚠️ **DEPRECATED**: Use `git-safety-release` instead. This skill will be removed in a future update.
+> **Reason**: `git-safety-release` includes validation gates (compile, risk review) before commit+push.
+> **Migration**: Replace `alpha-commit-push` references with `git-safety-release` in agent specs and workflows.
+
 ---
 name: alpha-commit-push
 description: |

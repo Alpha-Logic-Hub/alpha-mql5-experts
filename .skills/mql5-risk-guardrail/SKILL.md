@@ -37,6 +37,20 @@ Usar esta skill en cualquier cambio que toque entradas, salidas, lotaje, SL/TP, 
 | Unidades ambiguas | Bloquear hasta aclarar |
 | Spread check ausente | Bloquear entrada |
 
+## Combined Pre-deploy Gate (post-risk-guardrail)
+
+Después de que risk-guardrail emite PASS, DEBE ejecutarse `execution-safety-review` como segunda etapa de la secuencia pre-deploy. La combinación es obligatoria: ambas skills deben emitir PASS para que el cambio sea deployable.
+
+| Skill | Orden | Qué verifica |
+|---|---|---|
+| mql5-risk-guardrail | 1º | SL/TP, lotaje, spread, drawdown, retcodes |
+| execution-safety-review | 2º | OrderSend, OnTick budget, emergency close, slippage |
+
+**Veredicto final**:
+- BLOCKED si cualquiera de las dos skills emite BLOCKER/BLOCKED
+- PROBATION si alguna emite WARNING
+- PASS solo si ambas emiten PASS
+
 ## Execution Steps
 
 1. Identificar todas las rutas que abren, cierran o modifican trades.
@@ -48,6 +62,8 @@ Usar esta skill en cualquier cambio que toque entradas, salidas, lotaje, SL/TP, 
 7. Buscar martingala, grid o multiplicadores.
 8. Revisar unidades points, _Point, precio y tick size.
 9. Emitir verdict: PASS, WARNING, o BLOCKED.
+10. **Si PASS**: activar gate `execution-safety-review` como segunda etapa pre-deploy.
+11. **Veredicto combinado**: BLOCKED si alguna falla, PASS solo si ambas PASS.
 
 ## Output Contract
 

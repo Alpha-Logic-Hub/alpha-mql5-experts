@@ -47,6 +47,35 @@ delivery:
   pr_strategy: ask-always
   execution_mode: interactive
 
+testing:
+  strict_tdd: false
+  reason: MQL5 has no unit test framework — no xUnit, no mocking, no assertion library. Compilation gates and visual backtesting are the only validation mechanisms.
+  compiler:
+    path: C:\Program Files\MetaTrader 5\metaeditor64.exe
+    command: metaeditor64 /compile /log /s
+    verified: true
+  backtest:
+    tool: MetaTrader 5 Strategy Tester
+    type: visual/system-level only
+  static_analysis:
+    pre_compile_audit: true
+    checks:
+      - No #pragma once
+      - lowercase color keyword
+      - PascalCase inputs prefix Inp
+      - RISK guardrail compliance
+  layers:
+    unit: false
+    integration: false
+    e2e: false
+  coverage: false
+  quality_tools:
+    linter: false
+    type_checker: false
+    formatter: false
+  test_command: ""
+  build_command: scripts/build.ps1 -EA "{ea_name}"
+
 artifacts:
   mode: openspec
   base_path: .sdd/

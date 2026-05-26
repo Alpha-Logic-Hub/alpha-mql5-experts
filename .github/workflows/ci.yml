@@ -3,10 +3,20 @@ name: Alpha MQL5 — CI Pipeline
 on:
   push:
     paths:
-      - 'alpha-mql5-experts/**'
+      - 'Expert/**'
+      - 'Shared/**'
+      - '.skills/**'
+      - '.sdd/**'
+      - '.atl/**'
+      - '.github/**'
   pull_request:
     paths:
-      - 'alpha-mql5-experts/**'
+      - 'Expert/**'
+      - 'Shared/**'
+      - '.skills/**'
+      - '.sdd/**'
+      - '.atl/**'
+      - '.github/**'
   workflow_dispatch:
 
 jobs:
@@ -19,14 +29,14 @@ jobs:
       - name: Check SDD structure
         run: |
           echo "=== Validating SDD structure ==="
-          test -f alpha-mql5-experts/.sdd/config.yaml && echo "✅ config.yaml" || echo "❌ config.yaml"
-          test -f alpha-mql5-experts/.sdd/sdd_master.md && echo "✅ sdd_master.md" || echo "❌ sdd_master.md"
-          test -f alpha-mql5-experts/.atl/skill-registry.md && echo "✅ skill-registry.md" || echo "❌ skill-registry.md"
+          test -f .sdd/config.yaml && echo "✅ config.yaml" || echo "❌ config.yaml"
+          test -f .sdd/sdd_master.md && echo "✅ sdd_master.md" || echo "❌ sdd_master.md"
+          test -f .atl/skill-registry.md && echo "✅ skill-registry.md" || echo "❌ skill-registry.md"
 
       - name: Validate skill count
         run: |
           echo "=== Skill Directory Audit ==="
-          skills=$(find alpha-mql5-experts/.skills -name "SKILL.md" | wc -l)
+          skills=$(find .skills -name "SKILL.md" | wc -l)
           echo "Skills registered: $skills"
           test $skills -ge 3 && echo "✅ Minimum 3 skills present" || echo "⚠️ Fewer than 3 skills"
 
@@ -39,7 +49,6 @@ jobs:
       - name: Check MQL5 conventions
         run: |
           echo "=== Naming Convention Audit ==="
-          cd alpha-mql5-experts
 
           echo "--- Check #pragma once (MQL5 INVALID) ---"
           ! grep -rn "#pragma once" Expert/ Shared/ && echo "✅ No #pragma once" || echo "❌ Found #pragma once"
@@ -53,7 +62,6 @@ jobs:
       - name: Verify risk guardrails
         run: |
           echo "=== SoulzBTC Compliance Audit ==="
-          cd alpha-mql5-experts
 
           echo "--- RISK-002: No hardcoded lots ---"
           ! grep -rn '0\.0[1-9]' Expert/ Shared/ | grep -v "input" | grep -v "InpFixedLot" && echo "✅" || echo "⚠️"
@@ -64,23 +72,6 @@ jobs:
           echo "--- ERR-001: ResultRetcode present ---"
           grep -rn "ResultRetcode" Expert/ Shared/ > /dev/null && echo "✅" || echo "❌"
 
-  backtest-link:
-    name: Strategy Lab Integration Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Verify backtest integration points
-        run: |
-          echo "=== Backtesting Integration Check ==="
-          test -d alpha-strategy-lab && echo "✅ Strategy Lab accessible" || echo "⚠️ Strategy Lab not in this checkout"
-
-          echo "=== EA Inventory for Backtesting ==="
-          find alpha-mql5-experts/Expert -name "*.mq5" | while read ea; do
-            name=$(basename "$ea" .mq5)
-            echo "  EA: $name => Backtest target"
-          done
-
   readme-sync:
     name: README Cross-Reference Check
     runs-on: ubuntu-latest
@@ -90,5 +81,5 @@ jobs:
       - name: Verify cross-repo links
         run: |
           echo "=== Cross-Repo Documentation Check ==="
-          test -f alpha-mql5-experts/README.md && echo "✅ README.md present" || echo "❌ Missing README.md"
+          test -f README.md && echo "✅ README.md present" || echo "❌ Missing README.md"
           test -f alpha-logic-hub-docs/README.md && echo "✅ Docs repo accessible" || echo "⚠️ Docs repo not accessible"

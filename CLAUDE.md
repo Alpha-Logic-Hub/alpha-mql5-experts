@@ -37,19 +37,15 @@ Alpha_Logic_Hub/
 4. **Include paths locales**: Todo `#include` dentro de un Expert usa paths relativos (`"Core\..."`).
 5. **Skills antes que código**: Si existe una skill para la tarea, cargarla antes de codificar.
 
-## Model Policy
-
-- **Spec / Design / Apply**: Gemini 1.5 Pro (razonamiento profundo)
-- **Explore / Verify / Archive**: Gemini 2.5 Flash (rápido, auditoría)
-
 ## Carga obligatoria al inicio de cada sesión
 
 Leer SIEMPRE estos archivos al comenzar una sesión antes de cualquier operación:
 
-1. `.sdd/ai-trading-plan.md` — Plan maestro: pipeline operativo, skills, subagentes, roadmap, principios no negociables
+1. `.sdd/plan-actualizado/README.md` — Plan maestro: pipeline operativo, skills, subagentes, roadmap, principios no negociables
 2. `.sdd/sdd_master.md` — Contratos de EA, skill, módulos Shared y flujo SDD
 3. `.sdd/specs/` — Especificaciones detalladas por componente
 4. `.atl/skill-registry.md` — Índice de skills disponibles. Antes de codificar, revisar si existe una skill para la tarea y cargarla.
+5. `.sdd/changes/` — Cambios activos del SDD: proposal, spec, design, tasks por implementar.
 
 ### Antes de cada tarea (automático)
 
@@ -59,11 +55,11 @@ Consultar `.atl/skill-registry.md`, cargar la skill que corresponda y ejecutar s
 
 Siempre que se haya modificado archivos en el repo:
 
-1. Cargar la skill `alpha-commit-push` automáticamente
-2. Ejecutar: `git fetch` → `git pull --rebase` → `git add` selectivo → `git commit` → `git push`
+1. Cargar la skill `git-safety-release` automáticamente
+2. Ejecutar su contrato: `git fetch` → `git pull --rebase` → `git add` selectivo → `git commit` → `git push`
 3. **No preguntar**. Solo frenar y avisar si hay: conflictos de rebase, secretos, o cambios no relacionados mezclados
 
-La skill `alpha-commit-push/SKILL.md` tiene los comandos exactos. No improvisar.
+La skill `git-safety-release/SKILL.md` tiene los comandos exactos y el playbook de seguridad. No improvisar.
 
 ## Handoff Chain
 

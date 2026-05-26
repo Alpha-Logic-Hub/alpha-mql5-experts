@@ -32,7 +32,9 @@ Get-ChildItem Expert -Directory | ForEach-Object { $_.Name }
 | EA | Archivo | Estrategia | Magic |
 |----|---------|------------|-------|
 | EA_MA_RSI_Trend | `Expert/EA_MA_RSI_Trend/EA_MA_RSI_Trend.mq5` | EMA 9 / SMA 21 + RSI 14 | 999001 |
-| EA_Grid_Scalper | `Expert/EA_Grid_Scalper/` | Grid (TBD) | TBD |
+| EA_MultiSignal_Composite | `Expert/EA_MultiSignal_Composite/EA_MultiSignal_Composite.mq5` | Multi-Signal Weighted Voting (MA + RSI + MACD) | 999002 |
+| EA_SMC_Scalper | `Expert/EA_SMC_Scalper/EA_SMC_Scalper.mq5` | SMC OB retest + Order Flow confirmation | 999003 |
+| SupplyDemandCVD_EA_Math_Elite | `Expert/EA_SupplyDemand/SupplyDemandCVD_EA_Math_Elite.mq5` | Support/Resistance + CVD Flow | 888123 |
 
 ### Arquitectura
 
@@ -62,7 +64,7 @@ EA_MA_RSI_Trend/
 
 - **validate-sdd**: Verifica estructura `.sdd/`, `.skills/`, `.atl/`
 - **lint-mql5**: Audita `#pragma once`, `Color`, paths absolutos, naming conventions
-- **backtest-link**: Verifica que EAs están accesibles para backtesting
+- **execution-safety**: Verifica OrderSend, retcodes y OnTick budget antes de deploy
 - **build-local**: `scripts/build.ps1` compila con MetaEditor64
 
 ### Desarrollo con IA
