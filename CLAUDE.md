@@ -42,6 +42,14 @@ Alpha_Logic_Hub/
 - **Spec / Design / Apply**: Gemini 1.5 Pro (razonamiento profundo)
 - **Explore / Verify / Archive**: Gemini 2.5 Flash (rápido, auditoría)
 
+## Carga obligatoria al inicio de cada sesión
+
+Leer SIEMPRE estos archivos al comenzar una sesión antes de cualquier operación:
+
+1. `.sdd/ai-trading-plan.md` — Plan maestro: pipeline operativo, skills, subagentes, roadmap, principios no negociables
+2. `.sdd/sdd_master.md` — Contratos de EA, skill, módulos Shared y flujo SDD
+3. `.sdd/specs/` — Especificaciones detalladas por componente
+
 ## Handoff Chain
 
 ```

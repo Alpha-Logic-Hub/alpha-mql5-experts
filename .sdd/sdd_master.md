@@ -56,7 +56,13 @@ Todo módulo en `Shared/` debe:
 
 ---
 
-## 5. Reglas de Seguridad
+## 5. Documentación relacionada
+
+- `.sdd/ai-trading-plan.md` — Plan maestro del sistema (visión, skills, subagentes, roadmap)
+
+---
+
+## 6. Reglas de Seguridad
 
 - **Nunca hardcodear credenciales** (API keys, tokens) en `.mqh`.
 - **Magic Numbers únicos** por EA para tracking de posiciones.
