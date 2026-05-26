@@ -1,0 +1,45 @@
+# Execution Review — EA_RSI_Reversal (Dry Run Test)
+# Agent: EXECUTION_REVIEWER
+# Date: 2026-05-26
+# Skill: execution-safety-review
+
+hypothesis_ref: ".sdd/specs/EA_RSI_Reversal/hypothesis.yaml"
+research_ref: ".sdd/specs/EA_RSI_Reversal/research-brief.yaml"
+
+## Pre-Implementation Checklist
+
+### 1. Signal Design
+- [x] Entry condition específica y reproducible: RSI(7) < 25 / > 75
+- [x] Exit condition con SL definido: 80 puntos
+- [x] TP definido: 160 puntos (RR 2.0)
+- [x] Filtro de sesión documentado: London + NY
+
+### 2. Risk Parameters
+- [x] risk_max_percent: 0.5% (dentro del 1.0% límite)
+- [x] SL obligatorio: 80 puntos
+- [x] Spread max: 25 pts (configurable)
+- [x] Cooldown: 3 barras entre trades
+
+### 3. Execution Concerns
+- [ ] OnTick budget: M5 timeframe → bajo riesgo de timeout, pero verificar
+- [ ] RSI(7) en M5 = cálculo frecuente → verificar que no exceda 50ms
+- [ ] Spread de 25 pts en M5 es agresivo — XAUUSD spread promedio 20-30 pts
+
+### 4. Look-Ahead Risk
+- [x] RSI se calcula sobre Close[1] (barra cerrada), no Close[0]
+- [x] No hay indicadores que usen datos futuros
+
+### 5. Overfit Risk
+- [!] RSI period = 7 (corto) + oversold = 25, overbought = 75
+- [!] 3 parámetros optimizables → riesgo medio de overfit
+- [!] Recomendación: validar con RSI period 5-9 range en walk-forward
+
+## Verdict
+
+verdict: PASS_CONDITIONAL
+conditions:
+  - "Validar RSI(7) no exceda 50ms en OnTick"
+  - "Walk-forward required: test RSI period 5-9 en IS/OOS"
+  - "Spread 25 pts es agresivo — considerar 30 pts como default"
+
+next_step: "BACKTEST_AUDITOR → ejecutar Test 1 (random baseline) primero"

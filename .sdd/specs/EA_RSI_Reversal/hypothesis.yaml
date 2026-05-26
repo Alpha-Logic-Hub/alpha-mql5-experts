@@ -1,0 +1,27 @@
+# Hypothesis — EA_RSI_Reversal (Dry Run Test)
+# Date: 2026-05-26
+# Agent: STRATEGIST
+
+hypothesis:
+  market: XAUUSD
+  timeframe: M5
+  entry_condition: "RSI(7) < 25 (oversold) → BUY | RSI(7) > 75 (overbought) → SELL"
+  exit_condition: "SL en 80 puntos, TP en 160 puntos (RR 2.0)"
+  risk_max_percent: 0.5
+  success_metric: "PF > 1.3, Sharpe > 0.8, trades >= 300"
+  invalidation: "PF < 1.1 después de 300 trades o DD > 12%"
+  min_trades: 300
+  min_period: "3 años"
+
+rationale: >
+  RSI en M5 con periodos cortos captura reversiones rápidas en rango.
+  El filtro de sesión (London/NY) reduce ruido en horas muertas.
+  RR 2.0 compensa por menor win rate esperado en scalping.
+
+filters:
+  session: "London (02:00-12:00) + NY (12:00-22:00)"
+  spread_max: 25  # 2.5 pips — más restrictivo que otros EAs
+  cooldown_bars: 3  # mínimo 3 barras entre trades
+
+decision: GO
+next_step: "RESEARCHER → diseñar prueba de falsación más barata"

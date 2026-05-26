@@ -1,0 +1,64 @@
+# Validation Report — EA_RSI_Reversal (Dry Run Test)
+# Date: 2026-05-26
+# Purpose: Validar flujo operativo completo con agentes nuevos
+
+cycle:
+  - phase: STRATEGIST
+    status: PASS
+    skill: strategy-hypothesis
+    artifact: ".sdd/specs/EA_RSI_Reversal/hypothesis.yaml"
+    next: "RESEARCHER"
+
+  - phase: RESEARCHER
+    status: PASS
+    skill: strategy-research
+    artifact: ".sdd/specs/EA_RSI_Reversal/research-brief.yaml"
+    tests_designed: 3
+    next: "EXECUTION_REVIEWER"
+
+  - phase: EXECUTION_REVIEWER
+    status: PASS_CONDITIONAL
+    skill: execution-safety-review
+    artifact: ".sdd/specs/EA_RSI_Reversal/execution-review.yaml"
+    conditions: 3 (OnTick budget, walk-forward RSI 5-9, spread default 30)
+    next: "BACKTEST_AUDITOR"
+
+  - phase: BACKTEST_AUDITOR
+    status: PROBATION
+    skill: backtest-validation + walk-forward-audit + trading-metrics-reporter
+    artifact: ".sdd/specs/EA_RSI_Reversal/backtest-audit.yaml"
+    blocking: false
+    next: "Ejecutar Test 1 en MT5 Strategy Tester"
+
+  - phase: RISK_GUARDIAN
+    status: PASS
+    skill: mql5-risk-guardrail
+    findings: "Risk params dentro de límites (0.5%, SL obligatorio, spread 25)"
+    next: "backtest-validation"
+
+  - phase: git-safety-release
+    status: PASS
+    skill: git-safety-release
+    commit: "pendiente (dry run, sin código MQL5 generado)"
+
+resumen:
+  skills_utilizadas:
+    - strategy-hypothesis
+    - strategy-research
+    - execution-safety-review
+    - backtest-validation
+    - walk-forward-audit
+    - trading-metrics-reporter
+    - mql5-risk-guardrail
+    - git-safety-release
+  agentes_probados:
+    - STRATEGIST ✅
+    - RESEARCHER ✅
+    - EXECUTION_REVIEWER ✅
+    - BACKTEST_AUDITOR ✅
+    - RISK_GUARDIAN ✅
+    - GIT_GUARDIAN ✅
+  ciclo_tecnico_completo: true
+  ciclo_trading_completo: false
+  pendiente: "backtest en MT5 → review → paper validation"
+  leccion: "El flujo operativo funciona correctamente. Los agentes interactúan sin conflictos. Los artefactos se generan en el orden correcto."

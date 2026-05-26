@@ -1,0 +1,46 @@
+# Research Brief — EA_RSI_Reversal (Dry Run Test)
+# Agent: RESEARCHER
+# Date: 2026-05-26
+# Skill: strategy-research
+
+hypothesis_ref: ".sdd/specs/EA_RSI_Reversal/hypothesis.yaml"
+
+## Claim
+"RSI(7) en M5 con filtro de sesión genera edge direccional en XAUUSD"
+
+## Fastest Disproof Test
+
+### Test 1: Random Entry Baseline (ghost_test)
+- Reemplazar señal RSI con random.choice(BUY/SELL)
+- Mantener filtros de sesión, spread, cooldown, SL/TP
+- Ejecutar en 1 año de datos (2024)
+- Si PF_random >= PF_RSI → la señal no agrega valor
+
+### Test 2: RSI Period Shuffle
+- Mantener RSI(7) pero shufflear los valores temporalmente
+- Romper correlación temporal, mantener distribución
+- Si performance no cambia → RSI no es predictivo, es ruido
+
+### Test 3: Spread Hostil
+- Ejecutar con spread = 50 pts (5.0 pips) en lugar de 25
+- Si PF cae < 1.0 → el edge es marginal, no sobrevive costos reales
+
+## Data Slice
+- Período: 2024 (1 año, suficiente para disproof)
+- Timeframe: M5
+- Symbol: XAUUSD
+- Model: Every tick based on real ticks
+
+## Pass/Fail Thresholds
+| Métrica | PASS | FAIL |
+|---------|------|------|
+| PF vs random | PF_RSI > PF_random + 0.2 | PF_RSI <= PF_random |
+| WFE | >= 0.55 | < 0.45 |
+| Sharpe | > 0.5 | < 0.3 |
+| Trades | >= 100 (en 1 año) | < 50 |
+
+## Verdict
+decision: NEEDS_BACKTEST
+next_step: "Ejecutar Test 1 en MT5 Strategy Tester → si PASS → Test 2 → si PASS → MQL5_ENGINEER"
+confidence: "Media — RSI corto en M5 es ruidoso, pero el filtro de sesión puede ayudar"
+risk: "Alto de overfit si se optimiza RSI period en el mismo dataset"

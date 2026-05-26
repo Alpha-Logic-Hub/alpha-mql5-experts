@@ -1,0 +1,55 @@
+# Backtest Audit — EA_RSI_Reversal (Dry Run Test)
+# Agent: BACKTEST_AUDITOR
+# Date: 2026-05-26
+# Skills: backtest-validation, walk-forward-audit, trading-metrics-reporter
+
+hypothesis_ref: ".sdd/specs/EA_RSI_Reversal/hypothesis.yaml"
+research_ref: ".sdd/specs/EA_RSI_Reversal/research-brief.yaml"
+execution_ref: ".sdd/specs/EA_RSI_Reversal/execution-review.yaml"
+
+## Audit Status
+
+backtest_status: NOT_EXECUTED
+reason: "Dry run test — infraestructura validada, backtest pendiente de ejecución en MT5"
+
+## Pre-Audit Checklist
+
+- [x] Hypothesis exists and is falsable
+- [x] Research brief with 3 disproof tests designed
+- [x] Execution review PASS_CONDITIONAL with 3 conditions
+- [x] Backtest config ready (reports/backtests/)
+- [x] Risk audit template ready
+- [ ] Backtest results — PENDING (requires MT5 Strategy Tester)
+
+## Walk-Forward Plan (when backtest is ready)
+
+| Phase | Period | Purpose |
+|-------|--------|---------|
+| IS-1 | 2024.01-2024.06 | Train baseline |
+| OOS-1 | 2024.07-2024.12 | Validate IS-1 |
+| IS-2 | 2024.07-2025.06 | Retrain |
+| OOS-2 | 2025.07-2025.12 | Validate IS-2 |
+| IS-3 | 2025.01-2025.12 | Full retrain |
+| OOS-3 | 2026.01-2026.03 | Final validation |
+
+## Metrics to Validate (when backtest is ready)
+
+| Metric | Threshold | Source |
+|--------|-----------|--------|
+| Profit Factor | > 1.3 | Hypothesis |
+| Sharpe Ratio | > 0.8 | Hypothesis |
+| WFE | >= 0.55 | Research brief |
+| Trades | >= 100 (1yr) | Research brief |
+| OOS DD | within 50% of IS DD | Walk-forward gate |
+
+## Verdict
+
+verdict: PROBATION
+reason: "Infraestructura completa y validada. Backtest pendiente de ejecución."
+conditions:
+  - "Ejecutar Test 1 (random baseline) en MT5"
+  - "Si PF_RSI > PF_random + 0.2 → PASS → continuar con Test 2"
+  - "Si PF_RSI <= PF_random → FAIL → descartar hipótesis"
+  - "Si Test 1 y 2 PASS → ejecutar backtest completo 2024-2026"
+
+next_step: "Abrir MT5 Strategy Tester → cargar EA_RSI_Reversal → ejecutar Test 1 → guardar reporte en reports/backtests/"
