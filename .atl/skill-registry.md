@@ -8,6 +8,9 @@
 | mql5-risk-guardrail | .skills/mql5-risk-guardrail/ | risk, lote, shield, SoulzBTC, guardrail | ✅ Active |
 | trader-memory-loop | .skills/trader-memory-loop/ | postmortem, sesion, diario, journal | ✅ Active |
 | alpha-commit-push | .skills/alpha-commit-push/ | commit, push, subir, guardar, github, deploy | ✅ Active |
+| strategy-hypothesis | .skills/strategy-hypothesis/ | hipótesis, idea nueva, setup, invalidación, STRATEGIST | ✅ Active |
+| backtest-validation | .skills/backtest-validation/ | backtest, validación, reporte, WFE, overfit, BACKTEST_AUDITOR | ✅ Active |
+| git-safety-release | .skills/git-safety-release/ | commit, push, release, deploy, secretos, GIT_GUARDIAN | ✅ Active |
 
 ## Active EAs
 
