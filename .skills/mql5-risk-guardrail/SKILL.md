@@ -35,7 +35,28 @@ Usar esta skill en cualquier cambio que toque entradas, salidas, lotaje, SL/TP, 
 | Grid no autorizado | Bloquear cambio |
 | Retcode no auditado | Bloquear cambio |
 | Unidades ambiguas | Bloquear hasta aclarar |
-| Spread check ausente | Bloquear entrada |
+| **Spread check ausente (EA con ejecución)** | **BLOCKED — no commitear** |
+| Spread check ausente (research-only, sin ejecución) | WARNING — documentar |
+
+## Severity Context
+
+La severidad de ERR-002 (spread check) depende del contexto:
+
+| Contexto | Spread check ausente | Razón |
+|---|---|---|
+| EA que abre trades (real/paper) | **BLOCKED** | Spread alto destruye scalping y backtests. No es cosmético. |
+| Research-only, sin OrderSend | WARNING | Se puede avanzar pero debe documentarse como deuda técnica. |
+
+## Ciclo de Validación — Qué es "completo"
+
+No confundir MVP técnico con validación trading:
+
+| Fase | Qué incluye | ¿"Completo"? |
+|---|---|---|
+| **MVP técnico** | hipótesis → código → compila → risk audit → commit | ✅ Ciclo técnico cerrado |
+| **Validación trading** | MVP técnico + **backtest real** + reporte + review → commit final | ❌ Sin backtest NO está completo |
+
+Un commit después del MVP técnico debe etiquetarse como `docs/setup` o `feat/scaffolding`. Nunca como "validación completa" hasta que el backtest se corrió y pasó los gates.
 
 ## Combined Pre-deploy Gate (post-risk-guardrail)
 

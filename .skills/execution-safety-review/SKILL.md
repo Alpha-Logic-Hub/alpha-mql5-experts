@@ -28,6 +28,7 @@ Risk base: `.skills/mql5-risk-guardrail/SKILL.md`
 ### 3. Spread & Slippage Gates
 - [ ] Spread check before every entry: max spread per symbol configured
 - [ ] Slippage parameter set and verified against symbol's `SYMBOL_TRADE_STOPS_LEVEL`
+- [ ] **Si el EA abre trades y falta spread check → BLOCKER** (no WARNING). Spread alto destruye scalping y backtests.
 
 ### 4. Emergency Close
 - [ ] 4:55 PM ET emergency close path exists

@@ -44,6 +44,16 @@ Antes de cualquier `git commit`, ejecutar esta checklist:
 - [ ] Tipos válidos: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `style:`
 - [ ] No mensajes vagos ("update", "fix", "changes", "wip")
 - [ ] Descripción breve pero informativa
+- [ ] **Etiquetar alcance real del commit**:
+
+| Estado de validación | Prefijo de commit | Ejemplo |
+|---|---|---|
+| MVP técnico (sin backtest) | `docs/setup:` o `feat/scaffolding:` | `feat/scaffolding: EA_MA_RSI_Trend estructura base` |
+| Con backtest aprobado | `feat:` o `fix:` | `feat: EA_MA_RSI_Trend validado con backtest WFE=0.72` |
+| Solo refactor sin cambio funcional | `refactor:` | `refactor: extraer RiskGuardrail a módulo compartido` |
+| Corrección de bug | `fix:` | `fix: spread check ausente en EA_SMC_Scalper` |
+
+**Prohibido**: etiquetar como "validación completa" o "listo para producción" si no se corrió backtest real con reporte.
 
 ## Gate Pre-Push
 
