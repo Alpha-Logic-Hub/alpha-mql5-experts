@@ -1,0 +1,80 @@
+# Hipótesis: MA Crossover + RSI Momentum Filter
+# Generada por: STRATEGIST
+# Fecha: 2026-05-25
+# Estado: GO
+
+hypothesis:
+  id: "EA_MA_RSI_Trend-v1"
+  market: XAUUSD
+  timeframe: H1
+
+  entry_condition:
+    long: >
+      EMA 9 cruza ARRIBA de SMA 21 (crossover bullish)
+      Y RSI 14 está entre 50 (midHigh) y 70 (overbought)
+    short: >
+      EMA 9 cruza DEBAJO de SMA 21 (crossunder bearish)
+      Y RSI 14 está entre 30 (oversold) y 50 (midLow)
+
+  exit_condition:
+    stop_loss: >
+      Distancia mínima calculada por GetMinStopDistance().
+      Por defecto 150 puntos en XAUUSD.
+    take_profit: >
+      SL * InpRR (Risk/Reward ratio = 2.0 por defecto)
+    close_on_opposite: >
+      Si llega señal contraria y InpCloseOnOpposite=true,
+      cierra posición actual y abre en la nueva dirección.
+
+  risk_max_percent: 0.15
+  max_lot: 0.05
+  daily_shield: 4.0%
+
+  success_metric:
+    profit_factor: ">= 1.5"
+    sharpe_ratio: ">= 1.0"
+    sqn: ">= 2.0"
+    max_drawdown: "< 15%"
+
+  invalidation:
+    - "Profit Factor < 1.2 después de 200 trades"
+    - "Max Drawdown > 15% en cualquier momento"
+    - "Sharpe Ratio < 0.5 después de 300 trades"
+    - "Menos de 40 trades/año (poca oportunidad)"
+
+  min_trades: 200
+  min_period: "2 años"
+
+gate_checklist:
+  - [x] Mercado y timeframe definidos
+  - [x] Entry condition específica y reproducible
+  - [x] Exit condition incluye SL y TP
+  - [x] Riesgo máximo por trade <= 1%
+  - [x] Métrica de éxito con números concretos
+  - [x] Invalidación escrita (4 condiciones)
+  - [x] Mínimo de trades y período definidos
+
+# ============================================================
+# Análisis de edge (STRATEGIST)
+# ============================================================
+edge_analysis:
+  source: |
+    El edge propuesto combina dos factores ortogonales:
+    1. Trend following vía MA crossover (EMA 9 / SMA 21)
+    2. Momentum filter vía RSI 14 (evita comprar sobrecomprado
+       y vender sobrevendido)
+  risk: |
+    Mercados laterales (rango) generan señales falsas de
+    crossover. El filtro RSI reduce las falsas pero no las
+    elimina. Riesgo controlado por daily shield al 4%.
+  regime_filter: |
+    Sin filtro de régimen explícito. En tendencias fuertes
+    funciona bien; en rangos puede dar muchas señales falsas.
+
+decision: GO
+hypothesis_file: ".sdd/specs/EA_MA_RSI_Trend/hypothesis.yaml"
+risks:
+  - "Mercados laterales generan señales falsas de crossover"
+  - "Sin filtro de régimen (range vs trend)"
+  - "Depende de que el spread sea bajo para XAUUSD"
+next_step: "implement"

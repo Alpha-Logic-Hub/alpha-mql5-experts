@@ -1,0 +1,27 @@
+# Risk Audit — EA_MA_RSI_Trend
+# Audited by: RISK_GUARDIAN
+# Date: 2026-05-25
+
+decision: PASS
+findings:
+  - severity: WARNING
+    rule: ERR-002
+    detail: >
+      No hay input de spread máximo ni verificación pre-OrderSend.
+      En XAUUSD el spread puede dispararse hasta 50+ puntos en eventos
+      noticiosos (NFP, FOMC, noticias geopolíticas). Sin este control,
+      el EA podría abrir trades con spreads que devoran el SL.
+    file: "Expert/EA_MA_RSI_Trend/EA_MA_RSI_Trend.mq5"
+    suggested_fix: >
+      Agregar input InpMaxSpread (ej: 50 puntos para XAUUSD) y
+      verificar en OnTick antes de abrir trade. Si spread > máximo,
+      skip del trade con log.
+
+  - severity: INFO
+    rule: RISK-002
+    detail: >
+      CalculateLotSize() y OpenTrade() están en Shared/Execution/
+      y Shared/Risk/ — no se auditaron internamente. Asumir que
+      siguen RiskGuardrail.mqh estándar.
+
+next_step: "fix_spread_check → reauditar → approve"

@@ -1,0 +1,33 @@
+# Validation Report — EA_MA_RSI_Trend Cycle
+# Date: 2026-05-25
+
+cycle:
+  - phase: STRATEGIST
+    status: PASS
+    artifact: ".sdd/specs/EA_MA_RSI_Trend/hypothesis.yaml"
+    details: "Hipótesis completa con entry/exit, métrica, invalidación"
+
+  - phase: MQL5_ENGINEER
+    status: PASS
+    compile: "0 errors, 0 warnings"
+    checklist: "9/9 enterprise-coder checks pass"
+    details: "Código modular, includes relativos, handles liberados"
+
+  - phase: RISK_GUARDIAN
+    status: PASS (1 WARNING)
+    artifact: ".sdd/specs/EA_MA_RSI_Trend/risk-audit.yaml"
+    findings:
+      - severity: WARNING
+        rule: ERR-002
+        detail: "Sin control de spread máximo pre-OrderSend"
+    decision: "PASS - seguir con backtest"
+
+  - phase: backtest-validation
+    status: NOT_READY
+    artifact: ".sdd/specs/EA_MA_RSI_Trend/backtest-config.yaml"
+    details: "EA compilado y listo. Falta ejecutar backtest en MT5 y validar resultados contra hipótesis."
+    blocking: false
+    next: "Ejecutar backtest MT5 → validar con backtest-validation skill"
+
+  - phase: git-safety-release
+    status: PENDING

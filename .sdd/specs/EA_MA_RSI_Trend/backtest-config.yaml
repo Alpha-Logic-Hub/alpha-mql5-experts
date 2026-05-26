@@ -1,0 +1,57 @@
+# Backtest Configuration — EA_MA_RSI_Trend
+# Para ejecutar en MetaTrader 5 Strategy Tester
+# Creado: 2026-05-25
+
+backtest_config:
+  symbol: XAUUSD
+  timeframe: H1
+  period_start: "2023-01-01"    # 2+ años mínimo
+  period_end: "2025-01-01"
+  spread: 20                     # Spread realista para XAUUSD (puntos)
+  commission: 0.0                # Comisión por lote (USD)
+  slippage: 10                   # Slippage simulado (puntos)
+  deposit: 10000                 # Depósito inicial USD
+  leverage: 1:100                # Apalancamiento
+  optimization: false            # Primera pasada: single run
+  mode: "every tick"             # Precisión máxima
+
+parameters:
+  InpRiskPercent: 0.15
+  InpMaxLot: 0.05
+  InpMagicNumber: 999001
+  InpStopLoss: 150
+  InpRR: 2.0
+  InpRiskProfile: 1
+  InpFixedLot: 0.0
+  InpUseShield: true
+  InpShieldPercent: 4.0
+  InpFastMAPeriod: 9
+  InpSlowMAPeriod: 21
+  InpRSIPeriod: 14
+  InpRSIOverbought: 70.0
+  InpRSIOversold: 30.0
+  InpRSIMidHigh: 50.0
+  InpRSIMidLow: 50.0
+  InpCloseOnOpposite: true
+  InpShowHUD: true
+
+# Métricas objetivo (de la hipótesis)
+target_metrics:
+  profit_factor: ">= 1.5"
+  sharpe_ratio: ">= 1.0"
+  sqn: ">= 2.0"
+  max_drawdown: "< 15%"
+  min_trades: 200
+
+# Cómo ejecutar
+instructions: |
+  1. Abrir MetaTrader 5
+  2. Strategy Tester (Ctrl+R)
+  3. Seleccionar: EA_MA_RSI_Trend.ex5
+  4. Símbolo: XAUUSD, Timeframe: H1
+  5. Periodo: 2023.01.01 - 2025.01.01
+  6. Modo: Every tick
+  7. Depósito: 10000
+  8. Cargar parámetros de este archivo
+  9. Ejecutar
+  10. Exportar reporte y validar con backtest-validation skill
