@@ -538,6 +538,11 @@
 </orchestration_protocol>
 
 <router>
+  <!-- Alpha Logic Hub — MQL5 Agents -->
+  <route intent="Idea/Hypothesis/MQL5 Strategy" agent="STRATEGIST" trigger="STRATEGIST|hipótesis|nueva estrategia|setup MQL5" spec=".factory/droids/strategist-mql5.md"/>
+  <route intent="MQL5 Implementation" agent="MQL5_ENGINEER" trigger="MQL5_ENGINEER|implementar EA|codificar MQL5" spec=".factory/droids/mql5-engineer.md"/>
+  <route intent="Risk Audit/Compliance" agent="RISK_GUARDIAN" trigger="RISK_GUARDIAN|auditar riesgo|risk audit|SoulzBTC" spec=".factory/droids/risk-guardian-mql5.md"/>
+
   <!-- Strategy & Design -->
   <route intent="Setup/SMC/Strategy" agent="CRUCIBLE" trigger="Crucible|/setup|strategy design" spec=".claude/agents/crucible-gold-strategist.md"/>
   <route intent="NautilusTrader Architecture" agent="NAUTILUS" trigger="Nautilus|architecture|Strategy|Actor|BacktestNode" spec=".claude/agents/nautilus-trader-architect.md"/>
