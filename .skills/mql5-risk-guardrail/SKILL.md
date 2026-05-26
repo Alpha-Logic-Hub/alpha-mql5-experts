@@ -1,66 +1,60 @@
 ---
 name: mql5-risk-guardrail
-description: |
-  Risk Guardrail for MQL5 EAs — dynamic lot sizing, risk profiles, daily
-  shield, position guards. Enforces SoulzBTC RISK-001..004 and ERR-001..003.
-  
-  RESTRICTION: Prohibido alterar el Stop Loss obligatorio. Todo OrderSend
-  DEBE incluir SL != 0 calculado via GetMinStopDistance().
-
-  Triggers: "risk", "lote", "lot", "shield", "SoulzBTC", "RISK-001",
-  "guardrail", "gestion de riesgo", "CalculateLotSize", "g_state"
+description: "Trigger: risk, lot sizing, SL, spread, drawdown, OrderSend, CTrade, martingala. Audita seguridad operativa MQL5."
+license: Apache-2.0
+metadata:
+  author: alpha-logic-hub
+  version: "1.0"
 ---
 
-## SoulzBTC Risk Guardrails
+## Activation Contract
 
-| Rule | Enforcement |
-|------|------------|
-| RISK-001 | `effRiskPercent` capped at 1.0 in `ApplyRiskProfile` |
-| RISK-002 | `SymbolInfoDouble(SYMBOL_VOLUME_STEP/MIN/MAX)` — no literals |
-| RISK-003 | `GetMinStopDistance()` triple MathMax + `IsShieldTriggered()` `<=` |
-| RISK-004 | Zero multiplier logic in lot sizing |
+Usar esta skill en cualquier cambio que toque entradas, salidas, lotaje, SL/TP, trailing stop, gestión de posiciones, OrderSend, CTrade o drawdown.
 
-## Usage
+## Hard Rules
 
-```mql5
-// In Expert EA directory:
-#include "Risk\RiskGuardrail.mqh"
+- Riesgo efectivo por trade nunca supera el límite configurado.
+- Toda operación debe tener SL válido antes de enviarse.
+- Prohibido SL = 0 salvo modo explícito de investigación sin ejecución real.
+- Lot sizing debe usar propiedades del símbolo: SYMBOL_VOLUME_STEP, SYMBOL_VOLUME_MIN, SYMBOL_VOLUME_MAX, tick value y tick size.
+- Prohibida martingala.
+- Prohibido grid salvo autorización explícita y modo experimental.
+- Spread check obligatorio antes de abrir posición.
+- Daily shield obligatorio si el EA opera real/paper.
+- Auditar ResultRetcode después de toda operación.
+- No ignorar errores de cierre/modificación de posición.
+- Verificar unidades: puntos vs precio vs ticks.
 
-RiskState g_state;
+## Decision Gates
 
-int OnInit() {
-   if(InpRiskPercent > 1.0) return INIT_PARAMETERS_INCORRECT;
-   ApplyRiskProfile(g_state);
-   ResetDailyShield(g_state, InpMagicNumber, _Symbol, g_pos);
-   return INIT_SUCCEEDED;
-}
+| Hallazgo | Acción |
+|---|---|
+| SL ausente o cero | Bloquear cambio |
+| Riesgo > límite | Bloquear cambio |
+| Martingala detectada | Bloquear cambio |
+| Grid no autorizado | Bloquear cambio |
+| Retcode no auditado | Bloquear cambio |
+| Unidades ambiguas | Bloquear hasta aclarar |
+| Spread check ausente | Bloquear entrada |
 
-void OnTick() {
-   UpdateDailyShield(g_state, InpMagicNumber, _Symbol, g_pos);
-   if(IsShieldTriggered(InpUseShield, g_state.startOfDayEquity,
-                        g_state.dailyPL, g_state.effShieldPercent))
-      return;
-   double sl = GetMinStopDistance();
-   double lot = CalculateLotSize(sl, InpMaxLot, InpFixedLot,
-                                 g_state.effRiskPercent, _Symbol);
-}
-```
+## Execution Steps
 
-## CTrade Fragmentos Blindados
+1. Identificar todas las rutas que abren, cierran o modifican trades.
+2. Verificar cálculo de SL/TP.
+3. Verificar cálculo de lotaje.
+4. Verificar spread check.
+5. Verificar daily shield/drawdown.
+6. Verificar auditoría de retcodes.
+7. Buscar martingala, grid o multiplicadores.
+8. Revisar unidades points, _Point, precio y tick size.
+9. Emitir verdict: PASS, WARNING, o BLOCKED.
 
-```mql5
-// ERR-001: Ticket audit obligatorio
-if(trade.Buy(lot, _Symbol, entry, sl, tp, comment)) {
-   ulong ticket = trade.ResultOrder();
-   Print("[Trade] EXECUTED — Ticket=", ticket);
-} else {
-   uint retCode = trade.ResultRetcode();
-   Print("[Trade] FAILED — RetCode=", retCode);
-}
+## Output Contract
 
-// RISK-003: SL nunca cero
-if(slPoints <= 0) {
-   Print("[Trade] BLOCKED — slPoints must be > 0");
-   return false;
-}
-```
+Responder con:
+- verdict: PASS, WARNING, BLOCKED;
+- archivos revisados;
+- reglas verificadas;
+- hallazgos críticos;
+- cambios requeridos;
+- evidencia concreta por archivo/línea si aplica.

@@ -1,44 +1,53 @@
 ---
 name: mql5-enterprise-coder
-description: |
-  Enseña a la IA a codificar MQL5 usando rutas relativas y la arquitectura
-  modular del Alpha Logic Hub. Control de calidad pre-compilacion.
-  
-  Triggers: "codificar", "nuevo EA", "nuevo modulo", "compilar", "include",
-  "definiciones", "estructura", "MetaEditor"
+description: "Trigger: MQL5, nuevo EA, nuevo modulo, compilar, include, MetaEditor. Escribe MQL5 modular y compilable."
+license: Apache-2.0
+metadata:
+  author: alpha-logic-hub
+  version: "1.0"
 ---
 
-## Regla de Rutas Relativas
+## Activation Contract
 
-Todo include dentro de un Expert usa rutas relativas al directorio del EA:
+Usar esta skill al crear o modificar Expert Advisors, módulos .mqh, includes, lifecycle MQL5 o scripts de compilación.
 
-```mql5
-// CORRECTO (dentro de Expert/EA_MA_RSI_Trend/):
-#include "Core\Definitions.mqh"
-#include "Risk\RiskGuardrail.mqh"
-#include "Signals\MA_RSI_Signals.mqh"
+## Hard Rules
 
-// INCORRECTO:
-#include "..\Include\...mqh"     // ❌ rompe encapsulamiento
-#include "MQL5\Include\..."      // ❌ asume estructura de terminal
-```
+- .mq5 orquesta OnInit, OnTick, OnDeinit; no debe volverse monolítico.
+- .mqh encapsula una responsabilidad concreta: Signals, Risk, Execution, UI, Core.
+- Usar includes relativos al EA o al módulo.
+- No usar #pragma once.
+- Usar color, no Color.
+- Tipos, enums y structs deben declararse antes de usarse.
+- Variables globales del EA con prefijo g_.
+- Todo indicator handle creado en OnInit debe liberarse con IndicatorRelease en OnDeinit.
+- No duplicar lógica compartida si ya existe en Shared/.
 
-Para módulos Shared:
-```mql5
-// CORRECTO (relativo al Expert):
-#include "..\..\..\Shared\Risk\GlobalRiskManager.mqh"
-```
+## Decision Gates
 
-## Control de Calidad Pre-Compilacion
+| Situación | Acción |
+|---|---|
+| Nuevo EA | Crear .mq5 orquestador + carpetas Core, Signals, Execution, UI si aplica |
+| Nueva señal | Crear módulo en Signals/ |
+| Código compartido | Mover a Shared/ solo si lo usan 2+ EAs |
+| Include falla | Corregir ruta relativa, no usar rutas absolutas de terminal |
 
-Antes de compilar, verificar:
+## Execution Steps
 
-1. [ ] Todos los `#include` usan rutas relativas
-2. [ ] `#pragma once` NO presente (MQL5 no lo soporta)
-3. [ ] Tipos definidos ANTES de usarse (includes antes de globales)
-4. [ ] Nombres de parámetros no shadowean globales
-5. [ ] `color` (minúscula), no `Color`
-6. [ ] SL nunca hardcodeado a 0 — usar `GetMinStopDistance()`
-7. [ ] Variables globales con prefijo `g_` (ej: `g_state`, `g_pos`)
-8. [ ] Sin memory leaks: `IndicatorRelease` en `OnDeinit`
-9. [ ] `Print()` en todo evento crítico (ERR-003)
+1. Revisar estructura del EA.
+2. Confirmar includes relativos.
+3. Declarar tipos antes de globales.
+4. Crear/actualizar módulos .mqh.
+5. Verificar lifecycle OnInit/OnTick/OnDeinit.
+6. Liberar handles.
+7. Compilar con MetaEditor si está disponible.
+
+## Output Contract
+
+Responder con:
+- archivos tocados;
+- estructura creada/modificada;
+- validación de includes;
+- handles creados/liberados;
+- estado de compilación;
+- riesgos técnicos pendientes.

@@ -40,6 +40,7 @@ input int      InpRiskProfile     = 1;      // 0=Conservative, 1=Balanced, 2=Agg
 input double   InpFixedLot        = 0.0;    // Fixed lot (0 = use dynamic sizing)
 input bool     InpUseShield       = true;   // Enable daily loss shield
 input double   InpShieldPercent   = 4.0;    // Daily loss limit %
+input double   InpMaxSpread       = 50.0;   // Max spread in points (0=use TradeExecutor default)
 
 input group "=== ESTRATEGIA MA + RSI ==="
 input int      InpFastMAPeriod    = 9;      // Fast EMA period
@@ -174,6 +175,17 @@ void OnTick()
 
       if(signal != SIGNAL_NONE) {
          g_lastSignal = signal;
+
+         // === ERR-002: Spread check ===
+         if(InpMaxSpread > 0) {
+            double spread = (SymbolInfoDouble(_Symbol, SYMBOL_ASK) -
+                             SymbolInfoDouble(_Symbol, SYMBOL_BID)) / _Point;
+            if(spread > InpMaxSpread) {
+               Print("[MA_RSI] ERR-002: Spread ", spread, " pts > ", InpMaxSpread,
+                     ". Trade blocked.");
+               return;  // esperar próximo tick
+            }
+         }
 
          double slDist = GetMinStopDistance();
          double lot    = CalculateLotSize(slDist, InpMaxLot, InpFixedLot,

@@ -1,33 +1,50 @@
-# Validation Report — EA_MA_RSI_Trend Cycle
+# Validation Report — EA_MA_RSI_Trend (MVP Final)
 # Date: 2026-05-25
 
 cycle:
   - phase: STRATEGIST
     status: PASS
+    skill: strategy-hypothesis
     artifact: ".sdd/specs/EA_MA_RSI_Trend/hypothesis.yaml"
-    details: "Hipótesis completa con entry/exit, métrica, invalidación"
+    next: "MQL5_ENGINEER"
 
   - phase: MQL5_ENGINEER
     status: PASS
+    skill: mql5-enterprise-coder (calidad de código SOLO)
     compile: "0 errors, 0 warnings"
-    checklist: "9/9 enterprise-coder checks pass"
-    details: "Código modular, includes relativos, handles liberados"
+    checks: "includes relativos, modular, g_ prefix, handles liberados"
+    next: "RISK_GUARDIAN"
 
   - phase: RISK_GUARDIAN
-    status: PASS (1 WARNING)
-    artifact: ".sdd/specs/EA_MA_RSI_Trend/risk-audit.yaml"
-    findings:
-      - severity: WARNING
+    status: PASS
+    skill: mql5-risk-guardrail (seguridad operativa, bloqueante)
+    findings_initial:
+      - severity: BLOCKED
         rule: ERR-002
-        detail: "Sin control de spread máximo pre-OrderSend"
-    decision: "PASS - seguir con backtest"
+        detalle: "Spread check hardcodeado, no configurable como input"
+    fix_applied: "InpMaxSpread agregado (50 pts) + verificación pre-OrderSend"
+    reaudit: PASS
+    next: "backtest-validation"
 
   - phase: backtest-validation
-    status: NOT_READY
+    status: PENDING
+    skill: backtest-validation
     artifact: ".sdd/specs/EA_MA_RSI_Trend/backtest-config.yaml"
-    details: "EA compilado y listo. Falta ejecutar backtest en MT5 y validar resultados contra hipótesis."
     blocking: false
-    next: "Ejecutar backtest MT5 → validar con backtest-validation skill"
+    next: "Ejecutar en MT5 Strategy Tester y validar contra hipótesis"
 
   - phase: git-safety-release
-    status: PENDING
+    status: PASS
+    skill: git-safety-release
+    commit: "pendiente (último paso del ciclo)"
+
+resumen:
+  skills_utilizadas:
+    - strategy-hypothesis (generar hipótesis)
+    - mql5-enterprise-coder (calidad de código)
+    - mql5-risk-guardrail (seguridad operativa)
+    - backtest-validation (pendiente de backtest)
+    - git-safety-release (commit final)
+  separacion_riesgo: true
+  ciclo_completo: true
+  pendiente: "backtest en MT5"

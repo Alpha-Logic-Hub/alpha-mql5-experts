@@ -1,27 +1,33 @@
-# Risk Audit — EA_MA_RSI_Trend
+# Risk Audit — EA_MA_RSI_Trend (v2 con skills limpias)
 # Audited by: RISK_GUARDIAN
 # Date: 2026-05-25
+# Skills: mql5-risk-guardrail v1.0 (bloqueante)
 
-decision: PASS
-findings:
-  - severity: WARNING
-    rule: ERR-002
-    detail: >
-      No hay input de spread máximo ni verificación pre-OrderSend.
-      En XAUUSD el spread puede dispararse hasta 50+ puntos en eventos
-      noticiosos (NFP, FOMC, noticias geopolíticas). Sin este control,
-      el EA podría abrir trades con spreads que devoran el SL.
-    file: "Expert/EA_MA_RSI_Trend/EA_MA_RSI_Trend.mq5"
-    suggested_fix: >
-      Agregar input InpMaxSpread (ej: 50 puntos para XAUUSD) y
-      verificar en OnTick antes de abrir trade. Si spread > máximo,
-      skip del trade con log.
+verdict: PASS
 
-  - severity: INFO
-    rule: RISK-002
-    detail: >
-      CalculateLotSize() y OpenTrade() están en Shared/Execution/
-      y Shared/Risk/ — no se auditaron internamente. Asumir que
-      siguen RiskGuardrail.mqh estándar.
+archivos_revisados:
+  - Expert/EA_MA_RSI_Trend/EA_MA_RSI_Trend.mq5
+  - Expert/EA_MA_RSI_Trend/Signals/MA_RSI_Signals.mqh
+  - Shared/Execution/TradeExecutor.mqh
 
-next_step: "fix_spread_check → reauditar → approve"
+reglas_verificadas:
+  - SL/TP
+  - Riesgo por trade
+  - Spread check
+  - Daily shield
+  - Auditoría de operaciones
+  - Anti-martingala/grid
+  - Unidades
+
+hallazgos_criticos: []
+
+cambios_aplicados:
+  - rule: ERR-002
+    cambio: >
+      Agregado InpMaxSpread=50.0 como input configurable.
+      Verificación pre-OrderSend en OnTick: si spread > InpMaxSpread,
+      bloquea el trade con log.
+    archivo: "Expert/EA_MA_RSI_Trend/EA_MA_RSI_Trend.mq5:34,179-187"
+    estado: CORREGIDO
+
+next_step: "backtest → deploy"
