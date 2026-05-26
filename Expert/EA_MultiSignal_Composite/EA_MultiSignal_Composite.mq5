@@ -41,6 +41,7 @@ input int      InpRiskProfile     = 1;      // 0=Conservative, 1=Balanced, 2=Agg
 input double   InpFixedLot        = 0.0;    // Fixed lot (0 = use dynamic sizing)
 input bool     InpUseShield       = true;   // Enable daily loss shield
 input double   InpShieldPercent   = 4.0;    // Daily loss limit %
+input double   InpMaxSpread       = 30.0;   // Max spread in points (0 = use TradeExecutor default)
 
 input group "=== ESTRATEGIA MULTI-SIGNAL ==="
 input int      InpFastMAPeriod    = 9;      // Fast EMA period
@@ -163,8 +164,8 @@ void OnTick()
                                           g_state.effRiskPercent, _Symbol);
 
          string comment = (signal == SIGNAL_BUY) ? "Multi_BUY" : "Multi_SELL";
-         bool traded = OpenTrade(signal, lot, slDist, InpRR,
-                                 InpMagicNumber, comment);
+          bool traded = OpenTrade(signal, lot, slDist, InpRR,
+                                  InpMagicNumber, comment, InpMaxSpread);
 
          if(!traded) {
             g_lastSignal = SIGNAL_NONE;

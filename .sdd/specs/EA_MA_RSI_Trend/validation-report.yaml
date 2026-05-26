@@ -46,5 +46,6 @@ resumen:
     - backtest-validation (pendiente de backtest)
     - git-safety-release (commit final)
   separacion_riesgo: true
-  ciclo_completo: true
-  pendiente: "backtest en MT5"
+  ciclo_tecnico_completo: true
+  ciclo_trading_completo: false
+  pendiente: "backtest en MT5 → review → paper validation"

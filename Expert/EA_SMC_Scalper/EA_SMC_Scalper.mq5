@@ -41,6 +41,7 @@ input int      InpRiskProfile     = 1;      // 0=Conservative, 1=Balanced, 2=Agg
 input double   InpFixedLot        = 0.0;    // Fixed lot (0 = use dynamic sizing)
 input bool     InpUseShield       = true;   // Enable daily loss shield
 input double   InpShieldPercent   = 4.0;    // Daily loss limit %
+input double   InpMaxSpread       = 30.0;   // Max spread in points (0 = use TradeExecutor default)
 
 input group "=== SMC STRATEGY ==="
 input int      InpLookback        = 300;    // Lookback bars for structure
@@ -165,8 +166,8 @@ void OnTick()
 
          if(tradeSignal != SIGNAL_NONE) {
             string comment = (signal == SMC_BUY_OB) ? "SMC_BUY_OB" : "SMC_SELL_OB";
-            bool traded = OpenTrade(tradeSignal, lot, slDist, InpRR,
-                                    InpMagicNumber, comment);
+             bool traded = OpenTrade(tradeSignal, lot, slDist, InpRR,
+                                     InpMagicNumber, comment, InpMaxSpread);
             if(!traded) g_lastSignal = SMC_NONE;
          }
       }

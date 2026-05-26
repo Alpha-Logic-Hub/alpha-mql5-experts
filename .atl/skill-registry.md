@@ -53,7 +53,7 @@ La separación es clave: `mql5-enterprise-coder` NUNCA decide riesgo,
 
 | Change | Date | Status |
 |--------|------|--------|
-| implement-full-plan | 2026-05-26 | 🔄 In Progress |
+| implement-full-plan | 2026-05-26 | ✅ Archived |
 | ma-rsi-trend-ea | 2026-05-23 | ✅ Deployed |
 | multi-signal-composite | 2026-05-23 | ✅ Deployed |
 | alpha-logic-hub-init | 2026-05-23 | ✅ Deployed |

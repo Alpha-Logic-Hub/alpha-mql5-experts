@@ -69,3 +69,19 @@ GlobalRiskManager monitors:
     - Global daily loss across all EAs
     - If global DD > threshold -> HALTS all new orders system-wide
 ```
+
+## 7. Combined Pre-deploy Gate (execution-safety-review)
+
+**Added 2026-05-26 per implement-full-plan change.** After mql5-risk-guardrail emits PASS, the execution-safety-review MUST run as the second stage. Both must PASS for deploy approval.
+
+| Skill | Order | What It Checks |
+|-------|-------|----------------|
+| mql5-risk-guardrail | 1st | SL/TP, lot sizing, spread, drawdown, retcodes, units |
+| execution-safety-review | 2nd | OrderSend retcode audit, OnTick budget < 50ms, emergency close 4:55 PM ET, spread/slippage gates |
+
+**Final verdict rules:**
+- BLOCKED if either skill emits BLOCKER/BLOCKED
+- PROBATION if either emits WARNING
+- PASS only if both emit PASS
+
+**Scenario:** An EA that passes all risk guardrails but has a silent OrderSend failure (no `ResultRetcode()`) → execution-safety-review returns BLOCKED (SILENT_FAILURE) → final verdict is BLOCKED — deploy not allowed.

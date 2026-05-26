@@ -174,26 +174,15 @@ void OnTick()
                                 InpRSIMidHigh, InpRSIMidLow);
 
       if(signal != SIGNAL_NONE) {
-         g_lastSignal = signal;
+          g_lastSignal = signal;
 
-         // === ERR-002: Spread check ===
-         if(InpMaxSpread > 0) {
-            double spread = (SymbolInfoDouble(_Symbol, SYMBOL_ASK) -
-                             SymbolInfoDouble(_Symbol, SYMBOL_BID)) / _Point;
-            if(spread > InpMaxSpread) {
-               Print("[MA_RSI] ERR-002: Spread ", spread, " pts > ", InpMaxSpread,
-                     ". Trade blocked.");
-               return;  // esperar próximo tick
-            }
-         }
+          double slDist = GetMinStopDistance();
+          double lot    = CalculateLotSize(slDist, InpMaxLot, InpFixedLot,
+                                           g_state.effRiskPercent, _Symbol);
 
-         double slDist = GetMinStopDistance();
-         double lot    = CalculateLotSize(slDist, InpMaxLot, InpFixedLot,
-                                          g_state.effRiskPercent, _Symbol);
-
-         string comment = (signal == SIGNAL_BUY) ? "MA_RSI_BUY" : "MA_RSI_SELL";
-         bool traded = OpenTrade(signal, lot, slDist, InpRR,
-                                 InpMagicNumber, comment);
+          string comment = (signal == SIGNAL_BUY) ? "MA_RSI_BUY" : "MA_RSI_SELL";
+          bool traded = OpenTrade(signal, lot, slDist, InpRR,
+                                  InpMagicNumber, comment, InpMaxSpread);
 
          if(!traded) {
             g_lastSignal = SIGNAL_NONE;  // reset on failure

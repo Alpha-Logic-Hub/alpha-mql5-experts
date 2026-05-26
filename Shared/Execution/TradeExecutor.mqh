@@ -11,12 +11,14 @@
 //+------------------------------------------------------------------+
 // NOTA: slDistancePrice ya viene en PRECIO desde GetMinStopDistance().
 // NO multiplicar por _Point — eso duplicaría la conversión.
+// NOTA: maxSpread es configurable por el EA caller. Default 30 pts (3.0 pips XAUUSD).
 bool OpenTrade(ENUM_SIGNAL_TYPE signal,
                double            lot,
                double            slDistancePrice,
                double            rr,
                int               magic,
-               string            comment)
+               string            comment,
+               double            maxSpread = 30.0)
 {
    // --- Pre-trade validations ---
    if(signal == SIGNAL_NONE) {
@@ -29,11 +31,10 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
       return false;
    }
 
-   // --- ERR-002: Spread check ---
+   // --- ERR-002: Spread check (única puerta de ejecución) ---
    double spread = (SymbolInfoDouble(_Symbol, SYMBOL_ASK) -
                     SymbolInfoDouble(_Symbol, SYMBOL_BID)) / _Point;
-   double maxSpread = 30.0; // 3.0 pips for XAUUSD
-   if(spread > maxSpread) {
+   if(maxSpread > 0 && spread > maxSpread) {
       Print("[TradeExecutor] ERR-002: Spread too high (", spread, " pts > ", maxSpread, "). Trade blocked.");
       return false;
    }
