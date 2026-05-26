@@ -49,6 +49,16 @@ Leer SIEMPRE estos archivos al comenzar una sesión antes de cualquier operació
 1. `.sdd/ai-trading-plan.md` — Plan maestro: pipeline operativo, skills, subagentes, roadmap, principios no negociables
 2. `.sdd/sdd_master.md` — Contratos de EA, skill, módulos Shared y flujo SDD
 3. `.sdd/specs/` — Especificaciones detalladas por componente
+4. `.atl/skill-registry.md` — Índice de skills disponibles. Antes de codificar, revisar si existe una skill para la tarea y cargarla.
+
+### Carga dinámica de skills
+
+Antes de escribir código MQL5, modificar configuraciones o ejecutar git operations:
+
+1. Consultar `.atl/skill-registry.md` para ver si existe una skill que corresponda a la tarea
+2. Si existe → leer el archivo `SKILL.md` dentro de `.skills/[skill-name]/`
+3. Seguir las reglas, checklists y referencias de la skill
+4. Si no existe → proceder sin skill, pero considerar si vale la pena crear una
 
 ## Handoff Chain
 
