@@ -1,0 +1,67 @@
+# Risk Audit — EA_SupplyDemand
+# Audited by: RISK_GUARDIAN
+# Date: 2026-05-26
+# Skills: mql5-risk-guardrail v1.0 (bloqueante)
+
+verdict: PASS
+
+archivos_revisados:
+  - Expert/EA_SupplyDemand/SupplyDemandCVD_EA_Math_Elite.mq5
+  - Shared/Risk/RiskGuardrail.mqh
+  - Shared/Execution/TradeExecutor.mqh
+  - Shared/SupplyDemandCVD/Execution/EntryScanner.mqh
+  - Shared/SupplyDemandCVD/Execution/ExitManagement.mqh
+  - Shared/SupplyDemandCVD/UI/ControlPanel.mqh
+
+reglas_verificadas:
+  - SL/TP
+  - Riesgo por trade
+  - Spread check
+  - Daily shield
+  - Auditoría de operaciones
+  - Anti-martingala/grid
+  - Unidades
+  - Arquitectura modular
+
+hallazgos_criticos: []
+
+hallazgos_informativos:
+  - rule: RISK-001
+    detalle: "InpRiskPercent=0.15% validado en OnInit (>1.0 → INIT_PARAMETERS_INCORRECT)"
+    estado: OK
+  - rule: RISK-002
+    detalle: "Lot sizing dinámico via CalculateLotSize() con SYMBOL_VOLUME_STEP/MIN/MAX"
+    estado: OK
+  - rule: RISK-003
+    detalle: "SL obligatorio via GetMinStopDistance() (precio, no puntos). Sin TP fijo — trailing + partial closes."
+    estado: OK
+  - rule: RISK-004
+    detalle: "Sin martingala ni grid en código"
+    estado: OK
+  - rule: ERR-001
+    detalle: "TradeExecutor audita ResultRetcode() tras cada OrderSend (via OpenTrade centralizado)"
+    estado: OK
+  - rule: ERR-002
+    detalle: "Spread check centralizado en OpenTrade() con maxSpread=30 configurable"
+    estado: OK
+  - rule: ERR-003
+    detalle: "Print() en OnInit, OnDeinit, TradeExecutor, EntryScanner, ControlPanel"
+    estado: OK
+  - rule: DEINIT
+    detalle: "IndicatorRelease(h_atr), IndicatorRelease(h_ema), HTF_Deinit() en OnDeinit — handles liberados"
+    estado: OK
+  - rule: SHIELD
+    detalle: "UpdateDailyShield + IsShieldTriggered con InpShieldPercent=4.0%"
+    estado: OK
+  - rule: SINGLE_POSITION
+    detalle: "CountActivePositions >= 1 → no abre nueva posición"
+    estado: OK
+  - rule: COOLDOWN
+    detalle: "InpCooldownBars=1 entre trades, configurable"
+    estado: OK
+  - rule: ARQUITECTURA
+    detalle: "RiskGuardrail + TradeExecutor centralizados. EntryScanner refactorizado para usar Shared/ modules."
+    cambio: "2026-05-26 — migración de SupplyDemandCVD/Risk y SupplyDemandCVD/Execution a Shared/ centralizados"
+    estado: OK
+
+next_step: "backtest → review → paper validation"

@@ -14,7 +14,7 @@
 | **Mercado** | XAUUSD (Gold) — Multi-Timeframe SMC + Order Flow |
 | **Estrutura** | Expert/ (EAs autonmos) + Shared/ (modulos reutilizaveis) |
 | **Objetivo** | FTMO $100k Challenge + Apex Trading |
-| **Owner** | Franco |
+| **Owner** | Alpha Logic Hub |
 | **GitHub** | https://github.com/Alpha-Logic-Hub/alpha-mql5-experts |
 
 ---

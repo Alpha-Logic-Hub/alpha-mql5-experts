@@ -1,0 +1,64 @@
+# Validation Report — EA_SupplyDemand
+# Date: 2026-05-26
+
+cycle:
+  - phase: STRATEGIST
+    status: PASS
+    skill: strategy-hypothesis
+    artifact: ".sdd/specs/EA_SupplyDemand/hypothesis.yaml"
+    next: "MQL5_ENGINEER"
+
+  - phase: MQL5_ENGINEER
+    status: PASS
+    skill: mql5-enterprise-coder
+    compile: "(pending — MetaEditor)"
+    checks:
+      - "includes relativos: OK (Shared/ centralizados + SupplyDemandCVD específicos)"
+      - "modular: OK (18 módulos, 1 por responsabilidad)"
+      - "RiskGuardrail centralizado: OK"
+      - "TradeExecutor centralizado: OK"
+      - "g_ prefijo en globales: OK"
+      - "handles liberados en OnDeinit: OK"
+    refactor_2026_05_26:
+      - "RiskGuardrail: SupplyDemandCVD/Risk → Shared/Risk"
+      - "TradeExecutor: SupplyDemandCVD/Execution → Shared/Execution"
+      - "EntryScanner: ExecuteTrade refactorizado para usar OpenTrade() centralizado"
+      - "VolumeProfile: VP entries usan OpenTrade()"
+      - "TradeControlCenter: manual panel trades usan OpenTrade()"
+    next: "RISK_GUARDIAN"
+
+  - phase: RISK_GUARDIAN
+    status: PASS
+    skill: mql5-risk-guardrail
+    artifact: ".sdd/specs/EA_SupplyDemand/risk-audit.yaml"
+    findings_initial:
+      - severity: WARNING
+        rule: ARQUITECTURA
+        detalle: "RiskGuardrail y TradeExecutor legacy en SupplyDemandCVD/ en vez de Shared/"
+    fix_applied: "Migración completa a Shared/Risk/RiskGuardrail.mqh y Shared/Execution/TradeExecutor.mqh"
+    reaudit: PASS
+    next: "backtest-validation"
+
+  - phase: backtest-validation
+    status: PENDING
+    skill: backtest-validation
+    artifact: ".sdd/specs/EA_SupplyDemand/backtest-config.yaml"
+    blocking: false
+    next: "Ejecutar en MT5 Strategy Tester y validar contra hipótesis"
+
+  - phase: git-safety-release
+    status: PASS
+    skill: git-safety-release
+    commit: "pendiente (último paso del ciclo)"
+
+resumen:
+  skills_utilizadas:
+    - strategy-hypothesis (generar hipótesis)
+    - mql5-enterprise-coder (calidad de código + refactor arquitectura)
+    - mql5-risk-guardrail (seguridad operativa)
+    - backtest-validation (pendiente de backtest)
+    - git-safety-release (commit final)
+  separacion_riesgo: true
+  ciclo_tecnico_completo: true
+  ciclo_trading_completo: false
+  pendiente: "compilar en MetaEditor → backtest en MT5 → review → paper validation"

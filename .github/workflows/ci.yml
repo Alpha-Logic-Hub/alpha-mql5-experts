@@ -29,9 +29,11 @@ jobs:
       - name: Check SDD structure
         run: |
           echo "=== Validating SDD structure ==="
-          test -f .sdd/config.yaml && echo "✅ config.yaml" || echo "❌ config.yaml"
-          test -f .sdd/sdd_master.md && echo "✅ sdd_master.md" || echo "❌ sdd_master.md"
-          test -f .atl/skill-registry.md && echo "✅ skill-registry.md" || echo "❌ skill-registry.md"
+          failures=0
+          test -f .sdd/config.yaml && echo "✅ config.yaml" || { echo "❌ config.yaml"; failures=$((failures+1)); }
+          test -f .sdd/sdd_master.md && echo "✅ sdd_master.md" || { echo "❌ sdd_master.md"; failures=$((failures+1)); }
+          test -f .atl/skill-registry.md && echo "✅ skill-registry.md" || { echo "❌ skill-registry.md"; failures=$((failures+1)); }
+          if [ $failures -gt 0 ]; then echo "❌ $failures SDD check(s) failed"; exit 1; fi
 
       - name: Validate skill count
         run: |
@@ -49,15 +51,18 @@ jobs:
       - name: Check MQL5 conventions
         run: |
           echo "=== Naming Convention Audit ==="
+          failures=0
 
           echo "--- Check #pragma once (MQL5 INVALID) ---"
-          ! grep -rn "#pragma once" Expert/ Shared/ && echo "✅ No #pragma once" || echo "❌ Found #pragma once"
+          if grep -rn "#pragma once" Expert/ Shared/; then echo "❌ Found #pragma once"; failures=$((failures+1)); else echo "✅ No #pragma once"; fi
 
           echo "--- Check include paths (must be relative) ---"
-          ! grep -rn 'MQL5\\Include' Expert/ && echo "✅ No absolute MQL5\\Include paths" || echo "❌ Found absolute paths"
+          if grep -rn 'MQL5\\Include' Expert/; then echo "❌ Found absolute paths"; failures=$((failures+1)); else echo "✅ No absolute MQL5\\Include paths"; fi
 
           echo "--- Check Color (must be lowercase) ---"
-          ! grep -rn '\bColor\b' Expert/ Shared/ && echo "✅ No uppercase Color" || echo "❌ Found uppercase Color"
+          if grep -rn '\bColor\b' Expert/ Shared/; then echo "❌ Found uppercase Color"; failures=$((failures+1)); else echo "✅ No uppercase Color"; fi
+
+          if [ $failures -gt 0 ]; then echo "❌ $failures convention violation(s) found"; exit 1; fi
 
       - name: Verify risk guardrails
         run: |
@@ -67,10 +72,13 @@ jobs:
           ! grep -rn '0\.0[1-9]' Expert/ Shared/ | grep -v "input" | grep -v "InpFixedLot" && echo "✅" || echo "⚠️"
 
           echo "--- RISK-003: GetMinStopDistance present ---"
-          grep -rn "GetMinStopDistance" Expert/ Shared/ > /dev/null && echo "✅" || echo "❌"
+          failures=0
+          grep -rn "GetMinStopDistance" Expert/ Shared/ > /dev/null && echo "✅" || { echo "❌"; failures=$((failures+1)); }
 
           echo "--- ERR-001: ResultRetcode present ---"
-          grep -rn "ResultRetcode" Expert/ Shared/ > /dev/null && echo "✅" || echo "❌"
+          grep -rn "ResultRetcode" Expert/ Shared/ > /dev/null && echo "✅" || { echo "❌"; failures=$((failures+1)); }
+
+          if [ $failures -gt 0 ]; then echo "❌ $failures risk check(s) failed"; exit 1; fi
 
   readme-sync:
     name: README Cross-Reference Check

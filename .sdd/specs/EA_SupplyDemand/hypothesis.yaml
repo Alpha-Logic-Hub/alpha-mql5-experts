@@ -1,0 +1,105 @@
+# Hipótesis: Supply & Demand + CVD Flow + Volume Profile
+# Generada por: STRATEGIST
+# Fecha: 2026-05-26
+# Estado: GO
+
+hypothesis:
+  id: "EA_SupplyDemand-v1"
+  market: XAUUSD
+  timeframe: M15
+
+  entry_condition:
+    long: >
+      Price en OTE Fibonacci (30-70%) de zona demand activa
+      O rompimiento de VAH con volumen (VP injection)
+      O impulso institucional con delta > 2x promedio (shark)
+      Y CVD confirma dirección (opcional)
+      Y HTF filter no bloquea
+    short: >
+      Price en OTE Fibonacci (30-70%) de zona supply activa
+      O rompimiento de VAL con volumen (VP injection)
+      O impulso institucional con delta < 2x promedio (shark)
+      Y CVD confirma dirección (opcional)
+      Y HTF filter no bloquea
+
+  exit_condition:
+    stop_loss: >
+      Distancia mínima calculada por GetMinStopDistance().
+      SL dinámico basado en ATR para cada entrada.
+      Sin TP fijo — gestión mediante trailing stop progresivo
+      y cierres parciales en RR >= 1.5.
+    partial_close: >
+      50% del volumen en RR >= 1.5 (InpPartialRatio=0.5,
+      InpPartialTriggerRR=1.5)
+    break_even: >
+      SL movido a entry + offset (InpBeOffsetPoints=10)
+      cuando se alcanza PartialTriggerRR
+    trailing_stop: >
+      Activo desde InpTrailingTriggerUSD=0.50 USD.
+      Trail dinámico: ATR*0.5, se reduce progresivamente
+      a ATR*0.15 cuando profitRatio >= 8x.
+    close_on_opposite: >
+      Si InpCloseOnOpposite=true y llega señal contraria,
+      cierra posición actual y abre en nueva dirección.
+
+  risk_max_percent: 0.15
+  max_lot: 0.05
+  daily_shield: 4.0%
+
+  success_metric:
+    profit_factor: ">= 1.5"
+    sharpe_ratio: ">= 1.0"
+    sqn: ">= 1.5"
+    max_drawdown: "< 15%"
+
+  invalidation:
+    - "Profit Factor < 1.2 después de 300 trades"
+    - "Max Drawdown > 15% en cualquier momento"
+    - "Sharpe Ratio < 0.5 después de 400 trades"
+    - "Menos de 100 trades/año (poca oportunidad)"
+    - "VP injection genera > 60% de pérdidas (falso edge)"
+
+  min_trades: 300
+  min_period: "2 años"
+
+gate_checklist:
+  - [x] Mercado y timeframe definidos
+  - [x] Entry condition específica y reproducible
+  - [x] Exit condition incluye SL y gestión de salidas
+  - [x] Riesgo máximo por trade <= 1%
+  - [x] Métrica de éxito con números concretos
+  - [x] Invalidación escrita (5 condiciones)
+  - [x] Mínimo de trades y período definidos
+
+# ============================================================
+# Análisis de edge (STRATEGIST)
+# ============================================================
+edge_analysis:
+  source: |
+    El edge combina 3 señales ortogonales:
+    1. SMC + OTE — entradas en zonas de liquidez con
+       confirmación Fibonacci de orden interno (LuxAlgo style)
+    2. CVD Flow — divergencia de volumen direccional
+       como filtro de convicción
+    3. Volume Profile — inyección institucional en VAH/VAL
+       + Momentum breakout (shark) en picos de delta
+    Cada señal opera independientemente (no requieren
+    confluencia), maximizando oportunidades.
+  risk: |
+    Alta frecuencia de señales en M15 puede generar
+    sobreoptimización. Dependencia de CVD como filtro
+    reduce entradas en mercados sin volumen claro.
+    Sin filtro de régimen explícito (range vs trend).
+    Breakeven y partial closes reducen RR efectivo.
+  regime_filter: |
+    HTF filter (M15 tendencia) como único filtro de régimen.
+    Recomendado: operar solo en London (2-12h) y NY (12-22h).
+
+decision: GO
+hypothesis_file: ".sdd/specs/EA_SupplyDemand/hypothesis.yaml"
+risks:
+  - "3 señales independientes pueden sobreoptimizarse en backtest"
+  - "Sin filtro de régimen explícito (range vs trend)"
+  - "Dependencia de CVD puede filtrar trades válidos"
+  - "Múltiples subsistemas dificultan atribución de performance"
+next_step: "implement"

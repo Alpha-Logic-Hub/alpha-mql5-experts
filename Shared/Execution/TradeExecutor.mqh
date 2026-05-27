@@ -40,22 +40,21 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
    }
 
    // --- Calculate prices (slDistancePrice ya está en precio) ---
-   double entryPrice, slPrice, tpPrice;
+   double entryPrice, slPrice, tpPrice = 0;
    double slDistance = slDistancePrice;     // ya en precio, NO multiplicar por _Point
-   double tpDistance = slDistancePrice * rr; // ya en precio, NO multiplicar por _Point
 
    ENUM_ORDER_TYPE orderType;
 
    if(signal == SIGNAL_BUY) {
       entryPrice = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
       slPrice    = entryPrice - slDistance;
-      tpPrice    = entryPrice + tpDistance;
+      if(rr > 0) tpPrice = entryPrice + slDistance * rr;
       orderType  = ORDER_TYPE_BUY;
    }
    else {
       entryPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
       slPrice    = entryPrice + slDistance;
-      tpPrice    = entryPrice - tpDistance;
+      if(rr > 0) tpPrice = entryPrice - slDistance * rr;
       orderType  = ORDER_TYPE_SELL;
    }
 

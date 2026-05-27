@@ -21,6 +21,9 @@ research/backtesting/reports/
 Thumbs.db
 Desktop.ini
 
+# Repos anidados (copias duplicadas)
+alpha-mql5-experts/
+
 # Dependencias externas (si las hubiera)
 .venv/
 node_modules/

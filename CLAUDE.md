@@ -8,7 +8,7 @@ Este archivo es la MEMORIA PERMANENTE del ecosistema. Toda modificación debe se
 
 - **Proyecto**: Alpha Logic Hub v1.0
 - **Mercado**: Multi-activo (XAUUSD primario)
-- **Owner**: Franco
+- **Owner**: Alpha Logic Hub
 - **Core Directive**: 1 sesión = 1 task → build → test → next
 
 ## Arquitectura

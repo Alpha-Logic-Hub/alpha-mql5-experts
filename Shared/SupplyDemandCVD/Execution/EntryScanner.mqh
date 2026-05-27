@@ -2,6 +2,10 @@
 //| Entry Scanner — SMC zone entries + momentum breakout              |
 //+------------------------------------------------------------------+
 
+// Forward declarations (refactored to use centralized Shared/ modules)
+bool ExecuteTrade(ENUM_ORDER_TYPE type, double top, double bottom);
+void CloseOpposite(ENUM_ORDER_TYPE newType);
+
 void ScanForEntries()
 {
    if(!g_panelAutoTrading) return;
@@ -90,13 +94,13 @@ void CheckInstitutionalMomentum()
 
    if(liveDelta > 0 && ask > lastPivotHigh && iClose(_Symbol, _Period, 1) <= lastPivotHigh)
    {
-      if(!CanTrade(ORDER_TYPE_BUY)) return;
+      if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return;
+      if(InpUseCVDFilter && GetCachedCVD() < 0) return;
+      if(InpUseHTFFilter && !HTF_IsDirectionValid(ORDER_TYPE_BUY)) return;
 
       double slDist = GetMinStopDistance();
-      double sl = ask - slDist;
-      double tp = 0;
       double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
-      if(trade.PositionOpen(_Symbol, ORDER_TYPE_BUY, lot, ask, sl, tp, "Tiburon COMPRA Impulso")) {
+      if(OpenTrade(SIGNAL_BUY, lot, slDist, 0, InpMagicNumber, "Tiburon COMPRA Impulso", 30.0)) {
          Print("CAZA-TIBURONES: Inyeccion de Compra detectada en vivo! Delta: ", liveDelta);
          lastTradeTime = TimeCurrent();
       }
@@ -104,15 +108,59 @@ void CheckInstitutionalMomentum()
 
    if(liveDelta < 0 && bid < lastPivotLow && iClose(_Symbol, _Period, 1) >= lastPivotLow)
    {
-      if(!CanTrade(ORDER_TYPE_SELL)) return;
+      if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return;
+      if(InpUseCVDFilter && GetCachedCVD() > 0) return;
+      if(InpUseHTFFilter && !HTF_IsDirectionValid(ORDER_TYPE_SELL)) return;
 
       double slDist = GetMinStopDistance();
-      double sl = bid + slDist;
-      double tp = 0;
       double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
-      if(trade.PositionOpen(_Symbol, ORDER_TYPE_SELL, lot, bid, sl, tp, "Tiburon VENTA Impulso")) {
+      if(OpenTrade(SIGNAL_SELL, lot, slDist, 0, InpMagicNumber, "Tiburon VENTA Impulso", 30.0)) {
          Print("CAZA-TIBURONES: Inyeccion de Venta detectada en vivo! Delta: ", liveDelta);
          lastTradeTime = TimeCurrent();
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| ExecuteTrade — SMC zone entry via central OpenTrade                |
+//+------------------------------------------------------------------+
+bool ExecuteTrade(ENUM_ORDER_TYPE type, double top, double bottom)
+{
+   if(CountActivePositions(InpMagicNumber, _Symbol, pos) > 0 && InpCloseOnOpposite) CloseOpposite(type);
+   if(CountActivePositions(InpMagicNumber, _Symbol, pos) >= 1) return false;
+
+   if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return false;
+
+   if(InpUseCVDFilter) {
+      double cvd = GetCachedCVD();
+      if((type == ORDER_TYPE_BUY && cvd < 0) || (type == ORDER_TYPE_SELL && cvd > 0)) return false;
+   }
+
+   if(InpUseHTFFilter && !HTF_IsDirectionValid(type)) return false;
+
+   double slDist = GetMinStopDistance();
+   double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
+
+   ENUM_SIGNAL_TYPE sig = (type == ORDER_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
+   if(OpenTrade(sig, lot, slDist, 0, InpMagicNumber, "SMC Mitigacion", 30.0)) {
+      Print("Trade Ejecutado: ", EnumToString(type), " Lote: ", lot);
+      lastTradeTime = TimeCurrent();
+      return true;
+   }
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| CloseOpposite — close positions opposite to new signal             |
+//+------------------------------------------------------------------+
+void CloseOpposite(ENUM_ORDER_TYPE newType)
+{
+   for(int i=PositionsTotal()-1; i>=0; i--) {
+      if(pos.SelectByIndex(i) && pos.Magic() == InpMagicNumber) {
+         if((pos.PositionType() == POSITION_TYPE_BUY && newType == ORDER_TYPE_SELL) ||
+            (pos.PositionType() == POSITION_TYPE_SELL && newType == ORDER_TYPE_BUY)) {
+            trade.PositionClose(pos.Ticket());
+         }
       }
    }
 }

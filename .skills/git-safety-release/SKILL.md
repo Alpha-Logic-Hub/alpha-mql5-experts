@@ -59,7 +59,9 @@ Antes de cualquier `git commit`, ejecutar esta checklist:
 
 Antes de `git push`:
 
-- [ ] `git fetch origin` + `git pull --rebase` ejecutados
+- [ ] `git fetch origin` ejecutado
+- [ ] Verificar divergencia: si `git rev-list --count master..origin/master` > 0, pedir confirmación antes de rebase
+- [ ] Si se confirma: `git pull --rebase origin master`
 - [ ] No hay conflictos sin resolver
 - [ ] Los commits locales están encima de remote (fast-forward)
 - [ ] **Confirmación del humano obtenida antes de push** (salvo AUTO_GIT_MODE=true)
@@ -98,6 +100,14 @@ git commit -m "tipo: descripción"
 
 # 3. Sincronizar:
 git fetch origin
+
+# 3b. Verificar divergencia antes de rebase
+$diverged = git rev-list --count master..origin/master
+if ($diverged -gt 0) {
+  Write-Host "⚠️ Remote tiene $diverged commits nuevos. ¿Hacer pull --rebase? (s/n)"
+  $confirm = Read-Host
+  if ($confirm -ne "s") { Write-Host "🚫 Push bloqueado hasta sincronizar manualmente."; exit 1 }
+}
 git pull --rebase origin master
 
 # 4. Push:

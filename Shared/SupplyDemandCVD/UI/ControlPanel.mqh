@@ -152,25 +152,21 @@ bool OpenManualPanelTrade(ENUM_ORDER_TYPE type)
 {
    // Manual orders remain available when AUTO is OFF.
    // AUTO only blocks strategy-driven entries, not explicit trader actions.
-   if(!CanTrade(type)) return false;
+   if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return false;
    if(CountActivePositions(InpMagicNumber, _Symbol, pos) >= 1) {
       Print("[TradeControlCenter] Manual trade blocked: active position exists.");
       return false;
    }
 
-   double price = (type == ORDER_TYPE_BUY) ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
    double slDist = GetMinStopDistance();
-   double sl = (type == ORDER_TYPE_BUY) ? price - slDist : price + slDist;
-   double tp = (type == ORDER_TYPE_BUY) ? price + (slDist * InpRR) : price - (slDist * InpRR);
    double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
+   ENUM_SIGNAL_TYPE sig = (type == ORDER_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
    string comment = (type == ORDER_TYPE_BUY) ? "PANEL_BUY" : "PANEL_SELL";
 
-   bool ok = trade.PositionOpen(_Symbol, type, lot, price, sl, tp, comment);
+   bool ok = OpenTrade(sig, lot, slDist, InpRR, InpMagicNumber, comment, 30.0);
    if(ok) {
-      Print("[TradeControlCenter] Manual ", EnumToString(type), " opened. Lot=", lot, " SL=", sl, " TP=", tp);
+      Print("[TradeControlCenter] Manual ", EnumToString(type), " opened. Lot=", lot);
       lastTradeTime = TimeCurrent();
-   } else {
-      Print("[TradeControlCenter] Manual trade failed. RetCode=", trade.ResultRetcode(), " ", trade.ResultRetcodeDescription());
    }
    return ok;
 }

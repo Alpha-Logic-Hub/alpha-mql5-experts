@@ -110,22 +110,26 @@ void CheckVolumeProfileInjection()
    double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
    if(ask > vah && rates0[0].close > rates0[0].open) {
-      if(!CanTrade(ORDER_TYPE_BUY)) return;
+      if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return;
+      if(InpUseCVDFilter && GetCachedCVD() < 0) return;
+      if(InpUseHTFFilter && !HTF_IsDirectionValid(ORDER_TYPE_BUY)) return;
+
       double slDist = GetMinStopDistance();
-      double sl = ask - slDist;
       double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
-      if(trade.PositionOpen(_Symbol, ORDER_TYPE_BUY, lot, ask, sl, 0, "VP Inyeccion COMPRA")) {
+      if(OpenTrade(SIGNAL_BUY, lot, slDist, 0, InpMagicNumber, "VP Inyeccion COMPRA", 30.0)) {
          Print("VP INYECCION: Compra por rompimiento de Value Area (VAH)");
          lastTradeTime = TimeCurrent();
       }
    }
 
    if(bid < val && rates0[0].close < rates0[0].open) {
-      if(!CanTrade(ORDER_TYPE_SELL)) return;
+      if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return;
+      if(InpUseCVDFilter && GetCachedCVD() > 0) return;
+      if(InpUseHTFFilter && !HTF_IsDirectionValid(ORDER_TYPE_SELL)) return;
+
       double slDist = GetMinStopDistance();
-      double sl = bid + slDist;
       double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
-      if(trade.PositionOpen(_Symbol, ORDER_TYPE_SELL, lot, bid, sl, 0, "VP Inyeccion VENTA")) {
+      if(OpenTrade(SIGNAL_SELL, lot, slDist, 0, InpMagicNumber, "VP Inyeccion VENTA", 30.0)) {
          Print("VP INYECCION: Venta por rompimiento de Value Area (VAL)");
          lastTradeTime = TimeCurrent();
       }

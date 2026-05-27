@@ -1,0 +1,119 @@
+# Backtest Configuration — EA_SupplyDemand
+# Para ejecutar en MetaTrader 5 Strategy Tester
+# Creado: 2026-05-26
+
+backtest_config:
+  symbol: XAUUSD
+  timeframe: M15
+  period_start: "2023-01-01"
+  period_end: "2025-01-01"
+  spread: 25
+  commission: 0.0
+  slippage: 10
+  deposit: 10000
+  leverage: 1:100
+  optimization: false
+  mode: "every tick"
+
+parameters:
+  # Riesgo
+  InpRiskPercent: 0.15
+  InpMaxLot: 0.05
+  InpMagicNumber: 888123
+  InpStopLoss: 200
+  InpRR: 2.5
+  InpRiskProfile: 1
+  InpFixedLot: 0.0
+  InpUseShield: true
+  InpShieldPercent: 4.0
+
+  # SMC & Pivots
+  InpPivotLength: 3
+  InpMaxActiveZones: 10
+  InpATRLen: 14
+  InpTrendEMA: 200
+
+  # Consolidation
+  InpUseConsolidation: false
+  InpConsLength: 10
+  InpAtrMult: 3.0
+
+  # Cooldown
+  InpUseCooldown: true
+  InpCooldownBars: 1
+
+  # Confirmation filters
+  InpUseCVDFilter: false
+  InpUseHTFFilter: true
+  InpCloseOnOpposite: false
+  InpUseTrailingStop: true
+  InpTrailingTriggerUSD: 0.50
+  InpTrailATRMult: 0.5
+  InpTrailingDistance: 10
+  InpUseTrendFilter: false
+
+  # Math filters
+  InpUseMathTrend: true
+  InpMathPeriod: 20
+  InpMathMinR2: 0.20
+  InpUseMathAngle: true
+  InpMinAngleDeg: 8.0
+
+  # Shark / Momentum
+  InpUseMomentumBreakout: true
+  InpVolSpikeMultiplier: 2.0
+  InpMinAtrAcceleration: 1.0
+
+  # Volume Profile
+  InpUseVolumeProfile: true
+  InpVpLookback: 20
+  InpVpRows: 24
+  InpVpPercent: 70.0
+  InpVpVolMultiplier: 2.0
+  InpVpMinAtrAccel: 1.0
+
+  # Partial closes & BE
+  InpUsePartialClose: true
+  InpPartialRatio: 0.5
+  InpPartialTriggerRR: 1.5
+  InpUseBreakEven: true
+  InpBeOffsetPoints: 10
+
+  # OTE Fibonacci
+  InpUseOTE: true
+  InpFib30: 0.3
+  InpFib50: 0.5
+  InpFib70: 0.7
+  InpShowFibLines: true
+
+  # RSI & Session
+  InpRSIPeriod: 14
+  InpRSIOverbought: 70.0
+  InpRSIOversold: 30.0
+
+  # S/R
+  InpUseSupportResistance: true
+  InpSRLookback: 100
+  InpSRThreshold: 0.0005
+
+  # HUD
+  InpShowHUD: true
+
+target_metrics:
+  profit_factor: ">= 1.5"
+  sharpe_ratio: ">= 1.0"
+  sqn: ">= 1.5"
+  max_drawdown: "< 15%"
+  min_trades: 300
+
+instructions: |
+  1. Abrir MetaTrader 5
+  2. Strategy Tester (Ctrl+R)
+  3. Seleccionar: SupplyDemandCVD_EA_Math_Elite.ex5
+  4. Símbolo: XAUUSD, Timeframe: M15
+  5. Periodo: 2023.01.01 - 2025.01.01
+  6. Modo: Every tick
+  7. Depósito: 10000
+  8. Cargar parámetros de este archivo
+  9. Ejecutar
+  10. Exportar reporte y validar

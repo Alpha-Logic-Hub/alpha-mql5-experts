@@ -107,18 +107,22 @@ input bool     InpShowHUD         = true;
 //+------------------------------------------------------------------+
 //| MODULE INCLUDES                                                  |
 //+------------------------------------------------------------------+
+// --- Shared centralizados ---
+#include "..\..\Shared\Core\Definitions.mqh"
+#include "..\..\Shared\Risk\RiskGuardrail.mqh"
+#include "..\..\Shared\Execution\TradeExecutor.mqh"
+
+// --- SMC-specific modules ---
 #include "..\..\Shared\SupplyDemandCVD\Core\Definitions.mqh"
 #include "..\..\Shared\SupplyDemandCVD\UI\ChartDrawing.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Analysis\MathFilters.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Analysis\CVD.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Analysis\PivotZone.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Risk\RiskGuardrail.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Analysis\Indicators.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Analysis\Session.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Analysis\HTFFilter.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Analysis\VolumeProfile.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Analysis\SREngine.mqh"
-#include "..\..\Shared\SupplyDemandCVD\Execution\TradeExecutor.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Execution\ExitManagement.mqh"
 #include "..\..\Shared\SupplyDemandCVD\Execution\EntryScanner.mqh"
 #include "..\..\Shared\SupplyDemandCVD\UI\HUD.mqh"
