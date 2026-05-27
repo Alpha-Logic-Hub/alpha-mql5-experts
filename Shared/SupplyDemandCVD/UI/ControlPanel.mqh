@@ -180,11 +180,11 @@ void CloseAllPanelPositions()
       if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
       if((int)PositionGetInteger(POSITION_MAGIC) != InpMagicNumber) continue;
 
-      if(trade.PositionClose(ticket)) {
+      if(g_trade.PositionClose(ticket)) {
          closed++;
       } else {
          Print("[TradeControlCenter] Close failed ticket=", ticket,
-               " retcode=", trade.ResultRetcode(), " ", trade.ResultRetcodeDescription());
+               " retcode=", g_trade.ResultRetcode(), " ", g_trade.ResultRetcodeDescription());
       }
    }
    Print("[TradeControlCenter] Close all completed. Closed positions=", closed);

@@ -139,8 +139,8 @@ int      h_rsi;
 
 int      h_atr;
 int      h_ema;
-CTrade   trade;
-CPositionInfo pos;
+CTrade   g_trade;
+CPositionInfo g_pos;
 int    dynATRLen;
 int    dynTrendEMA;
 double trailingDistPoints;
@@ -213,12 +213,12 @@ int OnInit()
       return INIT_PARAMETERS_INCORRECT;
    }
    ApplyRiskProfile(g_state);
-   ResetDailyShield(g_state, InpMagicNumber, _Symbol, pos);
+   ResetDailyShield(g_state, InpMagicNumber, _Symbol, g_pos);
 
    ArrayResize(demandZones, 0);
    ArrayResize(supplyZones, 0);
 
-   trade.SetExpertMagicNumber(InpMagicNumber);
+   g_trade.SetExpertMagicNumber(InpMagicNumber);
    max_equity_peak = AccountInfoDouble(ACCOUNT_EQUITY);
 
    HTF_Init();
@@ -268,7 +268,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
 //+------------------------------------------------------------------+
 void OnTick()
 {
-   UpdateDailyShield(g_state, InpMagicNumber, _Symbol, pos);
+   UpdateDailyShield(g_state, InpMagicNumber, _Symbol, g_pos);
 
    if(g_panelAutoTrading) {
       ScanForEntries();
