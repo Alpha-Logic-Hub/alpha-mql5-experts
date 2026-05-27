@@ -1,6 +1,7 @@
 //+------------------------------------------------------------------+
-//| ControlPanel.mqh                                                  |
-//| Interactive OBJ_BUTTON panel — toggle strategies, risk, metrics  |
+//| TradeControlCenter.mqh                                            |
+//| Interactive chart console — strategy toggles, manual actions,     |
+//| risk sync, metrics, and safe confirmations.                       |
 //+------------------------------------------------------------------+
 
 // --- Metrics tracker ---
@@ -15,123 +16,309 @@ double g_avgLoss      = 0;
 double g_sumWins      = 0;
 double g_sumLosses    = 0;
 
-// --- Runtime toggles (mirrors of inputs, modifiable at runtime) ---
-bool   g_useSMC       = true;
-bool   g_useShark     = true;
-bool   g_useVP        = true;
-bool   g_useSR        = true;
-double g_riskPercent  = 0.15;
-int    g_riskProfile  = 1;
+// --- Runtime state (mirrors inputs but can be changed from panel) ---
+bool   g_panelAutoTrading = true;
+bool   g_useSMC           = true;
+bool   g_useShark         = true;
+bool   g_useVP            = true;
+bool   g_useSR            = true;
+double g_riskPercent      = 0.15;
+int    g_riskProfile      = 1;
 
-// --- Button names ---
-string g_btns[8] = {
-   "ALH_BTN_SMC", "ALH_BTN_SHARK", "ALH_BTN_VP", "ALH_BTN_SR",
-   "ALH_BTN_CLOSE", "ALH_BTN_RISKUP", "ALH_BTN_RISKDN", "ALH_BTN_PROFILE"
-};
+// --- Safety confirmation state ---
+string   g_pendingAction = "";
+datetime g_pendingUntil  = 0;
+
+// --- Layout ---
+int g_panelX = 320;
+int g_panelY = 12;
+int g_panelW = 265;
+int g_panelH = 275;
+
+// --- Object names ---
+string CP_PREFIX       = "ALH_CP_";
+string BTN_AUTO        = "ALH_CP_BTN_AUTO";
+string BTN_SMC         = "ALH_CP_BTN_SMC";
+string BTN_SHARK       = "ALH_CP_BTN_SHARK";
+string BTN_VP          = "ALH_CP_BTN_VP";
+string BTN_SR          = "ALH_CP_BTN_SR";
+string BTN_BUY         = "ALH_CP_BTN_BUY";
+string BTN_SELL        = "ALH_CP_BTN_SELL";
+string BTN_CLOSE_ALL   = "ALH_CP_BTN_CLOSE_ALL";
+string BTN_RISK_UP     = "ALH_CP_BTN_RISK_UP";
+string BTN_RISK_DOWN   = "ALH_CP_BTN_RISK_DOWN";
+string BTN_PROFILE     = "ALH_CP_BTN_PROFILE";
 
 //+------------------------------------------------------------------+
-//| CreateButton — helper to create a styled button                  |
+//| UI helpers                                                        |
 //+------------------------------------------------------------------+
-void CreateButton(string name, string text, int x, int y, int w, int h, color clr)
+void CreatePanelLabel(string name, string text, int x, int y, color clr, int size=8, string font="Segoe UI")
 {
-   if(ObjectFind(0, name) >= 0) return; // already exists
-
-   ObjectCreate(0, name, OBJ_BUTTON, 0, 0, 0);
-   ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-   ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
-   ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
-   ObjectSetInteger(0, name, OBJPROP_XSIZE, w);
-   ObjectSetInteger(0, name, OBJPROP_YSIZE, h);
-   ObjectSetInteger(0, name, OBJPROP_COLOR, clrWhite);
-   ObjectSetInteger(0, name, OBJPROP_BGCOLOR, clr);
-   ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, clrWhite);
-   ObjectSetString(0,  name, OBJPROP_TEXT, text);
-   ObjectSetString(0,  name, OBJPROP_FONT, "Segoe UI Bold");
-   ObjectSetInteger(0, name, OBJPROP_FONTSIZE, 8);
-   ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
-}
-
-//+------------------------------------------------------------------+
-//| UpdateButtonText — refresh button appearance                     |
-//+------------------------------------------------------------------+
-void UpdateButtonText(string name, string text, bool active)
-{
-   if(ObjectFind(0, name) < 0) return;
+   if(ObjectFind(0, name) < 0) {
+      ObjectCreate(0, name, OBJ_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+      ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
+      ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
+      ObjectSetString(0, name, OBJPROP_FONT, font);
+      ObjectSetInteger(0, name, OBJPROP_FONTSIZE, size);
+   }
    ObjectSetString(0, name, OBJPROP_TEXT, text);
-   ObjectSetInteger(0, name, OBJPROP_BGCOLOR, active ? C'30,120,60' : C'80,40,40');
+   ObjectSetInteger(0, name, OBJPROP_COLOR, clr);
+}
+
+void CreatePanelButton(string name, string text, int x, int y, int w, int h, color bg, color fg=clrWhite)
+{
+   if(ObjectFind(0, name) < 0) {
+      ObjectCreate(0, name, OBJ_BUTTON, 0, 0, 0);
+      ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+      ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
+      ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
+      ObjectSetInteger(0, name, OBJPROP_XSIZE, w);
+      ObjectSetInteger(0, name, OBJPROP_YSIZE, h);
+      ObjectSetInteger(0, name, OBJPROP_BORDER_COLOR, C'180,210,210');
+      ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
+      ObjectSetString(0, name, OBJPROP_FONT, "Segoe UI Semibold");
+      ObjectSetInteger(0, name, OBJPROP_FONTSIZE, 8);
+   }
+   ObjectSetString(0, name, OBJPROP_TEXT, text);
+   ObjectSetInteger(0, name, OBJPROP_COLOR, fg);
+   ObjectSetInteger(0, name, OBJPROP_BGCOLOR, bg);
+   ObjectSetInteger(0, name, OBJPROP_STATE, false);
+}
+
+void SetPanelButton(string name, string text, bool active)
+{
+   color bg = active ? C'28,125,72' : C'95,45,45';
+   CreatePanelButton(name, text, (int)ObjectGetInteger(0, name, OBJPROP_XDISTANCE),
+                     (int)ObjectGetInteger(0, name, OBJPROP_YDISTANCE),
+                     (int)ObjectGetInteger(0, name, OBJPROP_XSIZE),
+                     (int)ObjectGetInteger(0, name, OBJPROP_YSIZE), bg);
+}
+
+void ClearPendingAction()
+{
+   g_pendingAction = "";
+   g_pendingUntil = 0;
+}
+
+bool ArmOrConfirm(string action)
+{
+   datetime now = TimeLocal();
+   if(g_pendingAction == action && now <= g_pendingUntil) {
+      ClearPendingAction();
+      return true;
+   }
+
+   g_pendingAction = action;
+   g_pendingUntil = now + 12;
+   Print("[TradeControlCenter] Confirm required: click ", action, " again within 12 seconds.");
+   return false;
+}
+
+string RiskProfileName(int profile)
+{
+   switch(profile) {
+      case 0: return "CONS";
+      case 1: return "BAL";
+      case 2: return "AGG";
+      default: return "MAN";
+   }
+}
+
+// Formula: effective risk = runtime risk percent multiplied by selected profile multiplier, capped at 1.0%.
+// Example: g_riskPercent=0.20 and profile=2 (1.5x) => min(0.30, 1.0) = 0.30%.
+void SyncRuntimeRiskState()
+{
+   double multiplier = 1.0;
+   double rr = InpRR;
+   double shield = InpShieldPercent;
+
+   switch(g_riskProfile) {
+      case 0: multiplier = 0.5; shield = 3.0; rr = 1.5; break;
+      case 1: multiplier = 1.0; shield = 4.0; rr = 1.33; break;
+      case 2: multiplier = 1.5; shield = 6.0; rr = 1.2; break;
+      default: multiplier = 1.0; shield = InpShieldPercent; rr = InpRR; break;
+   }
+
+   g_state.effRiskPercent = MathMin(1.0, MathMax(0.01, g_riskPercent * multiplier));
+   g_state.effShieldPercent = shield;
+   g_state.effRR = rr;
 }
 
 //+------------------------------------------------------------------+
-//| InitControlPanel — create all buttons and metrics labels         |
+//| Trade actions                                                     |
+//+------------------------------------------------------------------+
+bool OpenManualPanelTrade(ENUM_ORDER_TYPE type)
+{
+   // Manual orders remain available when AUTO is OFF.
+   // AUTO only blocks strategy-driven entries, not explicit trader actions.
+   if(!CanTrade(type)) return false;
+   if(CountActivePositions(InpMagicNumber, _Symbol, pos) >= 1) {
+      Print("[TradeControlCenter] Manual trade blocked: active position exists.");
+      return false;
+   }
+
+   double price = (type == ORDER_TYPE_BUY) ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double slDist = GetMinStopDistance();
+   double sl = (type == ORDER_TYPE_BUY) ? price - slDist : price + slDist;
+   double tp = (type == ORDER_TYPE_BUY) ? price + (slDist * InpRR) : price - (slDist * InpRR);
+   double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
+   string comment = (type == ORDER_TYPE_BUY) ? "PANEL_BUY" : "PANEL_SELL";
+
+   bool ok = trade.PositionOpen(_Symbol, type, lot, price, sl, tp, comment);
+   if(ok) {
+      Print("[TradeControlCenter] Manual ", EnumToString(type), " opened. Lot=", lot, " SL=", sl, " TP=", tp);
+      lastTradeTime = TimeCurrent();
+   } else {
+      Print("[TradeControlCenter] Manual trade failed. RetCode=", trade.ResultRetcode(), " ", trade.ResultRetcodeDescription());
+   }
+   return ok;
+}
+
+void CloseAllPanelPositions()
+{
+   int closed = 0;
+   for(int i = PositionsTotal() - 1; i >= 0; i--) {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
+      if((int)PositionGetInteger(POSITION_MAGIC) != InpMagicNumber) continue;
+
+      if(trade.PositionClose(ticket)) {
+         closed++;
+      } else {
+         Print("[TradeControlCenter] Close failed ticket=", ticket,
+               " retcode=", trade.ResultRetcode(), " ", trade.ResultRetcodeDescription());
+      }
+   }
+   Print("[TradeControlCenter] Close all completed. Closed positions=", closed);
+}
+
+//+------------------------------------------------------------------+
+//| Init / refresh / destroy                                          |
 //+------------------------------------------------------------------+
 void InitControlPanel()
 {
-   // Sync runtime vars from inputs
-   g_useSMC    = InpUseOTE;
-   g_useShark  = InpUseMomentumBreakout;
-   g_useVP     = InpUseVolumeProfile;
-   g_useSR     = InpUseSupportResistance;
+   g_panelAutoTrading = true;
+   g_useSMC = InpUseOTE;
+   g_useShark = InpUseMomentumBreakout;
+   g_useVP = InpUseVolumeProfile;
+   g_useSR = InpUseSupportResistance;
    g_riskPercent = InpRiskPercent;
    g_riskProfile = InpRiskProfile;
+   SyncRuntimeRiskState();
 
-   int x = 295;  // right of HUD panel
-   int y = 12;
-   int bw = 80;
-   int bh = 22;
-   int gap = 3;
-
-   // Row 1 — Strategy toggles
-   CreateButton(g_btns[0], "SMC ON",  x, y, bw, bh, C'30,120,60');
-   CreateButton(g_btns[1], "TIBURON ON",  x + bw + gap, y, bw+15, bh, C'30,120,60');
-   CreateButton(g_btns[2], "VP ON",  x, y + bh + gap, bw, bh, C'30,120,60');
-   CreateButton(g_btns[3], "SR OFF", x + bw + gap, y + bh + gap, bw+15, bh, C'80,40,40');
-
-   // Row 2 — Actions
-   y = y + 2*(bh + gap) + 5;
-   CreateButton(g_btns[4], "CERRAR TODO", x, y, bw+25, bh+10, C'140,40,40');
-   CreateButton(g_btns[5], "RISK +", x, y + bh + 12, 42, bh, C'50,50,120');
-   CreateButton(g_btns[6], "RISK -", x + 44, y + bh + 12, 42, bh, C'50,50,120');
-   CreateButton(g_btns[7], "PERFIL",  x + 90, y + bh + 12, 60, bh, C'80,60,20');
-}
-
-//+------------------------------------------------------------------+
-//| RefreshControlPanel — update toggle states and metrics           |
-//+------------------------------------------------------------------+
-void RefreshControlPanel()
-{
-   UpdateButtonText(g_btns[0], g_useSMC ? "SMC ON" : "SMC OFF", g_useSMC);
-   UpdateButtonText(g_btns[1], g_useShark ? "TIBURON ON" : "TIBURON OFF", g_useShark);
-   UpdateButtonText(g_btns[2], g_useVP ? "VP ON" : "VP OFF", g_useVP);
-   UpdateButtonText(g_btns[3], g_useSR ? "SR ON" : "SR OFF", g_useSR);
-
-   // Update profile button
-   string profName = "";
-   switch(g_riskProfile) { case 0: profName = "CONS"; break; case 1: profName = "BAL"; break; case 2: profName = "AGRO"; break; default: profName = "MAN"; }
-   ObjectSetString(0, g_btns[7], OBJPROP_TEXT, "PERFIL: " + profName);
-
-   // Update metrics labels
-   string met0 = "ALH_MET_0"; string met1 = "ALH_MET_1"; string met2 = "ALH_MET_2";
-   double wr = (g_totalTrades > 0) ? (double)g_wins / g_totalTrades * 100.0 : 0;
-   double pf = (g_sumLosses > 0) ? g_sumWins / g_sumLosses : 0;
-
-   if(ObjectFind(0, met0) < 0) {
-      int y2 = 148; int x2 = 295;
-      ObjectCreate(0, met0, OBJ_LABEL, 0, 0, 0); ObjectSetInteger(0, met0, OBJPROP_CORNER, CORNER_LEFT_UPPER); ObjectSetInteger(0, met0, OBJPROP_XDISTANCE, x2); ObjectSetInteger(0, met0, OBJPROP_YDISTANCE, y2); ObjectSetInteger(0, met0, OBJPROP_FONTSIZE, 8); ObjectSetString(0, met0, OBJPROP_FONT, "Consolas");
-      ObjectCreate(0, met1, OBJ_LABEL, 0, 0, 0); ObjectSetInteger(0, met1, OBJPROP_CORNER, CORNER_LEFT_UPPER); ObjectSetInteger(0, met1, OBJPROP_XDISTANCE, x2); ObjectSetInteger(0, met1, OBJPROP_YDISTANCE, y2 + 14); ObjectSetInteger(0, met1, OBJPROP_FONTSIZE, 8); ObjectSetString(0, met1, OBJPROP_FONT, "Consolas");
-      ObjectCreate(0, met2, OBJ_LABEL, 0, 0, 0); ObjectSetInteger(0, met2, OBJPROP_CORNER, CORNER_LEFT_UPPER); ObjectSetInteger(0, met2, OBJPROP_XDISTANCE, x2); ObjectSetInteger(0, met2, OBJPROP_YDISTANCE, y2 + 28); ObjectSetInteger(0, met2, OBJPROP_FONTSIZE, 8); ObjectSetString(0, met2, OBJPROP_FONT, "Consolas");
+   string bg = CP_PREFIX + "BG";
+   if(ObjectFind(0, bg) < 0) {
+      ObjectCreate(0, bg, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, bg, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+      ObjectSetInteger(0, bg, OBJPROP_XDISTANCE, g_panelX);
+      ObjectSetInteger(0, bg, OBJPROP_YDISTANCE, g_panelY);
+      ObjectSetInteger(0, bg, OBJPROP_XSIZE, g_panelW);
+      ObjectSetInteger(0, bg, OBJPROP_YSIZE, g_panelH);
+      ObjectSetInteger(0, bg, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+      ObjectSetInteger(0, bg, OBJPROP_COLOR, C'45,85,88');
+      ObjectSetInteger(0, bg, OBJPROP_BGCOLOR, C'16,34,38');
+      ObjectSetInteger(0, bg, OBJPROP_BACK, false);
    }
 
-   color mc = (wr >= 50) ? clrMediumSpringGreen : clrTomato;
-   ObjectSetString(0, met0, OBJPROP_TEXT, StringFormat("Trades: %d | Win: %.0f%% | PF: %.2f", g_totalTrades, wr, pf));
-   ObjectSetInteger(0, met0, OBJPROP_COLOR, mc);
-   ObjectSetString(0, met1, OBJPROP_TEXT, StringFormat("MaxDD: %.2f%% | AvgW: $%.0f | AvgL: $%.0f", g_maxDD, g_avgWin, g_avgLoss));
-   ObjectSetInteger(0, met1, OBJPROP_COLOR, clrLightGray);
-   ObjectSetString(0, met2, OBJPROP_TEXT, StringFormat("Risk: %.3f%% | P&L: $%.2f", g_riskPercent, g_totalPnL));
-   ObjectSetInteger(0, met2, OBJPROP_COLOR, clrSandyBrown);
+   CreatePanelLabel(CP_PREFIX + "TITLE", "ALPHA TRADE CONTROL", g_panelX + 12, g_panelY + 8, clrAqua, 9, "Segoe UI Bold");
+   CreatePanelLabel(CP_PREFIX + "SUB", _Symbol + "  |  " + EnumToString((ENUM_TIMEFRAMES)_Period), g_panelX + 12, g_panelY + 25, clrLightGray, 8, "Consolas");
+
+   int x = g_panelX + 12;
+   int y = g_panelY + 62;
+   int bw = 76;
+   int bh = 22;
+   int gap = 6;
+
+   CreatePanelButton(BTN_AUTO, "AUTO ON", x, y, bw, bh, C'28,125,72');
+   CreatePanelButton(BTN_SMC, "SMC ON", x + bw + gap, y, bw, bh, C'28,125,72');
+   CreatePanelButton(BTN_SHARK, "SHARK ON", x + 2*(bw + gap), y, bw, bh, C'28,125,72');
+
+   y += bh + gap;
+   CreatePanelButton(BTN_VP, "VP ON", x, y, bw, bh, C'28,125,72');
+   CreatePanelButton(BTN_SR, "SR ON", x + bw + gap, y, bw, bh, C'28,125,72');
+   CreatePanelButton(BTN_PROFILE, "PROFILE", x + 2*(bw + gap), y, bw, bh, C'95,75,30');
+
+   y += bh + gap + 6;
+   CreatePanelButton(BTN_BUY, "BUY MKT", x, y, bw, bh + 4, C'20,105,70');
+   CreatePanelButton(BTN_SELL, "SELL MKT", x + bw + gap, y, bw, bh + 4, C'145,55,55');
+   CreatePanelButton(BTN_CLOSE_ALL, "CLOSE ALL", x + 2*(bw + gap), y, bw, bh + 4, C'145,40,40');
+
+   y += bh + gap + 10;
+   CreatePanelButton(BTN_RISK_DOWN, "RISK -", x, y, bw, bh, C'45,58,120');
+   CreatePanelButton(BTN_RISK_UP, "RISK +", x + bw + gap, y, bw, bh, C'45,58,120');
+
+   RefreshControlPanel();
+}
+
+void RefreshControlPanel()
+{
+   SyncRuntimeRiskState();
+
+   SetPanelButton(BTN_AUTO, g_panelAutoTrading ? "AUTO ON" : "AUTO OFF", g_panelAutoTrading);
+   SetPanelButton(BTN_SMC, g_useSMC ? "SMC ON" : "SMC OFF", g_useSMC);
+   SetPanelButton(BTN_SHARK, g_useShark ? "SHARK ON" : "SHARK OFF", g_useShark);
+   SetPanelButton(BTN_VP, g_useVP ? "VP ON" : "VP OFF", g_useVP);
+   SetPanelButton(BTN_SR, g_useSR ? "SR ON" : "SR OFF", g_useSR);
+
+   CreatePanelButton(BTN_BUY,
+                     (g_pendingAction == "BUY") ? "CONFIRM BUY" : "BUY MKT",
+                     g_panelX + 12, g_panelY + 124, 76, 26,
+                     (g_pendingAction == "BUY") ? clrGold : C'20,105,70',
+                     (g_pendingAction == "BUY") ? clrBlack : clrWhite);
+   CreatePanelButton(BTN_SELL,
+                     (g_pendingAction == "SELL") ? "CONFIRM SELL" : "SELL MKT",
+                     g_panelX + 94, g_panelY + 124, 76, 26,
+                     (g_pendingAction == "SELL") ? clrGold : C'145,55,55',
+                     (g_pendingAction == "SELL") ? clrBlack : clrWhite);
+   CreatePanelButton(BTN_CLOSE_ALL,
+                     (g_pendingAction == "CLOSE_ALL") ? "CONFIRM" : "CLOSE ALL",
+                     g_panelX + 176, g_panelY + 124, 76, 26,
+                     (g_pendingAction == "CLOSE_ALL") ? clrGold : C'145,40,40',
+                     (g_pendingAction == "CLOSE_ALL") ? clrBlack : clrWhite);
+
+   string actionText = (g_pendingAction == "") ? "READY" : "CONFIRM: " + g_pendingAction;
+   color actionColor = (g_pendingAction == "") ? clrMediumSpringGreen : clrGold;
+
+   double wr = (g_totalTrades > 0) ? (double)g_wins / g_totalTrades * 100.0 : 0;
+   double pf = (g_sumLosses > 0) ? g_sumWins / g_sumLosses : 0;
+   int activePositions = CountActivePositions(InpMagicNumber, _Symbol, pos);
+   double spreadPts = (SymbolInfoDouble(_Symbol, SYMBOL_ASK) - SymbolInfoDouble(_Symbol, SYMBOL_BID)) / _Point;
+
+   CreatePanelLabel(CP_PREFIX + "STATE", actionText, g_panelX + 12, g_panelY + 45, actionColor, 8, "Segoe UI Bold");
+   string sizingMode = (InpFixedLot > 0) ? StringFormat("FIXED %.2f", InpFixedLot) : StringFormat("Risk %.3f%% eff", g_state.effRiskPercent);
+   CreatePanelLabel(CP_PREFIX + "RISK", StringFormat("%s | Profile %s | Pos %d", sizingMode, RiskProfileName(g_riskProfile), activePositions), g_panelX + 12, g_panelY + 185, clrSandyBrown, 8, "Consolas");
+   CreatePanelLabel(CP_PREFIX + "METRICS", StringFormat("Trades %d | WR %.0f%% | PF %.2f | PnL %.2f", g_totalTrades, wr, pf, g_totalPnL), g_panelX + 12, g_panelY + 205, clrLightGray, 8, "Consolas");
+   CreatePanelLabel(CP_PREFIX + "MARKET", StringFormat("Spread %.1f pts | DD %.2f%% | Shield %.1f%%", spreadPts, g_maxDD, g_state.effShieldPercent), g_panelX + 12, g_panelY + 225, clrLightSteelBlue, 8, "Consolas");
+
+   ObjectSetString(0, BTN_PROFILE, OBJPROP_TEXT, "PROFILE " + RiskProfileName(g_riskProfile));
+}
+
+void DestroyControlPanel()
+{
+   ObjectDelete(0, CP_PREFIX + "BG");
+   ObjectDelete(0, CP_PREFIX + "TITLE");
+   ObjectDelete(0, CP_PREFIX + "SUB");
+   ObjectDelete(0, CP_PREFIX + "STATE");
+   ObjectDelete(0, CP_PREFIX + "RISK");
+   ObjectDelete(0, CP_PREFIX + "METRICS");
+   ObjectDelete(0, CP_PREFIX + "MARKET");
+   ObjectDelete(0, BTN_AUTO);
+   ObjectDelete(0, BTN_SMC);
+   ObjectDelete(0, BTN_SHARK);
+   ObjectDelete(0, BTN_VP);
+   ObjectDelete(0, BTN_SR);
+   ObjectDelete(0, BTN_BUY);
+   ObjectDelete(0, BTN_SELL);
+   ObjectDelete(0, BTN_CLOSE_ALL);
+   ObjectDelete(0, BTN_RISK_UP);
+   ObjectDelete(0, BTN_RISK_DOWN);
+   ObjectDelete(0, BTN_PROFILE);
 }
 
 //+------------------------------------------------------------------+
-//| RecordTrade — call after every closed position                   |
+//| RecordTrade — call after every closed position                    |
 //+------------------------------------------------------------------+
 void RecordTrade(double pnl)
 {
@@ -153,27 +340,51 @@ void RecordTrade(double pnl)
 }
 
 //+------------------------------------------------------------------+
-//| HandleButtonClick — process button events                       |
+//| HandleButtonClick — process button events                         |
 //+------------------------------------------------------------------+
 bool HandleButtonClick(string objName)
 {
-   if(objName == g_btns[0]) { g_useSMC   = !g_useSMC;   return true; }
-   if(objName == g_btns[1]) { g_useShark = !g_useShark; return true; }
-   if(objName == g_btns[2]) { g_useVP    = !g_useVP;    return true; }
-   if(objName == g_btns[3]) { g_useSR    = !g_useSR;    return true; }
+   if(objName == BTN_AUTO) { g_panelAutoTrading = !g_panelAutoTrading; ClearPendingAction(); return true; }
+   if(objName == BTN_SMC) { g_useSMC = !g_useSMC; return true; }
+   if(objName == BTN_SHARK) { g_useShark = !g_useShark; return true; }
+   if(objName == BTN_VP) { g_useVP = !g_useVP; return true; }
+   if(objName == BTN_SR) { g_useSR = !g_useSR; return true; }
 
-   if(objName == g_btns[4]) {
-      for(int i = PositionsTotal() - 1; i >= 0; i--) {
-         ulong t = PositionGetTicket(i);
-         if(t > 0 && PositionGetInteger(POSITION_MAGIC) == InpMagicNumber)
-            trade.PositionClose(t);
-      }
+   if(objName == BTN_BUY) {
+      if(!ArmOrConfirm("BUY")) return true;
+      OpenManualPanelTrade(ORDER_TYPE_BUY);
       return true;
    }
 
-   if(objName == g_btns[5]) { g_riskPercent = MathMin(1.0, g_riskPercent + 0.05); return true; }
-   if(objName == g_btns[6]) { g_riskPercent = MathMax(0.05, g_riskPercent - 0.05); return true; }
-   if(objName == g_btns[7]) { g_riskProfile = (g_riskProfile + 1) % 4; ApplyRiskProfile(g_state); return true; }
+   if(objName == BTN_SELL) {
+      if(!ArmOrConfirm("SELL")) return true;
+      OpenManualPanelTrade(ORDER_TYPE_SELL);
+      return true;
+   }
+
+   if(objName == BTN_CLOSE_ALL) {
+      if(!ArmOrConfirm("CLOSE_ALL")) return true;
+      CloseAllPanelPositions();
+      return true;
+   }
+
+   if(objName == BTN_RISK_UP) {
+      g_riskPercent = MathMin(1.0, g_riskPercent + 0.05);
+      SyncRuntimeRiskState();
+      return true;
+   }
+
+   if(objName == BTN_RISK_DOWN) {
+      g_riskPercent = MathMax(0.05, g_riskPercent - 0.05);
+      SyncRuntimeRiskState();
+      return true;
+   }
+
+   if(objName == BTN_PROFILE) {
+      g_riskProfile = (g_riskProfile + 1) % 4;
+      SyncRuntimeRiskState();
+      return true;
+   }
 
    return false;
 }

@@ -232,6 +232,7 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
+   DestroyControlPanel();
    ObjectsDeleteAll(0,"SND_");
    if(h_atr!=INVALID_HANDLE) IndicatorRelease(h_atr);
    if(h_ema!=INVALID_HANDLE) IndicatorRelease(h_ema);
@@ -265,14 +266,16 @@ void OnTick()
 {
    UpdateDailyShield(g_state, InpMagicNumber, _Symbol, pos);
 
-   ScanForEntries();
+   if(g_panelAutoTrading) {
+      ScanForEntries();
 
-   if(g_useShark) {
-      CheckInstitutionalMomentum();
-   }
+      if(g_useShark) {
+         CheckInstitutionalMomentum();
+      }
 
-   if(g_useVP) {
-      CheckVolumeProfileInjection();
+      if(g_useVP) {
+         CheckVolumeProfileInjection();
+      }
    }
 
    ManagePositionExits();

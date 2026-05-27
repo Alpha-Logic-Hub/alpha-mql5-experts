@@ -63,12 +63,12 @@ void ApplyRiskProfile(RiskState &s)
 //| CalculateDailyPnL — sum of open position P&L + today closed deals|
 //| Scoped to matching magic number and symbol                       |
 //+------------------------------------------------------------------+
-double CalculateDailyPnL(int magic, string sym, CPositionInfo &pos)
+double CalculateDailyPnL(int magic, string sym, CPositionInfo &positionInfo)
 {
    double pnl = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--) {
-      if(pos.SelectByIndex(i) && pos.Magic() == magic && pos.Symbol() == sym) {
-         pnl += pos.Profit() + pos.Swap() + pos.Commission();
+      if(positionInfo.SelectByIndex(i) && positionInfo.Magic() == magic && positionInfo.Symbol() == sym) {
+         pnl += positionInfo.Profit() + positionInfo.Swap() + positionInfo.Commission();
       }
    }
    HistorySelect(TimeCurrent() - 86400, TimeCurrent());
@@ -88,13 +88,13 @@ double CalculateDailyPnL(int magic, string sym, CPositionInfo &pos)
 //| Reset daily shield — set midnight boundary + starting equity     |
 //| ERR-003: Print() on reset event                                  |
 //+------------------------------------------------------------------+
-void ResetDailyShield(RiskState &s, int magic, string sym, CPositionInfo &pos)
+void ResetDailyShield(RiskState &s, int magic, string sym, CPositionInfo &positionInfo)
 {
    MqlDateTime dt;
    TimeCurrent(dt);
    s.lastShieldResetDay = StringToTime(StringFormat("%04d.%02d.%02d 00:00:00", dt.year, dt.mon, dt.day));
    s.startOfDayEquity   = AccountInfoDouble(ACCOUNT_EQUITY);
-   s.dailyPL            = CalculateDailyPnL(magic, sym, pos);
+   s.dailyPL            = CalculateDailyPnL(magic, sym, positionInfo);
    Print("[RiskGuardrail] Daily shield reset - equity=", s.startOfDayEquity);
 }
 
@@ -102,7 +102,7 @@ void ResetDailyShield(RiskState &s, int magic, string sym, CPositionInfo &pos)
 //| Update daily shield — detect day boundary, refresh P&L           |
 //| Called every OnTick. Resets equity at calendar midnight.         |
 //+------------------------------------------------------------------+
-void UpdateDailyShield(RiskState &s, int magic, string sym, CPositionInfo &pos)
+void UpdateDailyShield(RiskState &s, int magic, string sym, CPositionInfo &positionInfo)
 {
    MqlDateTime dt;
    TimeCurrent(dt);
@@ -113,7 +113,7 @@ void UpdateDailyShield(RiskState &s, int magic, string sym, CPositionInfo &pos)
       s.dailyPL            = 0;
       Print("[RiskGuardrail] Daily shield reset - equity=", s.startOfDayEquity);
    } else {
-      s.dailyPL = CalculateDailyPnL(magic, sym, pos);
+      s.dailyPL = CalculateDailyPnL(magic, sym, positionInfo);
    }
 }
 
@@ -192,11 +192,11 @@ double CalculateLotSize(double slPoints, double maxLot, double fixedLot, double 
 //+------------------------------------------------------------------+
 //| CountActivePositions — positions matching magic + symbol         |
 //+------------------------------------------------------------------+
-int CountActivePositions(int magic, string sym, CPositionInfo &pos)
+int CountActivePositions(int magic, string sym, CPositionInfo &positionInfo)
 {
    int count = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--) {
-      if(pos.SelectByIndex(i) && pos.Magic() == magic && pos.Symbol() == sym) {
+      if(positionInfo.SelectByIndex(i) && positionInfo.Magic() == magic && positionInfo.Symbol() == sym) {
          count++;
       }
    }

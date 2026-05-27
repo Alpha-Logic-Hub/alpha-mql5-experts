@@ -4,6 +4,8 @@
 
 void ScanForEntries()
 {
+   if(!g_panelAutoTrading) return;
+
    int cooldownBarsLeft = 9999;
    if(lastTradeTime > 0) {
       cooldownBarsLeft = iBarShift(_Symbol, _Period, lastTradeTime);
@@ -17,45 +19,43 @@ void ScanForEntries()
    double ema[1];
    bool useTrend = InpUseTrendFilter && (CopyBuffer(h_ema,0,1,1,ema) > 0);
 
-   for(int i=0; i<ArraySize(demandZones); i++) {
-      if(demandZones[i].active && !demandZones[i].traded) {
-         double zoneRange  = demandZones[i].top - demandZones[i].bottom;
-         double oteHigh = demandZones[i].bottom + zoneRange * InpFib70;
-         double oteLow  = demandZones[i].bottom + zoneRange * InpFib30;
-         bool inZone = (ask <= demandZones[i].top && ask >= demandZones[i].bottom);
-         bool inOTE  = (ask <= oteHigh && ask >= oteLow);
-         bool trigger = g_useSMC ? inOTE : inZone;
-         if(trigger) {
-            if(useTrend && ask < ema[0]) continue;
+   if(g_useSMC) {
+      for(int i=0; i<ArraySize(demandZones); i++) {
+         if(demandZones[i].active && !demandZones[i].traded) {
+            double zoneRange  = demandZones[i].top - demandZones[i].bottom;
+            double oteHigh = demandZones[i].bottom + zoneRange * InpFib70;
+            double oteLow  = demandZones[i].bottom + zoneRange * InpFib30;
+            bool inOTE  = (ask <= oteHigh && ask >= oteLow);
+            if(inOTE) {
+               if(useTrend && ask < ema[0]) continue;
 
-            if(ExecuteTrade(ORDER_TYPE_BUY, demandZones[i].top, demandZones[i].bottom)) {
-               demandZones[i].traded = true;
-               return;
+               if(ExecuteTrade(ORDER_TYPE_BUY, demandZones[i].top, demandZones[i].bottom)) {
+                  demandZones[i].traded = true;
+                  return;
+               }
+            }
+         }
+      }
+
+      for(int i=0; i<ArraySize(supplyZones); i++) {
+         if(supplyZones[i].active && !supplyZones[i].traded) {
+            double zoneRange  = supplyZones[i].top - supplyZones[i].bottom;
+            double oteLow2  = supplyZones[i].top - zoneRange * InpFib70;
+            double oteHigh2 = supplyZones[i].top - zoneRange * InpFib30;
+            bool inOTE2  = (bid >= oteLow2 && bid <= oteHigh2);
+            if(inOTE2) {
+               if(useTrend && bid > ema[0]) continue;
+
+               if(ExecuteTrade(ORDER_TYPE_SELL, supplyZones[i].top, supplyZones[i].bottom)) {
+                  supplyZones[i].traded = true;
+                  return;
+               }
             }
          }
       }
    }
 
-   for(int i=0; i<ArraySize(supplyZones); i++) {
-      if(supplyZones[i].active && !supplyZones[i].traded) {
-         double zoneRange  = supplyZones[i].top - supplyZones[i].bottom;
-         double oteLow2  = supplyZones[i].top - zoneRange * InpFib70;
-         double oteHigh2 = supplyZones[i].top - zoneRange * InpFib30;
-         bool inZone2 = (bid >= supplyZones[i].bottom && bid <= supplyZones[i].top);
-         bool inOTE2  = (bid >= oteLow2 && bid <= oteHigh2);
-         bool trigger2 = g_useSMC ? inOTE2 : inZone2;
-         if(trigger2) {
-            if(useTrend && bid > ema[0]) continue;
-
-            if(ExecuteTrade(ORDER_TYPE_SELL, supplyZones[i].top, supplyZones[i].bottom)) {
-               supplyZones[i].traded = true;
-               return;
-            }
-         }
-      }
-   }
-
-   CheckSupportResistance();
+   if(g_useSR) CheckSupportResistance();
 }
 
 void CheckInstitutionalMomentum()
