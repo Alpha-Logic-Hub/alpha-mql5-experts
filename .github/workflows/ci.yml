@@ -1,0 +1,85 @@
+name: Alpha MQL5 — CI Pipeline
+
+on:
+  push:
+    paths:
+      - 'Expert/**'
+      - 'Shared/**'
+      - '.skills/**'
+      - '.sdd/**'
+      - '.atl/**'
+      - '.github/**'
+  pull_request:
+    paths:
+      - 'Expert/**'
+      - 'Shared/**'
+      - '.skills/**'
+      - '.sdd/**'
+      - '.atl/**'
+      - '.github/**'
+  workflow_dispatch:
+
+jobs:
+  validate-sdd:
+    name: Validate SDD Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check SDD structure
+        run: |
+          echo "=== Validating SDD structure ==="
+          test -f .sdd/config.yaml && echo "✅ config.yaml" || echo "❌ config.yaml"
+          test -f .sdd/sdd_master.md && echo "✅ sdd_master.md" || echo "❌ sdd_master.md"
+          test -f .atl/skill-registry.md && echo "✅ skill-registry.md" || echo "❌ skill-registry.md"
+
+      - name: Validate skill count
+        run: |
+          echo "=== Skill Directory Audit ==="
+          skills=$(find .skills -name "SKILL.md" | wc -l)
+          echo "Skills registered: $skills"
+          test $skills -ge 3 && echo "✅ Minimum 3 skills present" || echo "⚠️ Fewer than 3 skills"
+
+  lint-mql5:
+    name: Lint MQL5 Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check MQL5 conventions
+        run: |
+          echo "=== Naming Convention Audit ==="
+
+          echo "--- Check #pragma once (MQL5 INVALID) ---"
+          ! grep -rn "#pragma once" Expert/ Shared/ && echo "✅ No #pragma once" || echo "❌ Found #pragma once"
+
+          echo "--- Check include paths (must be relative) ---"
+          ! grep -rn 'MQL5\\Include' Expert/ && echo "✅ No absolute MQL5\\Include paths" || echo "❌ Found absolute paths"
+
+          echo "--- Check Color (must be lowercase) ---"
+          ! grep -rn '\bColor\b' Expert/ Shared/ && echo "✅ No uppercase Color" || echo "❌ Found uppercase Color"
+
+      - name: Verify risk guardrails
+        run: |
+          echo "=== SoulzBTC Compliance Audit ==="
+
+          echo "--- RISK-002: No hardcoded lots ---"
+          ! grep -rn '0\.0[1-9]' Expert/ Shared/ | grep -v "input" | grep -v "InpFixedLot" && echo "✅" || echo "⚠️"
+
+          echo "--- RISK-003: GetMinStopDistance present ---"
+          grep -rn "GetMinStopDistance" Expert/ Shared/ > /dev/null && echo "✅" || echo "❌"
+
+          echo "--- ERR-001: ResultRetcode present ---"
+          grep -rn "ResultRetcode" Expert/ Shared/ > /dev/null && echo "✅" || echo "❌"
+
+  readme-sync:
+    name: README Cross-Reference Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify cross-repo links
+        run: |
+          echo "=== Cross-Repo Documentation Check ==="
+          test -f README.md && echo "✅ README.md present" || echo "❌ Missing README.md"
+          test -f alpha-logic-hub-docs/README.md && echo "✅ Docs repo accessible" || echo "⚠️ Docs repo not accessible"

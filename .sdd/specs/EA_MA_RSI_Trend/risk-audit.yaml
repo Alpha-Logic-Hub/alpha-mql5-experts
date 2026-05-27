@@ -1,0 +1,33 @@
+# Risk Audit — EA_MA_RSI_Trend (v2 con skills limpias)
+# Audited by: RISK_GUARDIAN
+# Date: 2026-05-25
+# Skills: mql5-risk-guardrail v1.0 (bloqueante)
+
+verdict: PASS
+
+archivos_revisados:
+  - Expert/EA_MA_RSI_Trend/EA_MA_RSI_Trend.mq5
+  - Expert/EA_MA_RSI_Trend/Signals/MA_RSI_Signals.mqh
+  - Shared/Execution/TradeExecutor.mqh
+
+reglas_verificadas:
+  - SL/TP
+  - Riesgo por trade
+  - Spread check
+  - Daily shield
+  - Auditoría de operaciones
+  - Anti-martingala/grid
+  - Unidades
+
+hallazgos_criticos: []
+
+cambios_aplicados:
+  - rule: ERR-002
+    cambio: >
+      Spread check centralizado en TradeExecutor.OpenTrade() como única puerta de ejecución.
+      Parámetro maxSpread configurable por EA caller (InpMaxSpread).
+      Default 30 pts (3.0 pips XAUUSD). EA pasa InpMaxSpread a OpenTrade().
+    archivo: "Shared/Execution/TradeExecutor.mqh:14-39"
+    estado: CORREGIDO
+
+next_step: "backtest → review → paper validation"

@@ -1,0 +1,77 @@
+# Backtest Configuration — EA_MA_RSI_Trend
+# Strategy: EMA 9 / SMA 21 crossover + RSI 14 filter
+# Date: 2026-05-26
+# Commit: 4fc76f2
+
+meta:
+  ea: EA_MA_RSI_Trend
+  magic: 999001
+  version: "1.00"
+  hypothesis: ".sdd/specs/EA_MA_RSI_Trend/hypothesis.yaml"
+
+symbol:
+  name: XAUUSD
+  timeframe: M15
+
+testing:
+  model: "Every tick based on real ticks"
+  optimization: false
+  forward: 30
+  deposit: 10000
+  currency: USD
+  leverage: 100
+  delay: "Random delay, 0-50 ms"
+
+period:
+  from: "2024.01.01"
+  to: "2025.12.31"
+  forward_from: "2026.01.01"
+  forward_to: "2026.03.31"
+
+inputs:
+  InpFastMAPeriod: 9
+  InpFastMAType: 1  # EMA
+  InpSlowMAPeriod: 21
+  InpSlowMAType: 0  # SMA
+  InpRSIPeriod: 14
+  InpRSIOverbought: 70
+  InpRSIOversold: 30
+  InpRSIMidHigh: 55
+  InpRSIMidLow: 45
+  InpRiskPercent: 0.15
+  InpMaxLot: 0.05
+  InpStopLoss: 150
+  InpRR: 2.0
+  InpMaxSpread: 50.0
+  InpRiskProfile: 1  # Balanced
+  InpUseShield: true
+  InpShieldPercent: 4.0
+  InpUseCooldown: true
+  InpCooldownBars: 1
+  InpCloseOnOpposite: true
+  InpShowHUD: false
+
+costs:
+  spread: 30  # 3.0 pips average
+  commission: 0
+  swap_long: 0
+  swap_short: 0
+
+hypothesis_criteria:
+  success:
+    - "Profit Factor > 1.5"
+    - "Sharpe Ratio > 1.0"
+    - "Trades >= 200"
+  invalidation:
+    - "Profit Factor < 1.2 after 200 trades"
+    - "Max DD > 15%"
+
+gates:
+  walk_forward:
+    is_oos_split: "70/30"
+    wfe_threshold: 0.6
+    oos_dd_within: "50% of IS DD"
+  risk:
+    max_risk_per_trade: "1.0%"
+    max_daily_dd: "3.0%"
+    max_trailing_dd: "5.0%"
