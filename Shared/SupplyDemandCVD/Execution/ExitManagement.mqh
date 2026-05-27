@@ -31,13 +31,13 @@ void ManagePositionExits()
                   double step = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
                   double minLot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
                   double closeVol = MathMax(MathRound((volume * InpPartialRatio) / step) * step, minLot);
-                  if(closeVol < volume) g_g_trade.PositionClosePartial(ticket, closeVol, 10);
+                  if(closeVol < volume) g_trade.PositionClosePartial(ticket, closeVol, 10);
                }
                if(InpUseBreakEven)
                {
                   double offset = InpBeOffsetPoints * _Point;
                   double newSL = (posExit.PositionType() == POSITION_TYPE_BUY) ? entryPrice + offset : entryPrice - offset;
-                  g_g_trade.PositionModify(ticket, newSL, tp);
+                  g_trade.PositionModify(ticket, newSL, tp);
                }
             }
          }

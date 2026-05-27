@@ -8,17 +8,16 @@
 //+------------------------------------------------------------------+
 //| OpenTrade — send market order with SL and TP                     |
 //| Returns true on success, false on failure                        |
+//| Spread filter: dynamic via ATR*0.3 (matching CanTrade)           |
 //+------------------------------------------------------------------+
 // NOTA: slDistancePrice ya viene en PRECIO desde GetMinStopDistance().
 // NO multiplicar por _Point — eso duplicaría la conversión.
-// NOTA: maxSpread es configurable por el EA caller. Default 30 pts (3.0 pips XAUUSD).
 bool OpenTrade(ENUM_SIGNAL_TYPE signal,
                double            lot,
                double            slDistancePrice,
                double            rr,
                int               magic,
-               string            comment,
-               double            maxSpread = 30.0)
+               string            comment)
 {
    // --- Pre-trade validations ---
    if(signal == SIGNAL_NONE) {
@@ -31,11 +30,24 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
       return false;
    }
 
-   // --- ERR-002: Spread check (única puerta de ejecución) ---
-   double spread = (SymbolInfoDouble(_Symbol, SYMBOL_ASK) -
-                    SymbolInfoDouble(_Symbol, SYMBOL_BID)) / _Point;
-   if(maxSpread > 0 && spread > maxSpread) {
-      Print("[TradeExecutor] ERR-002: Spread too high (", spread, " pts > ", maxSpread, "). Trade blocked.");
+   if(rr <= 0) {
+      Print("[TradeExecutor] WARNING: rr=", rr, " <= 0 — falling back to InpRR=", InpRR);
+      rr = InpRR;
+   }
+
+   // --- ERR-002: Spread check (ATR-dinámico) ---
+   double spreadPrice = SymbolInfoDouble(_Symbol, SYMBOL_ASK) -
+                        SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double atr[1];
+   if(CopyBuffer(h_atr, 0, 0, 1, atr) < 1) {
+      Print("[TradeExecutor] WARNING: Cannot read ATR — trade blocked");
+      return false;
+   }
+   double maxSpreadPrice = atr[0] * 0.3;
+   if(maxSpreadPrice > 0 && spreadPrice > maxSpreadPrice) {
+      double spreadPts = spreadPrice / _Point;
+      double maxPts    = maxSpreadPrice / _Point;
+      Print("[TradeExecutor] ERR-002: Spread too high (", spreadPts, " pts > ", maxPts, " pts = ATR*0.3). Trade blocked.");
       return false;
    }
 
@@ -91,8 +103,8 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
    else {
       uint retCode = trade.ResultRetcode();
       Print("[TradeExecutor] ERR-001: TRADE FAILED — RetCode=", retCode,
-            " | Description=", trade.ResultRetcodeDescription(),
-            " | Spread=", spread, " pts");
+             " | Description=", trade.ResultRetcodeDescription(),
+             " | Spread=", spreadPrice / _Point, " pts");
       return false;
    }
 }

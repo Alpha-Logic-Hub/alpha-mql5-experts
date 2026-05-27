@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //| EA_MA_RSI_Trend.mq5                                              |
-//| Alpha Logic Hub — Expert: EMA 9 / SMA 21 + RSI 14 Filter        |
+//| Alpha Logic Hub — Expert: EMA 9 / SMA 21 + RSI 14 + HTF Filter  |
 //| Architecture: SoulzBTC Modular — .mq5 orchestrates, .mqh modules |
 //| Risk: mql5-risk-guardrail (RiskState + dynamic lot + daily shield)|
 //+------------------------------------------------------------------+
@@ -34,7 +34,7 @@ input group "=== GESTION DE RIESGO ==="
 input double   InpRiskPercent     = 0.15;   // Risk % per trade (max 1.0% per RISK-001)
 input double   InpMaxLot          = 0.05;   // Max lot size
 input int      InpMagicNumber     = 999001; // EA identifier (Magic Number)
-input int      InpStopLoss        = 150;    // Stop Loss in points
+input int      InpStopLoss        = 400;    // Stop Loss in points
 input double   InpRR              = 2.0;    // Risk/Reward ratio
 input int      InpRiskProfile     = 1;      // 0=Conservative, 1=Balanced, 2=Aggressive, 3=Custom
 input double   InpFixedLot        = 0.0;    // Fixed lot (0 = use dynamic sizing)
@@ -52,6 +52,11 @@ input double   InpRSIMidHigh      = 50.0;   // RSI midpoint for long filter
 input double   InpRSIMidLow       = 50.0;   // RSI midpoint for short filter
 input bool     InpCloseOnOpposite = true;   // Close position on opposite signal
 
+input group "=== FILTRO DE TENDENCIA HTF ==="
+input bool     InpUseTrendFilter    = true;          // Enable HTF trend filter
+input ENUM_TIMEFRAMES InpHtfTimeframe = PERIOD_H4;    // HTF for trend direction
+input int      InpHtfPeriod          = 200;           // HTF MA period
+
 input group "=== VISUAL ==="
 input bool     InpShowHUD         = true;   // Show on-chart HUD panel
 
@@ -66,6 +71,7 @@ int      h_maFast;
 int      h_maSlow;
 int      h_rsi;
 int      h_atr;
+int      h_htfMA = INVALID_HANDLE;
 
 ENUM_SIGNAL_TYPE g_lastSignal = SIGNAL_NONE;
 
@@ -106,6 +112,17 @@ int OnInit()
       return INIT_FAILED;
    }
 
+   // === HTF trend filter handle ===
+   if(InpUseTrendFilter) {
+      h_htfMA = iMA(_Symbol, InpHtfTimeframe, InpHtfPeriod, 0, MODE_EMA, PRICE_CLOSE);
+      if(h_htfMA == INVALID_HANDLE) {
+         Print("[MA_RSI] Failed to create HTF MA handle");
+         return INIT_FAILED;
+      }
+      Print("[MA_RSI] HTF filter active — ", EnumToString(InpHtfTimeframe),
+            " EMA ", InpHtfPeriod);
+   }
+
    // === Init risk guardrail ===
    InitGlobalRisk();
    ApplyRiskProfile(g_state);
@@ -138,6 +155,7 @@ void OnDeinit(const int reason)
    if(h_maSlow != INVALID_HANDLE) IndicatorRelease(h_maSlow);
    if(h_rsi    != INVALID_HANDLE) IndicatorRelease(h_rsi);
    if(h_atr    != INVALID_HANDLE) IndicatorRelease(h_atr);
+   if(h_htfMA  != INVALID_HANDLE) IndicatorRelease(h_htfMA);
 
    Print("[MA_RSI] EA deinitialized — reason=", reason);
 }
@@ -173,6 +191,11 @@ void OnTick()
                                 InpRSIOverbought, InpRSIOversold,
                                 InpRSIMidHigh, InpRSIMidLow);
 
+      // --- HTF Trend Filter: block trades against higher timeframe direction ---
+      if(InpUseTrendFilter && signal != SIGNAL_NONE) {
+         signal = FilterByHtfTrend(signal, h_htfMA, InpHtfTimeframe);
+      }
+
       if(signal != SIGNAL_NONE) {
           g_lastSignal = signal;
 
@@ -198,4 +221,38 @@ void OnTick()
       DrawHUD(g_state, rsiVal, maFastBuf[0], maSlowBuf[0],
               g_lastSignal, shieldBlocked);
    }
+}
+
+//+------------------------------------------------------------------+
+//| FilterByHtfTrend — block trades against higher timeframe trend   |
+//| BUY  → only allow when price > HTF EMA (uptrend)                 |
+//| SELL → only allow when price < HTF EMA (downtrend)               |
+//+------------------------------------------------------------------+
+ENUM_SIGNAL_TYPE FilterByHtfTrend(ENUM_SIGNAL_TYPE signal, int htfMAHandle, ENUM_TIMEFRAMES htfTF)
+{
+   double htfMA[1];
+   if(CopyBuffer(htfMAHandle, 0, 0, 1, htfMA) < 1) {
+      Print("[MA_RSI] HTF filter: failed to read MA value — allowing trade");
+      return signal;
+   }
+
+   double price = iClose(_Symbol, htfTF, 0);
+   if(price == 0.0) {
+      Print("[MA_RSI] HTF filter: failed to read price — allowing trade");
+      return signal;
+   }
+
+   if(signal == SIGNAL_BUY && price < htfMA[0]) {
+      Print("[MA_RSI] HTF FILTER BLOCKED BUY — price ", DoubleToString(price, _Digits),
+            " below HTF EMA ", DoubleToString(htfMA[0], _Digits));
+      return SIGNAL_NONE;
+   }
+
+   if(signal == SIGNAL_SELL && price > htfMA[0]) {
+      Print("[MA_RSI] HTF FILTER BLOCKED SELL — price ", DoubleToString(price, _Digits),
+            " above HTF EMA ", DoubleToString(htfMA[0], _Digits));
+      return SIGNAL_NONE;
+   }
+
+   return signal;
 }

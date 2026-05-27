@@ -85,7 +85,7 @@ void CalculateVolumeProfile()
 void CheckVolumeProfileInjection()
 {
    if(!InpUseVolumeProfile) return;
-   if(CountActivePositions(InpMagicNumber, _Symbol, pos) >= 1) return;
+   if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) >= 1) return;
    if(vah <= 0 || val <= 0) return;
 
    int cooldownBarsLeft = 9999;
@@ -99,38 +99,56 @@ void CheckVolumeProfileInjection()
    if(CopyRates(_Symbol, _Period, 0, 1, rates0) <= 0) return;
    double curVol = (rates0[0].real_volume > 0) ? (double)rates0[0].real_volume : (double)rates0[0].tick_volume;
 
-   if(curVol < vpAvgVol * InpVpVolMultiplier) return;
+   if(curVol < vpAvgVol * InpVpMinVolRatio) return;
 
    double atr[1];
    if(CopyBuffer(h_atr, 0, 0, 1, atr) <= 0) return;
-   double candleRange = iHigh(_Symbol, _Period, 0) - iLow(_Symbol, _Period, 0);
-   if(candleRange < atr[0] * InpVpMinAtrAccel) return;
 
    double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
    double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
+   double cvd = GetCachedCVD();
+
    if(ask > vah && rates0[0].close > rates0[0].open) {
       if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return;
-      if(InpUseCVDFilter && GetCachedCVD() < 0) return;
+      if(InpUseCVDFilter && cvd < 0) return;
       if(InpUseHTFFilter && !HTF_IsDirectionValid(ORDER_TYPE_BUY)) return;
 
+      double breakDist = ask - vah;
+      double score = CalcVPScore(SIGNAL_BUY, curVol, vpAvgVol, breakDist,
+                                  poc, val, vah, atr[0], cvd,
+                                  HTF_IsDirectionValid(ORDER_TYPE_BUY));
+
+      double rr = ScoreToRR(score, 2.5, 2.0, 1.5, InpScoreHigh, InpScoreMid);
+      double lotMult = ScoreToLotMult(score, InpScoreMid);
       double slDist = GetMinStopDistance();
-      double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
-      if(OpenTrade(SIGNAL_BUY, lot, slDist, 0, InpMagicNumber, "VP Inyeccion COMPRA", 30.0)) {
-         Print("VP INYECCION: Compra por rompimiento de Value Area (VAH)");
+      double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot * lotMult, g_state.effRiskPercent, _Symbol);
+
+      string comment = StringFormat("VP C [%.2f]", score);
+      if(OpenTrade(SIGNAL_BUY, lot, slDist, rr, InpMagicNumber, comment)) {
+         Print("VP INYECCION: Compra score=", score, " lot=", lot, " rr=", rr);
          lastTradeTime = TimeCurrent();
       }
    }
 
    if(bid < val && rates0[0].close < rates0[0].open) {
       if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return;
-      if(InpUseCVDFilter && GetCachedCVD() > 0) return;
+      if(InpUseCVDFilter && cvd > 0) return;
       if(InpUseHTFFilter && !HTF_IsDirectionValid(ORDER_TYPE_SELL)) return;
 
+      double breakDist = val - bid;
+      double score = CalcVPScore(SIGNAL_SELL, curVol, vpAvgVol, breakDist,
+                                  poc, val, vah, atr[0], cvd,
+                                  HTF_IsDirectionValid(ORDER_TYPE_SELL));
+
+      double rr = ScoreToRR(score, 2.5, 2.0, 1.5, InpScoreHigh, InpScoreMid);
+      double lotMult = ScoreToLotMult(score, InpScoreMid);
       double slDist = GetMinStopDistance();
-      double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
-      if(OpenTrade(SIGNAL_SELL, lot, slDist, 0, InpMagicNumber, "VP Inyeccion VENTA", 30.0)) {
-         Print("VP INYECCION: Venta por rompimiento de Value Area (VAL)");
+      double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot * lotMult, g_state.effRiskPercent, _Symbol);
+
+      string comment = StringFormat("VP V [%.2f]", score);
+      if(OpenTrade(SIGNAL_SELL, lot, slDist, rr, InpMagicNumber, comment)) {
+         Print("VP INYECCION: Venta score=", score, " lot=", lot, " rr=", rr);
          lastTradeTime = TimeCurrent();
       }
    }

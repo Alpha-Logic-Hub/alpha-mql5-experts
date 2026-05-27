@@ -21,7 +21,6 @@ bool   g_panelAutoTrading = true;
 bool   g_useSMC           = true;
 bool   g_useShark         = true;
 bool   g_useVP            = true;
-bool   g_useSR            = true;
 double g_riskPercent      = 0.15;
 int    g_riskProfile      = 1;
 
@@ -41,7 +40,6 @@ string BTN_AUTO        = "ALH_CP_BTN_AUTO";
 string BTN_SMC         = "ALH_CP_BTN_SMC";
 string BTN_SHARK       = "ALH_CP_BTN_SHARK";
 string BTN_VP          = "ALH_CP_BTN_VP";
-string BTN_SR          = "ALH_CP_BTN_SR";
 string BTN_BUY         = "ALH_CP_BTN_BUY";
 string BTN_SELL        = "ALH_CP_BTN_SELL";
 string BTN_CLOSE_ALL   = "ALH_CP_BTN_CLOSE_ALL";
@@ -153,7 +151,7 @@ bool OpenManualPanelTrade(ENUM_ORDER_TYPE type)
    // Manual orders remain available when AUTO is OFF.
    // AUTO only blocks strategy-driven entries, not explicit trader actions.
    if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return false;
-   if(CountActivePositions(InpMagicNumber, _Symbol, pos) >= 1) {
+   if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) >= 1) {
       Print("[TradeControlCenter] Manual trade blocked: active position exists.");
       return false;
    }
@@ -163,7 +161,7 @@ bool OpenManualPanelTrade(ENUM_ORDER_TYPE type)
    ENUM_SIGNAL_TYPE sig = (type == ORDER_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
    string comment = (type == ORDER_TYPE_BUY) ? "PANEL_BUY" : "PANEL_SELL";
 
-   bool ok = OpenTrade(sig, lot, slDist, InpRR, InpMagicNumber, comment, 30.0);
+   bool ok = OpenTrade(sig, lot, slDist, InpRR, InpMagicNumber, comment);
    if(ok) {
       Print("[TradeControlCenter] Manual ", EnumToString(type), " opened. Lot=", lot);
       lastTradeTime = TimeCurrent();
@@ -199,7 +197,6 @@ void InitControlPanel()
    g_useSMC = InpUseOTE;
    g_useShark = InpUseMomentumBreakout;
    g_useVP = InpUseVolumeProfile;
-   g_useSR = InpUseSupportResistance;
    g_riskPercent = InpRiskPercent;
    g_riskProfile = InpRiskProfile;
    SyncRuntimeRiskState();
@@ -233,8 +230,7 @@ void InitControlPanel()
 
    y += bh + gap;
    CreatePanelButton(BTN_VP, "VP ON", x, y, bw, bh, C'28,125,72');
-   CreatePanelButton(BTN_SR, "SR ON", x + bw + gap, y, bw, bh, C'28,125,72');
-   CreatePanelButton(BTN_PROFILE, "PROFILE", x + 2*(bw + gap), y, bw, bh, C'95,75,30');
+   CreatePanelButton(BTN_PROFILE, "PROFILE", x + bw + gap, y, bw, bh, C'95,75,30');
 
    y += bh + gap + 6;
    CreatePanelButton(BTN_BUY, "BUY MKT", x, y, bw, bh + 4, C'20,105,70');
@@ -256,7 +252,6 @@ void RefreshControlPanel()
    SetPanelButton(BTN_SMC, g_useSMC ? "SMC ON" : "SMC OFF", g_useSMC);
    SetPanelButton(BTN_SHARK, g_useShark ? "SHARK ON" : "SHARK OFF", g_useShark);
    SetPanelButton(BTN_VP, g_useVP ? "VP ON" : "VP OFF", g_useVP);
-   SetPanelButton(BTN_SR, g_useSR ? "SR ON" : "SR OFF", g_useSR);
 
    CreatePanelButton(BTN_BUY,
                      (g_pendingAction == "BUY") ? "CONFIRM BUY" : "BUY MKT",
@@ -279,7 +274,7 @@ void RefreshControlPanel()
 
    double wr = (g_totalTrades > 0) ? (double)g_wins / g_totalTrades * 100.0 : 0;
    double pf = (g_sumLosses > 0) ? g_sumWins / g_sumLosses : 0;
-   int activePositions = CountActivePositions(InpMagicNumber, _Symbol, pos);
+   int activePositions = CountActivePositions(InpMagicNumber, _Symbol, g_pos);
    double spreadPts = (SymbolInfoDouble(_Symbol, SYMBOL_ASK) - SymbolInfoDouble(_Symbol, SYMBOL_BID)) / _Point;
 
    CreatePanelLabel(CP_PREFIX + "STATE", actionText, g_panelX + 12, g_panelY + 45, actionColor, 8, "Segoe UI Bold");
@@ -304,7 +299,6 @@ void DestroyControlPanel()
    ObjectDelete(0, BTN_SMC);
    ObjectDelete(0, BTN_SHARK);
    ObjectDelete(0, BTN_VP);
-   ObjectDelete(0, BTN_SR);
    ObjectDelete(0, BTN_BUY);
    ObjectDelete(0, BTN_SELL);
    ObjectDelete(0, BTN_CLOSE_ALL);
@@ -344,7 +338,6 @@ bool HandleButtonClick(string objName)
    if(objName == BTN_SMC) { g_useSMC = !g_useSMC; return true; }
    if(objName == BTN_SHARK) { g_useShark = !g_useShark; return true; }
    if(objName == BTN_VP) { g_useVP = !g_useVP; return true; }
-   if(objName == BTN_SR) { g_useSR = !g_useSR; return true; }
 
    if(objName == BTN_BUY) {
       if(!ArmOrConfirm("BUY")) return true;

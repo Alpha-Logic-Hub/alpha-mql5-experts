@@ -1,8 +1,7 @@
 //+------------------------------------------------------------------+
-//| Entry Scanner — SMC zone entries + momentum breakout              |
+//| Entry Scanner — SMC zone entries + Tiburon momentum breakout      |
 //+------------------------------------------------------------------+
 
-// Forward declarations (refactored to use centralized Shared/ modules)
 bool ExecuteTrade(ENUM_ORDER_TYPE type, double top, double bottom);
 void CloseOpposite(ENUM_ORDER_TYPE newType);
 
@@ -58,14 +57,12 @@ void ScanForEntries()
          }
       }
    }
-
-   if(g_useSR) CheckSupportResistance();
 }
 
 void CheckInstitutionalMomentum()
 {
    if(!InpUseMomentumBreakout) return;
-   if(CountActivePositions(InpMagicNumber, _Symbol, pos) >= 1) return;
+   if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) >= 1) return;
 
    int cooldownBarsLeft = 9999;
    if(lastTradeTime > 0) {
@@ -76,21 +73,26 @@ void CheckInstitutionalMomentum()
 
    if(lastPivotHigh == 0 || lastPivotLow == 0) return;
 
-   double liveDelta = GetBarVolumeDelta(0);
-   double avgVol = GetAverageAbsoluteVolumeDelta(14);
-   if(avgVol <= 0) return;
+   double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
-   bool isVolSpike = (MathAbs(liveDelta) >= InpVolSpikeMultiplier * avgVol);
-   if(!isVolSpike) return;
+   MqlRates rates0[1];
+   if(CopyRates(_Symbol, _Period, 0, 1, rates0) <= 0) return;
+   double currentRange = rates0[0].high - rates0[0].low;
+   if(currentRange <= 0) return;
+
+   double avgRange = GetAverageCandleRange(14);
+   if(avgRange <= 0) return;
+
+   double rangeRatio = currentRange / avgRange;
+   if(rangeRatio < InpTiburonMinRangeRatio) return;
 
    double atr[1];
    if(CopyBuffer(h_atr, 0, 0, 1, atr) <= 0) return;
-   double currentBarHeight = iHigh(_Symbol, _Period, 0) - iLow(_Symbol, _Period, 0);
-   bool isAtrAccelerated = (currentBarHeight >= atr[0] * InpMinAtrAcceleration);
-   if(!isAtrAccelerated) return;
 
-   double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
-   double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double liveDelta = GetBarVolumeDelta(0);
+   double avgDelta = GetAverageAbsoluteVolumeDelta(14);
+   double cvd = GetCachedCVD();
 
    if(liveDelta > 0 && ask > lastPivotHigh && iClose(_Symbol, _Period, 1) <= lastPivotHigh)
    {
@@ -98,10 +100,19 @@ void CheckInstitutionalMomentum()
       if(InpUseCVDFilter && GetCachedCVD() < 0) return;
       if(InpUseHTFFilter && !HTF_IsDirectionValid(ORDER_TYPE_BUY)) return;
 
+      double breakDist = ask - lastPivotHigh;
+      double score = CalcTiburonScore(liveDelta, avgDelta, currentRange, avgRange,
+                                       breakDist, atr[0], cvd,
+                                       HTF_IsDirectionValid(ORDER_TYPE_BUY));
+
+      double rr = ScoreToRR(score, 3.0, 2.5, 1.5, InpScoreHigh, InpScoreMid);
+      double lotMult = ScoreToLotMult(score, InpScoreMid);
       double slDist = GetMinStopDistance();
-      double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
-      if(OpenTrade(SIGNAL_BUY, lot, slDist, 0, InpMagicNumber, "Tiburon COMPRA Impulso", 30.0)) {
-         Print("CAZA-TIBURONES: Inyeccion de Compra detectada en vivo! Delta: ", liveDelta);
+      double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot * lotMult, g_state.effRiskPercent, _Symbol);
+
+      string comment = StringFormat("Tiburon C [%.2f]", score);
+      if(OpenTrade(SIGNAL_BUY, lot, slDist, rr, InpMagicNumber, comment)) {
+         Print("CAZA-TIBURONES: Compra score=", score, " lot=", lot, " rr=", rr);
          lastTradeTime = TimeCurrent();
       }
    }
@@ -112,22 +123,28 @@ void CheckInstitutionalMomentum()
       if(InpUseCVDFilter && GetCachedCVD() > 0) return;
       if(InpUseHTFFilter && !HTF_IsDirectionValid(ORDER_TYPE_SELL)) return;
 
+      double breakDist = lastPivotLow - bid;
+      double score = CalcTiburonScore(liveDelta, avgDelta, currentRange, avgRange,
+                                       breakDist, atr[0], cvd,
+                                       HTF_IsDirectionValid(ORDER_TYPE_SELL));
+
+      double rr = ScoreToRR(score, 3.0, 2.5, 1.5, InpScoreHigh, InpScoreMid);
+      double lotMult = ScoreToLotMult(score, InpScoreMid);
       double slDist = GetMinStopDistance();
-      double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
-      if(OpenTrade(SIGNAL_SELL, lot, slDist, 0, InpMagicNumber, "Tiburon VENTA Impulso", 30.0)) {
-         Print("CAZA-TIBURONES: Inyeccion de Venta detectada en vivo! Delta: ", liveDelta);
+      double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot * lotMult, g_state.effRiskPercent, _Symbol);
+
+      string comment = StringFormat("Tiburon V [%.2f]", score);
+      if(OpenTrade(SIGNAL_SELL, lot, slDist, rr, InpMagicNumber, comment)) {
+         Print("CAZA-TIBURONES: Venta score=", score, " lot=", lot, " rr=", rr);
          lastTradeTime = TimeCurrent();
       }
    }
 }
 
-//+------------------------------------------------------------------+
-//| ExecuteTrade — SMC zone entry via central OpenTrade                |
-//+------------------------------------------------------------------+
 bool ExecuteTrade(ENUM_ORDER_TYPE type, double top, double bottom)
 {
-   if(CountActivePositions(InpMagicNumber, _Symbol, pos) > 0 && InpCloseOnOpposite) CloseOpposite(type);
-   if(CountActivePositions(InpMagicNumber, _Symbol, pos) >= 1) return false;
+   if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) > 0 && InpCloseOnOpposite) CloseOpposite(type);
+   if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) >= 1) return false;
 
    if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent)) return false;
 
@@ -138,21 +155,34 @@ bool ExecuteTrade(ENUM_ORDER_TYPE type, double top, double bottom)
 
    if(InpUseHTFFilter && !HTF_IsDirectionValid(type)) return false;
 
+   ENUM_SIGNAL_TYPE sig = (type == ORDER_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
+   double entryPrice = (type == ORDER_TYPE_BUY) ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double atr[1];
+   double atrVal = 0;
+   if(CopyBuffer(h_atr, 0, 0, 1, atr) > 0) atrVal = atr[0];
+
+   double score = CalcSMCScore(sig, top, bottom, (datetime)0, entryPrice,
+                                atrVal, GetCachedCVD(),
+                                HTF_IsDirectionValid(type));
+
+   if(score < InpScoreMid) {
+      Print("SMC Mitigacion: score=", score, " < ", InpScoreMid, " — no entry");
+      return false;
+   }
+
+   double rr = ScoreToRR(score, 2.5, 2.0, 1.5, InpScoreHigh, InpScoreMid);
    double slDist = GetMinStopDistance();
    double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
 
-   ENUM_SIGNAL_TYPE sig = (type == ORDER_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
-   if(OpenTrade(sig, lot, slDist, 0, InpMagicNumber, "SMC Mitigacion", 30.0)) {
-      Print("Trade Ejecutado: ", EnumToString(type), " Lote: ", lot);
+   string comment = StringFormat("SMC %s [%.2f]", (type == ORDER_TYPE_BUY) ? "C" : "V", score);
+   if(OpenTrade(sig, lot, slDist, rr, InpMagicNumber, comment)) {
+      Print("SMC Mitigacion: ", EnumToString(type), " score=", score, " lot=", lot, " rr=", rr);
       lastTradeTime = TimeCurrent();
       return true;
    }
    return false;
 }
 
-//+------------------------------------------------------------------+
-//| CloseOpposite — close positions opposite to new signal             |
-//+------------------------------------------------------------------+
 void CloseOpposite(ENUM_ORDER_TYPE newType)
 {
    for(int i=PositionsTotal()-1; i>=0; i--) {

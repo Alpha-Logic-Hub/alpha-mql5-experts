@@ -41,8 +41,8 @@ bool ExecuteTrade(ENUM_ORDER_TYPE type, double top, double bottom)
 {
    if(!CanTrade(type)) return false;
 
-   if(CountActivePositions(InpMagicNumber, _Symbol, pos) > 0 && InpCloseOnOpposite) CloseOpposite(type);
-   if(CountActivePositions(InpMagicNumber, _Symbol, pos) >= 1) return false;
+   if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) > 0 && InpCloseOnOpposite) CloseOpposite(type);
+   if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) >= 1) return false;
 
    double price = (type == ORDER_TYPE_BUY) ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
@@ -52,7 +52,7 @@ bool ExecuteTrade(ENUM_ORDER_TYPE type, double top, double bottom)
    double tp = 0;
    double lot = CalculateLotSize(slDist, InpMaxLot, InpFixedLot, g_state.effRiskPercent, _Symbol);
 
-   if(trade.PositionOpen(_Symbol, type, lot, price, sl, tp, "SMC Mitigacion")) {
+   if(g_trade.PositionOpen(_Symbol, type, lot, price, sl, tp, "SMC Mitigacion")) {
       Print("Trade Ejecutado: ", EnumToString(type), " Lote: ", lot);
       lastTradeTime = TimeCurrent();
       return true;
@@ -63,10 +63,10 @@ bool ExecuteTrade(ENUM_ORDER_TYPE type, double top, double bottom)
 void CloseOpposite(ENUM_ORDER_TYPE newType)
 {
    for(int i=PositionsTotal()-1; i>=0; i--) {
-      if(pos.SelectByIndex(i) && pos.Magic() == InpMagicNumber) {
-         if((pos.PositionType() == POSITION_TYPE_BUY && newType == ORDER_TYPE_SELL) ||
-            (pos.PositionType() == POSITION_TYPE_SELL && newType == ORDER_TYPE_BUY)) {
-            trade.PositionClose(pos.Ticket());
+      if(g_pos.SelectByIndex(i) && g_pos.Magic() == InpMagicNumber) {
+if((g_pos.PositionType() == POSITION_TYPE_BUY && newType == ORDER_TYPE_SELL) ||
+             (g_pos.PositionType() == POSITION_TYPE_SELL && newType == ORDER_TYPE_BUY)) {
+            g_trade.PositionClose(g_pos.Ticket());
          }
       }
    }

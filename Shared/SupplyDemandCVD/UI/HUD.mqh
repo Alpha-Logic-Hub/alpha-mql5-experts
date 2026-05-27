@@ -216,22 +216,22 @@ void DrawHUD()
    ObjectSetString(0, lblSec2, OBJPROP_TEXT, "=== GESTION DE RIESGO ===");
 
    string lblShark = "SND_HUD_Shark";
-   double liveDelta = GetBarVolumeDelta(0);
-   double avgVol = GetAverageAbsoluteVolumeDelta(14);
-   double ratio = (avgVol > 0) ? (MathAbs(liveDelta) / avgVol) : 0;
+   double cRange = iHigh(_Symbol, _Period, 0) - iLow(_Symbol, _Period, 0);
+   double aRange = GetAverageCandleRange(14);
+   double rangeRatio = (aRange > 0) ? (cRange / aRange) : 0;
 
    string sharkStr = "";
    color sharkColor = clrLightGray;
    if(InpUseMomentumBreakout)
    {
-      if(ratio >= InpVolSpikeMultiplier)
+      if(rangeRatio >= InpTiburonMinRangeRatio)
       {
-         sharkStr = StringFormat("Caza-Tiburones: TIBURON EN VIVO! (x%.1f)", ratio);
+         sharkStr = StringFormat("Caza-Tiburones: TIBURON EN VIVO! (x%.1f)", rangeRatio);
          sharkColor = clrTomato;
       }
       else
       {
-         sharkStr = StringFormat("Caza-Tiburones: Activo (Ratio: %.1fx)", ratio);
+         sharkStr = StringFormat("Caza-Tiburones: Activo (Rango: %.1fx)", rangeRatio);
          sharkColor = clrMediumSpringGreen;
       }
    }
@@ -315,7 +315,7 @@ void DrawHUD()
       }
    }
 
-   int nPos = CountActivePositions(InpMagicNumber, _Symbol, pos);
+   int nPos = CountActivePositions(InpMagicNumber, _Symbol, g_pos);
    bool shieldBlocked = IsShieldTriggered(InpUseShield, g_state.startOfDayEquity, g_state.dailyPL, g_state.effShieldPercent);
    bool cooldownOn = false;
    int cdBars = 9999;
@@ -346,7 +346,10 @@ void DrawHUD()
    double ld = GetBarVolumeDelta(0);
    double av = GetAverageAbsoluteVolumeDelta(14);
    double vr = (av > 0) ? (MathAbs(ld) / av) : 0;
-   string sharkSigStr = StringFormat("Tiburon: %.1f/%.1fx %s", vr, InpVolSpikeMultiplier, stShark);
+   double cr2 = iHigh(_Symbol, _Period, 0) - iLow(_Symbol, _Period, 0);
+   double ar2 = GetAverageCandleRange(14);
+   double rr2 = (ar2 > 0) ? (cr2 / ar2) : 0;
+   string sharkSigStr = StringFormat("Tiburon: rng=%.1f/%.1fx %s", rr2, InpTiburonMinRangeRatio, stShark);
    string sinal1Str = StringFormat("%s | %s", smcStr, sharkSigStr);
 
    ObjectDelete(0, lblSenales1);
