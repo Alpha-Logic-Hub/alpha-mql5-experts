@@ -27,3 +27,6 @@ alpha-mql5-experts/
 # Dependencias externas (si las hubiera)
 .venv/
 node_modules/
+
+# Agent Template Library generated cache
+.atl/.skill-registry.cache.json

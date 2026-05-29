@@ -130,5 +130,6 @@ Every agent response must include:
 | Skill registry | `.atl/skill-registry.md` |
 | Skills | `.skills/` |
 | Agent specs | `.factory/droids/` |
+| Legacy factory skills | `.factory/skills/README.md` |
 | Memoria permanente | `CLAUDE.md` |
 | SDD cambios | `.sdd/changes/` |

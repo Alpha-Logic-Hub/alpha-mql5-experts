@@ -41,11 +41,11 @@ Alpha_Logic_Hub/
 │   ├── Database/LocalLogger.mqh     # Postmortems YAML
 │   └── SupplyDemandCVD/             # Modulos do EA Elite (SMC + CVD + VP)
 │
-├── .skills/                         # Skills IA (4 ativas)
+├── .skills/                         # Runtime IA skills (17 ativas; ver .atl/skill-registry.md)
 │   ├── mql5-enterprise-coder/       # Padroes de codificacao MQL5
 │   ├── mql5-risk-guardrail/         # Risk guardrails SoulzBTC
-│   ├── trader-memory-loop/          # Postmortems de sessao
-│   └── alpha-commit-push/           # Auto commit + push ao GitHub
+│   ├── trade-memory-core/           # Trade journal + postmortems
+│   └── git-safety-release/          # Commit/push seguro
 │
 ├── .sdd/                            # System Design Documents
 │   ├── config.yaml                  # Config do ecossistema
@@ -55,7 +55,7 @@ Alpha_Logic_Hub/
 │
 ├── .factory/                        # Factory: skills, droids, commands
 │   ├── PROJECT_CONTEXT.md           # ⭐ ESTE ARQUIVO
-│   ├── skills/                      # Skills herdadas do EA_SCALPER
+│   ├── skills/                      # Legacy reference only; runtime lives in .skills/
 │   ├── droids/                      # Agentes (crucible, forge, sentinel, oracle...)
 │   └── commands/                    # Comandos (backtest, optimize, strategy...)
 │

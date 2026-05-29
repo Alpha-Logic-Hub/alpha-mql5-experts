@@ -1,6 +1,6 @@
 # Agent Template Library — Alpha Logic Hub
 
-## Registered Skills (19 total)
+## Registered Skills (17 total)
 
 | # | Skill | Path | Triggers | Status |
 |---|-------|------|----------|--------|
@@ -9,20 +9,18 @@
 | 3 | strategy-hypothesis | .skills/strategy-hypothesis/ | hipótesis, idea nueva, setup, invalidación, STRATEGIST | ✅ Active |
 | 4 | backtest-validation | .skills/backtest-validation/ | backtest, validación, reporte, WFE, overfit, BACKTEST_AUDITOR | ✅ Active |
 | 5 | git-safety-release | .skills/git-safety-release/ | commit, push, release, deploy, secretos, GIT_GUARDIAN | ✅ Active |
-| 6 | trader-memory-loop | .skills/trader-memory-loop/ | postmortem, sesion, diario, journal | 🔀 Merged → trade-memory-core |
-| 7 | alpha-commit-push | .skills/alpha-commit-push/ | commit, push, subir, guardar, github, deploy | ⛔ Deprecated → git-safety-release |
-| 8 | strategy-research | .skills/strategy-research/ | research, falsar, disproof, evidencia, RESEARCHER | ✅ Active |
-| 9 | walk-forward-audit | .skills/walk-forward-audit/ | WFA, overfit, walk-forward, OOS, robustez | ✅ Active |
-| 10 | execution-safety-review | .skills/execution-safety-review/ | retcode, OrderSend, OnTick, ejecución, EXECUTION_REVIEWER | ✅ Active |
-| 11 | trading-metrics-reporter | .skills/trading-metrics-reporter/ | reporte, backtest report, métricas, YAML, BACKTEST_AUDITOR | ✅ Active |
-| 12 | market-regime-check | .skills/market-regime-check/ | regime, mercado, volatilidad, sesión, spread, MARKET_REGIME_ANALYST | ✅ Active |
-| 13 | economic-calendar-risk | .skills/economic-calendar-risk/ | CPI, FOMC, NFP, noticias, calendario económico | ✅ Active |
-| 14 | trade-memory-core | .skills/trade-memory-core/ | trade journal, R-multiple, bitácora, postmortem, TRADE_MEMORY_ANALYST | ✅ Active |
-| 15 | signal-postmortem | .skills/signal-postmortem/ | postmortem, trade review, lecciones, GOOD/BAD/UGLY | ✅ Active |
-| 16 | edge-candidate-agent | .skills/edge-candidate-agent/ | observación, ticket de research, hipótesis candidata | ✅ Active |
-| 17 | edge-strategy-reviewer | .skills/edge-strategy-reviewer/ | crítica, pre-backtest, overfit check, plausibilidad | ✅ Active |
-| 18 | data-quality-checker | .skills/data-quality-checker/ | OHLCV, ticks, timezone, point/price, DOUBLE_CONVERSION | ✅ Active |
-| 19 | skill-quality-reviewer | .skills/skill-quality-reviewer/ | skill audit, calidad, scoring, SKILL_CURATOR | ✅ Active |
+| 6 | strategy-research | .skills/strategy-research/ | research, falsar, disproof, evidencia, RESEARCHER | ✅ Active |
+| 7 | walk-forward-audit | .skills/walk-forward-audit/ | WFA, overfit, walk-forward, OOS, robustez | ✅ Active |
+| 8 | execution-safety-review | .skills/execution-safety-review/ | retcode, OrderSend, OnTick, ejecución, EXECUTION_REVIEWER | ✅ Active |
+| 9 | trading-metrics-reporter | .skills/trading-metrics-reporter/ | reporte, backtest report, métricas, YAML, BACKTEST_AUDITOR | ✅ Active |
+| 10 | market-regime-check | .skills/market-regime-check/ | regime, mercado, volatilidad, sesión, spread, MARKET_REGIME_ANALYST | ✅ Active |
+| 11 | economic-calendar-risk | .skills/economic-calendar-risk/ | CPI, FOMC, NFP, noticias, calendario económico | ✅ Active |
+| 12 | trade-memory-core | .skills/trade-memory-core/ | trade journal, R-multiple, bitácora, postmortem, TRADE_MEMORY_ANALYST | ✅ Active |
+| 13 | signal-postmortem | .skills/signal-postmortem/ | postmortem, trade review, lecciones, GOOD/BAD/UGLY | ✅ Active |
+| 14 | edge-candidate-agent | .skills/edge-candidate-agent/ | observación, ticket de research, hipótesis candidata | ✅ Active |
+| 15 | edge-strategy-reviewer | .skills/edge-strategy-reviewer/ | crítica, pre-backtest, overfit check, plausibilidad | ✅ Active |
+| 16 | data-quality-checker | .skills/data-quality-checker/ | OHLCV, ticks, timezone, point/price, DOUBLE_CONVERSION | ✅ Active |
+| 17 | skill-quality-reviewer | .skills/skill-quality-reviewer/ | skill audit, calidad, scoring, SKILL_CURATOR | ✅ Active |
 
 ## Flujo de skills (responsabilidades separadas)
 
@@ -41,6 +39,32 @@ SKILL_CURATOR → .skills/skill-quality-reviewer
 
 La separación es clave: `mql5-enterprise-coder` NUNCA decide riesgo,
 `mql5-risk-guardrail` NUNCA revisa calidad de código.
+
+## Legacy / no-runtime areas
+
+`.factory/skills/` is legacy reference material only. Do not route runtime work
+there and do not create new runtime skills under `.factory/skills/`.
+
+Deprecated runtime folders removed from `.skills/`:
+
+| Removed | Replacement |
+|---|---|
+| `.skills/alpha-commit-push/` | `.skills/git-safety-release/` |
+| `.skills/trader-memory-loop/` | `.skills/trade-memory-core/` |
+
+## Paradex-inspired improvements — apply by upgrading existing skills
+
+Do not create duplicate `alpha-*` wrappers for responsibilities that already exist.
+Port useful ideas into the matching active skill:
+
+| Inspiration | Alpha destination |
+|---|---|
+| Paradex `strategy-builder` | `strategy-hypothesis` + `strategy-research` + `edge-strategy-reviewer` |
+| Paradex `market-analyst` | `market-regime-check` + `economic-calendar-risk` + `data-quality-checker` |
+| Paradex `risk-guardian` | `mql5-risk-guardrail` |
+| Paradex `execution-analyst` | `execution-safety-review` + `signal-postmortem` |
+| Paradex `trading-recap` | `trading-metrics-reporter` + `trade-memory-core` |
+| Paradex `order-builder` | `mql5-risk-guardrail` confirmation/sizing gates |
 
 ## Active EAs
 
