@@ -45,11 +45,19 @@ Base backtest method: `.skills/backtest-validation/SKILL.md`
 ## Output Contract
 
 ```yaml
-verdict:             # PASS / WARNING / OVERFIT / FAIL
-wfe:
-oos_sharpe:
-oos_dd_vs_is_delta:
-windows_analyzed:
-data_sufficiency:    # sufficient / insufficient (< 2y) / non-robust (< 5y)
-next_action:         # promote / review / discard
+decision: PASS | WARNING | OVERFIT | FAIL
+files:
+  - reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+validation:
+  wfe: 0.0
+  oos_sharpe: 0.0
+  oos_dd_vs_is_delta: 0.0
+  windows_analyzed: 0
+  data_sufficiency: sufficient | insufficient | non_robust
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Walk-forward robustness issue"
+    evidence: "window id, metric delta, or report reference"
+next_steps:
+  - promote | review_parameters | discard | collect_more_data
 ```

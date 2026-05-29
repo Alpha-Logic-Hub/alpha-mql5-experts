@@ -79,10 +79,20 @@ commit_hash:         # Git commit del código backtesteado
 ## Output Contract
 
 ```yaml
-decision:            # PASS / FAIL / NEEDS_WALK_FORWARD
-report_file:         # Ruta al reporte generado
+decision: PASS | FAIL | NEEDS_WALK_FORWARD
+files:
+  - reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+validation:
+  report_file: reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+  costs_documented: true
+  period_documented: true
+  commit_hash_present: true
+  min_trades_passed: true
+  overfit_screen: PASS | WARNING | FAIL
 risks:
-  - riesgo detectado
-walk_forward:        # YES / NO / NOT_NEEDED
-next_step:           # implementar, re-optimizar, descartar
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Backtest evidence issue"
+    evidence: "missing field, metric threshold, or file reference"
+next_steps:
+  - run walk-forward-audit | promote | re-optimize | discard
 ```

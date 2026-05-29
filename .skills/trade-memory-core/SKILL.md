@@ -27,6 +27,10 @@ direction_sign = +1 for BUY, -1 for SELL
 3. **Calculate R-multiple**: `((exit-entry)*direction_sign)/abs(entry-SL)`. Tag outcome: GOOD (R >= +0.5), BAD (R <= -0.5), UGLY (-0.5 < R < +0.5, messy exit or unclear thesis).
 4. **Store**: save to `Shared/Database/logs/trades/YYYY-MM-DD_EA_NAME_MAGIC.yaml`. Append to monthly index `_index.yaml`.
 
+## Anti-Anchoring Rule
+
+Never infer the active EA, symbol, magic number, ticket, prices, thesis, or lesson from this template. Use only values from the current trade record, current task context, or explicit user input. If the active EA is unknown, return `NEEDS_INFO` instead of reusing sample values.
+
 ## MQL5 Examples
 
 - **BUY XAUUSD**: Entry 2650.50, SL 2649.00, Exit 2654.25. R = ((2654.25-2650.50)*1)/abs(2650.50-2649.00) = 3.75/1.50 = 2.50 → **GOOD**.
@@ -47,18 +51,18 @@ risks:
 next_steps:
   - append_to_monthly_index
 trade:
-  ticket: 12345678
-  symbol: XAUUSD
-  ea: EA_SMC_Scalper
-  magic: 999003
-  direction: BUY
-  entry: 2650.50
-  sl: 2649.00
-  tp: 2654.25
-  exit: 2654.25
-  r_multiple: 2.50
-  outcome: GOOD
-  thesis: "SMC FVG retest with OB confirmation"
-  pnl: 75.00
-  lesson: "FVG held in NY session — repeatable setup"
+  ticket: "<ticket_id_from_trade_record>"
+  symbol: "<symbol_from_trade_record>"
+  ea: "<ea_name_from_current_context>"
+  magic: "<magic_number_from_trade_record>"
+  direction: BUY | SELL
+  entry: "<entry_price>"
+  sl: "<stop_loss_price>"
+  tp: "<take_profit_price_or_null>"
+  exit: "<exit_price>"
+  r_multiple: "<calculated_r_multiple>"
+  outcome: GOOD | BAD | UGLY
+  thesis: "<trade_thesis_from_record_or_user>"
+  pnl: "<net_pnl_after_costs>"
+  lesson: "<specific_lesson_from_this_trade>"
 ```

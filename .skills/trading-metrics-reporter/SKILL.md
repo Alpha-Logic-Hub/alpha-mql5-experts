@@ -79,8 +79,18 @@ If any mandatory field (`symbol`, `spread_pts`, `commit_hash`, `total_trades`, `
 ## Output Contract
 
 ```yaml
-report_path:           # reports/backtests/YYYY-MM-DD_EA_NAME.yaml
-status:                # COMPLETE / INCOMPLETE
-missing_fields: []     # if INCOMPLETE
-next_action:           # use as evidence / fix missing fields
+decision: COMPLETE | INCOMPLETE | FAIL
+files:
+  - reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+validation:
+  report_path: reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+  required_fields_present: true
+  missing_fields: []
+  schema_version: "1.0"
+risks:
+  - severity: WARNING | INFO
+    finding: "Report completeness issue"
+    evidence: "missing field or inconsistent metric"
+next_steps:
+  - use_as_evidence | fix_missing_fields | rerun_backtest
 ```
