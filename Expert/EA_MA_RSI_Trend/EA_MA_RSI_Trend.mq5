@@ -232,14 +232,14 @@ ENUM_SIGNAL_TYPE FilterByHtfTrend(ENUM_SIGNAL_TYPE signal, int htfMAHandle, ENUM
 {
    double htfMA[1];
    if(CopyBuffer(htfMAHandle, 0, 0, 1, htfMA) < 1) {
-      Print("[MA_RSI] HTF filter: failed to read MA value — allowing trade");
-      return signal;
+      Print("[MA_RSI] HTF filter: failed to read MA value — blocking trade");
+      return SIGNAL_NONE;
    }
 
    double price = iClose(_Symbol, htfTF, 0);
    if(price == 0.0) {
-      Print("[MA_RSI] HTF filter: failed to read price — allowing trade");
-      return signal;
+      Print("[MA_RSI] HTF filter: failed to read price — blocking trade");
+      return SIGNAL_NONE;
    }
 
    if(signal == SIGNAL_BUY && price < htfMA[0]) {

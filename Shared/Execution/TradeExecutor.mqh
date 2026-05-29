@@ -17,7 +17,8 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
                double            slDistancePrice,
                double            rr,
                int               magic,
-               string            comment)
+               string            comment,
+               double            maxSpreadPoints = 0.0)
 {
    // --- Pre-trade validations ---
    if(signal == SIGNAL_NONE) {
@@ -43,11 +44,11 @@ bool OpenTrade(ENUM_SIGNAL_TYPE signal,
       Print("[TradeExecutor] WARNING: Cannot read ATR — trade blocked");
       return false;
    }
-   double maxSpreadPrice = atr[0] * 0.3;
+   double maxSpreadPrice = (maxSpreadPoints > 0.0) ? maxSpreadPoints * _Point : atr[0] * 0.3;
    if(maxSpreadPrice > 0 && spreadPrice > maxSpreadPrice) {
       double spreadPts = spreadPrice / _Point;
       double maxPts    = maxSpreadPrice / _Point;
-      Print("[TradeExecutor] ERR-002: Spread too high (", spreadPts, " pts > ", maxPts, " pts = ATR*0.3). Trade blocked.");
+      Print("[TradeExecutor] ERR-002: Spread too high (", spreadPts, " pts > ", maxPts, " pts). Trade blocked.");
       return false;
    }
 
