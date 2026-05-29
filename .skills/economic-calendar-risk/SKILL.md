@@ -35,11 +35,20 @@ description: |
 ## Output Contract
 
 ```yaml
-status:           # BLOCKED / CLEAR
-event_name:       # CPI / FOMC / NFP / null
-window_type:      # before / after / null
-remaining_min:    # minutes until unblock
-expires_at:       # server time when block lifts
-next_event:       # next event name or null
-next_event_in_h:  # hours until next or null
+decision: BLOCKED | CLEAR
+files:
+  - path/to/calendar-source-or-report
+validation:
+  event_name: "<event-name-or-null>"
+  window_type: before | after | null
+  remaining_min: 0
+  expires_at: "<server-time-or-null>"
+  next_event: "<event-name-or-null>"
+  next_event_in_h: 0
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Economic calendar risk"
+    evidence: "event name, window, or source timestamp"
+next_steps:
+  - allow_trading | block_trading | reduce_exposure | recheck_calendar
 ```

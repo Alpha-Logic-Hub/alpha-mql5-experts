@@ -34,12 +34,21 @@ description: |
 ## Output Contract
 
 ```yaml
-ticket_id:        # YYYY-MM-DD_brief-name
-hypothesis:       # falsifiable claim
-invalidation:     # what test result would kill the hypothesis
-min_test:         # reference to strategy-research format
-success_metric:   # e.g. ΔSharpe > 0.5
-priority:         # LOW_PRIORITY / NORMAL / HIGH
-evidence_count:   # number of supporting instances
-status:           # OPEN / NOT_FALSIFIABLE
+decision: OPEN | LOW_PRIORITY | NOT_FALSIFIABLE
+files:
+  - .sdd/research-tickets/YYYY-MM-DD_<brief-name>.yaml
+validation:
+  ticket_id: YYYY-MM-DD_<brief-name>
+  hypothesis: "<falsifiable claim>"
+  invalidation: "<what result kills the hypothesis>"
+  min_test: "<strategy-research test reference>"
+  success_metric: "ΔSharpe > 0.5 or hypothesis-specific metric"
+  priority: LOW_PRIORITY | NORMAL | HIGH
+  evidence_count: 0
+risks:
+  - severity: WARNING | INFO
+    finding: "Weak or non-falsifiable candidate"
+    evidence: "observation count or missing invalidation"
+next_steps:
+  - observe_more | send_to_strategy_research | reject
 ```

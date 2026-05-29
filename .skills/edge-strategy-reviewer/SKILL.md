@@ -38,11 +38,18 @@ description: |
 ## Output Contract
 
 ```yaml
-verdict:          # BLOCKED / PASS / CONDITIONS / FAIL
-overfit_flag:     # true / false
-cost_flag:        # true / false
-lookahead_flag:   # true / false
-narrative_flag:   # true / false
-risks:            # list of identified risks
-fixes:            # list of recommended fixes
+decision: BLOCKED | PASS | CONDITIONS | FAIL
+files:
+  - .sdd/specs/<ea-name>/hypothesis.yaml
+validation:
+  overfit_flag: true | false
+  cost_flag: true | false
+  lookahead_flag: true | false
+  narrative_flag: true | false
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Strategy review issue"
+    evidence: "condition count, cost ratio, or lookahead pattern"
+next_steps:
+  - revise_hypothesis | run_backtest | reduce_conditions | discard
 ```

@@ -54,9 +54,18 @@ Antes de pasar a implementación, verificar:
 ## Output Contract
 
 ```yaml
-decision:            # GO / NO-GO / NEEDS_RESEARCH
-hypothesis_file:     # .sdd/specs/[ea-name]/hypothesis.yaml
+decision: GO | NO-GO | NEEDS_RESEARCH
+files:
+  - .sdd/specs/<ea-name>/hypothesis.yaml
+validation:
+  hypothesis_file: .sdd/specs/<ea-name>/hypothesis.yaml
+  falsifiable: true
+  risk_defined: true
+  invalidation_defined: true
 risks:
-  - riesgo detectado
-next_step:           # research, backtest, implement, discard
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Hypothesis issue"
+    evidence: "missing field or ambiguous rule"
+next_steps:
+  - research | backtest | implement | discard
 ```

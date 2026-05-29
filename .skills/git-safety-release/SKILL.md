@@ -129,10 +129,19 @@ git push origin master
 ## Output Contract
 
 ```yaml
-decision:            # PASS / BLOCKED / NEEDS_FIX
-block_reason:        # Si BLOCKED, explicar por qué
-files_checked:       # Archivos revisados
-secrets_found:       # Cantidad de secretos detectados (0 = OK)
-compile_status:      # OK / FAIL / NOT_APPLICABLE
-next_step:           # commit, fix issues, rebase, push
+decision: PASS | BLOCKED | NEEDS_FIX
+files:
+  - path/to/changed-file
+validation:
+  files_checked: 0
+  secrets_found: 0
+  diff_reviewed: true
+  remote_synced: true
+  compile_status: OK | FAIL | NOT_APPLICABLE
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Git/release safety issue"
+    evidence: "file, command output, or blocked rule"
+next_steps:
+  - commit | fix_issues | rebase | push | ask_human
 ```

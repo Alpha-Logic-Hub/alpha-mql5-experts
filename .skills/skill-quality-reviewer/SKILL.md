@@ -35,15 +35,22 @@ description: |
 ## Output Contract
 
 ```yaml
-file:             # path to SKILL.md
-total_score:      # 0-100
-verdict:          # PASS / CONDITIONS / FAIL
-dimensions:
-  frontmatter:    # score / max
-  triggers:       # score / max
-  rules:          # score / max
-  safety:         # score / max
-  output:         # score / max
-  length:         # score / max
-suggestions:      # ranked list, highest-impact first
+decision: PASS | CONDITIONS | FAIL
+files:
+  - .skills/<skill-name>/SKILL.md
+validation:
+  total_score: 0-100
+  dimensions:
+    frontmatter: "score / max"
+    triggers: "score / max"
+    rules: "score / max"
+    safety: "score / max"
+    output: "score / max"
+    length: "score / max"
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Skill quality issue"
+    evidence: "section, line, or missing rule"
+next_steps:
+  - keep | improve | merge | split | deprecate
 ```

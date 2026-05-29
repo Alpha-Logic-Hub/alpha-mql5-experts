@@ -39,12 +39,20 @@ description: |
 ## Output Contract
 
 ```yaml
-verdict:          # PASS / WARN / FAIL
-checks:
-  ohlcv:          # PASS / WARN / FAIL
-  spread:         # PASS / WARN / FAIL
-  ticks:          # PASS / WARN / FAIL / SKIPPED
-  timezone:       # PASS / FAIL
-  double_conversion: # PASS / FAIL
-details:          # list of specific issues found
+decision: PASS | WARN | FAIL
+files:
+  - path/to/data-or-source-file
+validation:
+  checks:
+    ohlcv: PASS | WARN | FAIL
+    spread: PASS | WARN | FAIL
+    ticks: PASS | WARN | FAIL | SKIPPED
+    timezone: PASS | FAIL
+    double_conversion: PASS | FAIL
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Data quality issue"
+    evidence: "file:line, bar timestamp, or conversion pattern"
+next_steps:
+  - use_data | fix_data | rerun_export | fix_conversion
 ```

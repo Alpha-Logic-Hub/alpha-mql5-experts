@@ -66,6 +66,10 @@ Port useful ideas into the matching active skill:
 | Paradex `trading-recap` | `trading-metrics-reporter` + `trade-memory-core` |
 | Paradex `order-builder` | `mql5-risk-guardrail` confirmation/sizing gates |
 
+## Anti-anchoring rule
+
+Runtime skills MUST use placeholders (`<ea-name>`, `<symbol>`, `<timeframe>`, `<magic>`) in reusable examples and output contracts. Do not include concrete EA names, symbols, magic numbers, tickets, strategy setups, or thesis examples unless they come from the current task context or explicit user input. If the active EA or symbol is unknown, return `NEEDS_INFO` instead of reusing a template value.
+
 ## Active EAs
 
 | EA | Path | Magic | Strategy |

@@ -34,11 +34,19 @@ description: |
 ## Output Contract
 
 ```yaml
-state:            # ALLOWED / CAUTION / NO-TRADE
-atr_ratio:        # current ATR / 20-period avg ATR
-adx:              # ADX(14) value
-session:          # London / New York / Asia / Inactive
-spread_pts:       # current spread in points
-max_exposure_pct: # 100 / 50 / 0
-rationale:        # brief justification
+decision: ALLOWED | CAUTION | NO-TRADE
+files:
+  - path/to/regime-report-or-source
+validation:
+  atr_ratio: 0.0
+  adx: 0.0
+  session: London | New_York | Asia | Inactive
+  spread_pts: 0
+  max_exposure_pct: 100 | 50 | 0
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Market regime issue"
+    evidence: "ATR, ADX, session, spread, or calendar condition"
+next_steps:
+  - allow_trading | reduce_exposure | block_trading
 ```

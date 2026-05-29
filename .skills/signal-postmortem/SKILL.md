@@ -37,14 +37,21 @@ description: |
 ## Output Contract
 
 ```yaml
-verdict:          # GOOD / BAD / UGLY
-pattern_name:     # short label for the identified pattern
-setup_score:      # 1-5
-timing_score:     # 1-5
-context_score:    # 1-5
-execution_score:  # 1-5
-management_score: # 1-5
-error_score:      # 1-5
-key_lesson:       # one-sentence takeaway
-improvement:      # actionable fix
+decision: GOOD | BAD | UGLY
+files:
+  - Shared/Database/logs/trades/YYYY-MM-DD_<ea-name>_<magic>.yaml
+validation:
+  pattern_name: "<short label>"
+  setup_score: 1-5
+  timing_score: 1-5
+  context_score: 1-5
+  execution_score: 1-5
+  management_score: 1-5
+  error_score: 1-5
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Repeated trade error or weak lesson"
+    evidence: "trade id, field, or pattern reference"
+next_steps:
+  - record_lesson | create_edge_candidate | fix_gate | discard_pattern
 ```

@@ -44,10 +44,19 @@ Usar esta skill al crear o modificar Expert Advisors, módulos .mqh, includes, l
 
 ## Output Contract
 
-Responder con:
-- archivos tocados;
-- estructura creada/modificada;
-- validación de includes;
-- handles creados/liberados;
-- estado de compilación;
-- riesgos técnicos pendientes.
+```yaml
+decision: PASS | NEEDS_FIX | BLOCKED
+files:
+  - path/to/changed-file.mq5
+validation:
+  structure_changed: true
+  includes_validated: true
+  handles_released: true
+  compile_status: OK | FAIL | NOT_RUN
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "MQL5 implementation issue"
+    evidence: "file:line, compile output, or rule reference"
+next_steps:
+  - compile | fix_includes | run_risk_guardrail | commit
+```

@@ -39,10 +39,19 @@ description: |
 ## Output Contract
 
 ```yaml
-verdict:            # NOT_FALSIFIABLE / NEEDS_MORE_DATA / FALSIFIED / NOT_FALSIFIED
-baseline_sharpe:
-strategy_sharpe:
-delta_sharpe:
-n_trades:
-next_action:        # refine / walk-forward / discard
+decision: NOT_FALSIFIABLE | NEEDS_MORE_DATA | FALSIFIED | NOT_FALSIFIED
+files:
+  - .sdd/research-tickets/YYYY-MM-DD_<brief-name>.yaml
+validation:
+  baseline_sharpe: 0.0
+  strategy_sharpe: 0.0
+  delta_sharpe: 0.0
+  n_trades: 0
+  min_sample_passed: true
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Research validity issue"
+    evidence: "sample size, baseline result, or invalidation gap"
+next_steps:
+  - refine | walk-forward | discard | collect_more_data
 ```
