@@ -12,6 +12,11 @@ description: |
 
 Risk base: `.skills/mql5-risk-guardrail/SKILL.md`
 
+## Boundary Contract
+
+Esta skill verifica **seguridad runtime de ejecución**. Asume que `mql5-risk-guardrail` ya definió política de riesgo: sizing, SL/TP, drawdown y spread permitido.
+No redefine límites de riesgo; confirma que el código los ejecuta correctamente en cada ruta real de trading.
+
 ## Checklist
 
 ### 1. OrderSend Validation
@@ -25,10 +30,10 @@ Risk base: `.skills/mql5-risk-guardrail/SKILL.md`
 - [ ] 48-50ms → **WARNING** — suggest optimization (reduce indicator count, batch operations)
 - [ ] >= 50ms → **FAIL** — not safe for tick-frequency markets
 
-### 3. Spread & Slippage Gates
-- [ ] Spread check before every entry: max spread per symbol configured
+### 3. Spread & Slippage Implementation
+- [ ] Spread policy from `mql5-risk-guardrail` is enforced before every entry path
 - [ ] Slippage parameter set and verified against symbol's `SYMBOL_TRADE_STOPS_LEVEL`
-- [ ] **Si el EA abre trades y falta spread check → BLOCKER** (no WARNING). Spread alto destruye scalping y backtests.
+- [ ] **Si el EA abre trades y no aplica la política de spread antes de una entrada → BLOCKER** (no WARNING).
 
 ### 4. Emergency Close
 - [ ] 4:55 PM ET emergency close path exists
@@ -44,14 +49,26 @@ Risk base: `.skills/mql5-risk-guardrail/SKILL.md`
 - When using `#include <Trade/Trade.mqh>`, verify `m_trade.ResultRetcode()` after every operation
 - Avoid `OrderSendAsync` without retcode callback
 - Use `GetMicrosecondCount()` diffs for OnTick timing measurements
+- If risk policy is missing, stop and route back to `mql5-risk-guardrail` instead of inventing thresholds here.
 
 ## Output Contract
 
 ```yaml
-verdict:             # PASS / WARNING / SILENT_FAILURE / FAIL
-checks_passed:       # count
-checks_failed:       # [{check: name, location: file:line, severity: }]
-on_tick_budget_ms:
-emergency_close:     # found / missing
-next_action:         # deploy / fix critical / optimize
+decision: PASS | WARNING | SILENT_FAILURE | FAIL
+files:
+  - path/to/file.mq5
+validation:
+  checks_passed: 0
+  checks_failed:
+    - check: retcode_audit | on_tick_budget | spread_policy | emergency_close | slippage
+      location: file:line
+      severity: CRITICAL | WARNING | INFO
+  on_tick_budget_ms: 0
+  emergency_close: found | missing
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Runtime execution issue found"
+    evidence: "file:line or observed behavior"
+next_steps:
+  - deploy | fix critical | optimize | return to mql5-risk-guardrail
 ```

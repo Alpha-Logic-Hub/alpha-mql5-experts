@@ -11,6 +11,11 @@ metadata:
 
 Usar esta skill en cualquier cambio que toque entradas, salidas, lotaje, SL/TP, trailing stop, gestión de posiciones, OrderSend, CTrade o drawdown.
 
+## Boundary Contract
+
+Esta skill decide **política de riesgo**: tamaño, SL/TP, drawdown, spread permitido, martingala/grid y límites por símbolo.
+No reemplaza `execution-safety-review`, que verifica la **implementación runtime**: retcodes por llamada, presupuesto `OnTick`, emergency close y comportamiento de slippage.
+
 ## Hard Rules
 
 - Riesgo efectivo por trade nunca supera el límite configurado.
@@ -19,7 +24,7 @@ Usar esta skill en cualquier cambio que toque entradas, salidas, lotaje, SL/TP, 
 - Lot sizing debe usar propiedades del símbolo: SYMBOL_VOLUME_STEP, SYMBOL_VOLUME_MIN, SYMBOL_VOLUME_MAX, tick value y tick size.
 - Prohibida martingala.
 - Prohibido grid salvo autorización explícita y modo experimental.
-- Spread check obligatorio antes de abrir posición.
+- Política de spread obligatoria antes de abrir posición: límite por símbolo/timeframe y acción si se excede.
 - Daily shield obligatorio si el EA opera real/paper.
 - Auditar ResultRetcode después de toda operación.
 - No ignorar errores de cierre/modificación de posición.
@@ -33,9 +38,9 @@ Usar esta skill en cualquier cambio que toque entradas, salidas, lotaje, SL/TP, 
 | Riesgo > límite | Bloquear cambio |
 | Martingala detectada | Bloquear cambio |
 | Grid no autorizado | Bloquear cambio |
-| Retcode no auditado | Bloquear cambio |
+| Política exige retcode audit pero no hay revisión de ejecución | Bloquear hasta correr `execution-safety-review` |
 | Unidades ambiguas | Bloquear hasta aclarar |
-| **Spread check ausente (EA con ejecución)** | **BLOCKED — no commitear** |
+| **Política de spread ausente (EA con ejecución)** | **BLOCKED — no commitear** |
 | Spread check ausente (research-only, sin ejecución) | WARNING — documentar |
 
 ## Severity Context
@@ -44,7 +49,7 @@ La severidad de ERR-002 (spread check) depende del contexto:
 
 | Contexto | Spread check ausente | Razón |
 |---|---|---|
-| EA que abre trades (real/paper) | **BLOCKED** | Spread alto destruye scalping y backtests. No es cosmético. |
+| EA que abre trades (real/paper) | **BLOCKED** | Debe existir política de spread; `execution-safety-review` verifica que se aplique antes de cada entrada. |
 | Research-only, sin OrderSend | WARNING | Se puede avanzar pero debe documentarse como deuda técnica. |
 
 ## Ciclo de Validación — Qué es "completo"
@@ -64,8 +69,8 @@ Después de que risk-guardrail emite PASS, DEBE ejecutarse `execution-safety-rev
 
 | Skill | Orden | Qué verifica |
 |---|---|---|
-| mql5-risk-guardrail | 1º | SL/TP, lotaje, spread, drawdown, retcodes |
-| execution-safety-review | 2º | OrderSend, OnTick budget, emergency close, slippage |
+| mql5-risk-guardrail | 1º | SL/TP, lotaje, política de spread, drawdown, límites de riesgo |
+| execution-safety-review | 2º | Retcodes por llamada, OrderSend/CTrade, OnTick budget, emergency close, slippage |
 
 **Veredicto final**:
 - BLOCKED si cualquiera de las dos skills emite BLOCKER/BLOCKED
@@ -77,9 +82,9 @@ Después de que risk-guardrail emite PASS, DEBE ejecutarse `execution-safety-rev
 1. Identificar todas las rutas que abren, cierran o modifican trades.
 2. Verificar cálculo de SL/TP.
 3. Verificar cálculo de lotaje.
-4. Verificar spread check.
+4. Verificar política de spread: límite, unidad, símbolo/timeframe y acción al exceder.
 5. Verificar daily shield/drawdown.
-6. Verificar auditoría de retcodes.
+6. Verificar que el cambio active `execution-safety-review` para auditar retcodes por llamada.
 7. Buscar martingala, grid o multiplicadores.
 8. Revisar unidades points, _Point, precio y tick size.
 9. Emitir verdict: PASS, WARNING, o BLOCKED.
@@ -88,10 +93,20 @@ Después de que risk-guardrail emite PASS, DEBE ejecutarse `execution-safety-rev
 
 ## Output Contract
 
-Responder con:
-- verdict: PASS, WARNING, BLOCKED;
-- archivos revisados;
-- reglas verificadas;
-- hallazgos críticos;
-- cambios requeridos;
-- evidencia concreta por archivo/línea si aplica.
+```yaml
+decision: PASS | WARNING | BLOCKED
+files:
+  - path/to/file.mq5
+validation:
+  risk_per_trade: PASS | FAIL
+  sl_tp_policy: PASS | FAIL
+  lot_sizing: PASS | FAIL
+  spread_policy: PASS | FAIL
+  drawdown_shield: PASS | FAIL
+risks:
+  - severity: CRITICAL | WARNING | INFO
+    finding: "Risk issue found"
+    evidence: "file:line or rule reference"
+next_steps:
+  - run execution-safety-review before deploy
+```
