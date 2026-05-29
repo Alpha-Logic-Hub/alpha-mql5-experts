@@ -30,11 +30,11 @@ description: |
 4. **Audit point conversions**: scan for `InpStopLoss * _Point` then multiplied again — DOUBLE_CONVERSION.
 5. **Output**: PASS (all clean), WARN (warnings only), FAIL (any FAIL).
 
-## MQL5 Examples
+## Generic Examples
 
-- **XAUUSD M1**: 0 gaps > 5%, spread > 0, timezone UTC+2 matched → **PASS**.
-- **EURUSD M15**: 15 bars H==L (Monday open), 3% zero spread → **WARN**.
-- **MultiSignal EA**: `StopLoss * _Point` then `sl * _Point` in OrderSend → **FAIL** (DOUBLE_CONVERSION).
+- **`<symbol>` `<timeframe>` clean data**: 0 gaps above threshold, spread > 0, timezone matches broker/server expectation → **PASS**.
+- **`<symbol>` `<timeframe>` suspicious bars**: repeated H==L bars or zero-spread rows exceed tolerance → **WARN**.
+- **`<ea-name>` point conversion bug**: `StopLoss * _Point` then `sl * _Point` in order placement → **FAIL** (DOUBLE_CONVERSION).
 
 ## Output Contract
 

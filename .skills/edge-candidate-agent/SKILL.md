@@ -26,10 +26,10 @@ description: |
 4. **Format ticket**: hypothesis, invalidation condition, min test design, success metric, priority.
 5. **Route**: write to `.sdd/research-tickets/YYYY-MM-DD_brief-name.yaml` and reference in index.
 
-## MQL5 Examples
+## Generic Examples
 
-- **Observation**: "3 of the last 4 winners on EA_SMC_Scalper had FVG retest during London open." Instances = 4 → **NORMAL**. Hypothesis: "London-open FVG retests on XAUUSD produce ΔSharpe > 0.5 over random entry." Invalidation: "Baseline random-entry Sharpe >= strategy Sharpe."
-- **Observation**: "I think breakouts work better on Thursdays." Instances = 1 → **LOW_PRIORITY**. 2 more instances needed before forming hypothesis.
+- **Observation**: "3 of the last 4 winners on `<ea-name>` shared `<setup-condition>` during `<session>`." Instances = 4 → **NORMAL**. Hypothesis: "`<setup-condition>` on `<symbol>` produces ΔSharpe > 0.5 over random entry." Invalidation: "Baseline random-entry Sharpe >= strategy Sharpe."
+- **Observation**: "I think `<pattern>` works better during `<time-window>`." Instances = 1 → **LOW_PRIORITY**. 2 more instances needed before forming hypothesis.
 
 ## Output Contract
 

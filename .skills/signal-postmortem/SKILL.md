@@ -29,10 +29,10 @@ description: |
 4. **Extract pattern**: flag if trade matches known repeated error.
 5. **Generate pattern card**: verdict + key lesson + improvement.
 
-## MQL5 Examples
+## Generic Examples
 
-- **EA_SMC_Scalper +2.5R**: Setup correct (FVG held), NY session, clean execution → **GOOD**. Pattern: "FVG hold in NY session — repeatable."
-- **EA_MA_RSI_Trend -1.0R**: Entry 10 min before CPI, spread 12→48 pts → **BAD** (calendar ignored). Improvement: add economic-calendar-risk gate.
+- **`<ea-name>` +2.5R**: Setup matched the thesis, session/context aligned, clean execution → **GOOD**. Pattern: "<repeatable condition> — repeatable."
+- **`<ea-name>` -1.0R**: Entry occurred near a blocked event or invalid context; spread expanded beyond policy → **BAD**. Improvement: add or enforce the missing gate.
 
 ## Output Contract
 

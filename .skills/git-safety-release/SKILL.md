@@ -48,10 +48,10 @@ Antes de cualquier `git commit`, ejecutar esta checklist:
 
 | Estado de validación | Prefijo de commit | Ejemplo |
 |---|---|---|
-| MVP técnico (sin backtest) | `docs/setup:` o `feat/scaffolding:` | `feat/scaffolding: EA_MA_RSI_Trend estructura base` |
-| Con backtest aprobado | `feat:` o `fix:` | `feat: EA_MA_RSI_Trend validado con backtest WFE=0.72` |
+| MVP técnico (sin backtest) | `docs/setup:` o `feat/scaffolding:` | `feat/scaffolding: add <strategy-name> technical scaffold` |
+| Con backtest aprobado | `feat:` o `fix:` | `feat: validate <strategy-name> with backtest WFE=<value>` |
 | Solo refactor sin cambio funcional | `refactor:` | `refactor: extraer RiskGuardrail a módulo compartido` |
-| Corrección de bug | `fix:` | `fix: spread check ausente en EA_SMC_Scalper` |
+| Corrección de bug | `fix:` | `fix: enforce spread check in <ea-name>` |
 
 **Prohibido**: etiquetar como "validación completa" o "listo para producción" si no se corrió backtest real con reporte.
 

@@ -81,9 +81,9 @@ commit_hash:         # Git commit del código backtesteado
 ```yaml
 decision: PASS | FAIL | NEEDS_WALK_FORWARD
 files:
-  - reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+  - reports/backtests/YYYY-MM-DD_<ea-name>.yaml
 validation:
-  report_file: reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+  report_file: reports/backtests/YYYY-MM-DD_<ea-name>.yaml
   costs_documented: true
   period_documented: true
   commit_hash_present: true

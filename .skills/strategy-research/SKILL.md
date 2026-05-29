@@ -20,11 +20,11 @@ description: |
 4. **Run test**: use single-regime data slice (6-12 months) for speed. MQL5 backtest with realistic spread.
 5. **Verdict**: ΔSharpe < 0.5 → FALSIFIED. ΔSharpe >= 0.5 → NOT_FALSIFIED (requires walk-forward).
 
-## MQL5 Examples
+## Generic Examples
 
-- **MA Crossover XAUUSD**: Generate random-entry baseline (same trade count, random timestamps). 10-shuffle. If baseline mean Sharpe >= real Sharpe → FALSIFIED.
-- **SMC FVG pattern**: Benchmark against entries on any candle with spread < 20. No ΔSharpe > 0.5 → pattern has no edge.
-- **MultiSignal Composite**: Drop one condition per run (permutation_importance). If Sharpe doesn't drop → that condition is decorative.
+- **Indicator crossover on `<symbol>`**: Generate random-entry baseline (same trade count, random timestamps). 10-shuffle. If baseline mean Sharpe >= real Sharpe → FALSIFIED.
+- **Price-action pattern on `<symbol>`**: Benchmark against entries on any candle with spread below the strategy threshold. No ΔSharpe > 0.5 → pattern has no edge.
+- **Composite signal strategy**: Drop one condition per run (permutation_importance). If Sharpe doesn't drop → that condition is decorative.
 
 ## Falsification Patterns (from AGENTS.md)
 

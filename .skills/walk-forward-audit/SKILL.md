@@ -47,7 +47,7 @@ Base backtest method: `.skills/backtest-validation/SKILL.md`
 ```yaml
 decision: PASS | WARNING | OVERFIT | FAIL
 files:
-  - reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+  - reports/backtests/YYYY-MM-DD_<ea-name>.yaml
 validation:
   wfe: 0.0
   oos_sharpe: 0.0

@@ -25,11 +25,11 @@ description: |
 4. **Classify regime**: cross-reference ATR ratio, ADX, session, spread, and HTF (H1) trend direction.
 5. **Output** structured regime label with metrics.
 
-## MQL5 Examples
+## Generic Examples
 
-- **XAUUSD M15**: ATR(14) = 2.50, ADX(14) = 28 → trending. ATR ratio 1.1x avg (0.7-1.3 → normal). NY active, spread 18 pts → **ALLOWED**.
-- **EURUSD M15**: ATR(14) = 0.85 vs avg 0.50 → ratio 1.7x (> 1.5x). Spread 55 pts (> 50). London closed → **CAUTION** (50% exposure).
-- **BTCUSD M5**: FOMC announcement in 15 min. Regime check triggers calendar gate → **NO-TRADE** immediately regardless of ATR/ADX values.
+- **`<symbol>` `<timeframe>` normal trend**: ATR ratio within normal band, ADX > 25, active session, spread within policy → **ALLOWED**.
+- **`<symbol>` `<timeframe>` stressed conditions**: ATR ratio > 1.5x or spread above policy, non-active session → **CAUTION** with reduced exposure.
+- **`<symbol>` `<timeframe>` event risk**: High-impact event within the configured block window → **NO-TRADE** regardless of ATR/ADX values.
 
 ## Output Contract
 

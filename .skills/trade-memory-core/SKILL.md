@@ -25,23 +25,23 @@ direction_sign = +1 for BUY, -1 for SELL
 1. **Entry record**: ticket, symbol, EA, magic, direction, entry price, SL, TP, lot, timestamp, thesis.
 2. **Exit record**: exit price, timestamp, reason (SL/TP/manual), net PnL, commission, swap.
 3. **Calculate R-multiple**: `((exit-entry)*direction_sign)/abs(entry-SL)`. Tag outcome: GOOD (R >= +0.5), BAD (R <= -0.5), UGLY (-0.5 < R < +0.5, messy exit or unclear thesis).
-4. **Store**: save to `Shared/Database/logs/trades/YYYY-MM-DD_EA_NAME_MAGIC.yaml`. Append to monthly index `_index.yaml`.
+4. **Store**: save to `Shared/Database/logs/trades/YYYY-MM-DD_<ea-name>_<magic>.yaml`. Append to monthly index `_index.yaml`.
 
 ## Anti-Anchoring Rule
 
 Never infer the active EA, symbol, magic number, ticket, prices, thesis, or lesson from this template. Use only values from the current trade record, current task context, or explicit user input. If the active EA is unknown, return `NEEDS_INFO` instead of reusing sample values.
 
-## MQL5 Examples
+## Generic R Examples
 
-- **BUY XAUUSD**: Entry 2650.50, SL 2649.00, Exit 2654.25. R = ((2654.25-2650.50)*1)/abs(2650.50-2649.00) = 3.75/1.50 = 2.50 → **GOOD**.
-- **SELL EURUSD**: Entry 1.0850, SL 1.0870, Exit 1.0860 (manual). R = ((1.0860-1.0850)*-1)/abs(1.0850-1.0870) = -0.0010/0.0020 = -0.5 → **UGLY** (chopped).
+- **BUY trade**: if exit is above entry by 2.5x the initial risk distance, R = +2.5 → **GOOD**.
+- **SELL trade**: if exit moves against entry by 0.5x the initial risk distance, R = -0.5 → **UGLY** or **BAD** depending on thesis/execution quality.
 
 ## Output Contract
 
 ```yaml
 decision: PASS | NEEDS_INFO | FAIL
 files:
-  - Shared/Database/logs/trades/YYYY-MM-DD_EA_NAME_MAGIC.yaml
+  - Shared/Database/logs/trades/YYYY-MM-DD_<ea-name>_<magic>.yaml
 validation:
   r_formula: "((exit - entry) * direction_sign) / abs(entry - SL)"
   direction_sign: "+1 BUY / -1 SELL"

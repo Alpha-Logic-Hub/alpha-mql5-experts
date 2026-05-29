@@ -27,7 +27,7 @@ Base format: `.skills/backtest-validation/SKILL.md`
 
 ## Report Template
 
-Save to `reports/backtests/YYYY-MM-DD_EA_NAME.yaml`
+Save to `reports/backtests/YYYY-MM-DD_<ea-name>.yaml`
 
 ```yaml
 meta:
@@ -81,9 +81,9 @@ If any mandatory field (`symbol`, `spread_pts`, `commit_hash`, `total_trades`, `
 ```yaml
 decision: COMPLETE | INCOMPLETE | FAIL
 files:
-  - reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+  - reports/backtests/YYYY-MM-DD_<ea-name>.yaml
 validation:
-  report_path: reports/backtests/YYYY-MM-DD_EA_NAME.yaml
+  report_path: reports/backtests/YYYY-MM-DD_<ea-name>.yaml
   required_fields_present: true
   missing_fields: []
   schema_version: "1.0"

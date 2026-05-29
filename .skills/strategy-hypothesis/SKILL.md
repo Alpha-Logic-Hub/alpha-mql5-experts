@@ -20,7 +20,7 @@ Toda idea debe producir este bloque antes de escribir código:
 
 ```yaml
 hypothesis:
-  market:            # XAUUSD, BTCUSD, EURUSD, etc.
+  market:            # <symbol>, e.g. broker symbol under test
   timeframe:         # M1, M5, M15, H1, H4, D1
   entry_condition:   # Condición exacta que abre el trade
   exit_condition:    # Condición exacta que cierra el trade
