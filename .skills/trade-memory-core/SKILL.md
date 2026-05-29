@@ -47,7 +47,9 @@ validation:
   direction_sign: "+1 BUY / -1 SELL"
   required_fields_present: true
 risks:
-  - missing_sl_or_exit_blocks_r_multiple
+  - severity: CRITICAL
+    finding: "Missing SL or exit blocks R-multiple calculation"
+    evidence: "trade record field"
 next_steps:
   - append_to_monthly_index
 trade:

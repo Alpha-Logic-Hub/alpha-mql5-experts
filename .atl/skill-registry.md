@@ -70,7 +70,9 @@ Port useful ideas into the matching active skill:
 
 Runtime skills MUST use placeholders (`<ea-name>`, `<symbol>`, `<timeframe>`, `<magic>`) in reusable examples and output contracts. Do not include concrete EA names, symbols, magic numbers, tickets, strategy setups, or thesis examples unless they come from the current task context or explicit user input. If the active EA or symbol is unknown, return `NEEDS_INFO` instead of reusing a template value.
 
-## Active EAs
+## Active EAs (inventory only — non-runtime context)
+
+This inventory is not a routing hint and MUST NOT be used to infer the active EA for a task. Use only the current user request, touched files, or explicit task context to select an EA.
 
 | EA | Path | Magic | Strategy |
 |----|------|-------|----------|

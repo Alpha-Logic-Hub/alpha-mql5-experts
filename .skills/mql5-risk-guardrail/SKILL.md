@@ -26,7 +26,7 @@ No reemplaza `execution-safety-review`, que verifica la **implementación runtim
 - Prohibido grid salvo autorización explícita y modo experimental.
 - Política de spread obligatoria antes de abrir posición: límite por símbolo/timeframe y acción si se excede.
 - Daily shield obligatorio si el EA opera real/paper.
-- Auditar ResultRetcode después de toda operación.
+- Exigir auditoría de ResultRetcode después de toda operación; `execution-safety-review` verifica cada llamada concreta.
 - No ignorar errores de cierre/modificación de posición.
 - Verificar unidades: puntos vs precio vs ticks.
 

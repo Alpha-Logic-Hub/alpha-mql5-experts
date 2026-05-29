@@ -29,11 +29,11 @@ description: |
 4. **Look-ahead check**: scan for `Close[0]` used in evaluation (only `Close[1]` is valid).
 5. **Output** PASS/CONDITIONS/FAIL + fixes.
 
-## MQL5 Examples
+## Generic Checks
 
-- **5 conditions** (MA, RSI, MACD, Stoch, ATR): 5 > 3 → **FAIL** (overfit). Fix: reduce to 2-3.
-- **Profit 5 pts, spread 3 pts**: 1.67x < 2x → **CONDITIONS**. Fix: widen target to 8+ pts.
-- **`Close[0]` in entry**: **FAIL** (look-ahead). Replace with `Close[1]`.
+- **Too many price-dependent conditions**: `<condition-count>` > 3 → **FAIL** (overfit risk). Fix: reduce to the smallest falsifiable rule set.
+- **Cost-sensitive target**: expected profit per trade < 2x average spread → **CONDITIONS**. Fix: adjust target/entry logic or discard.
+- **Current-bar entry dependency**: using an unclosed bar for confirmation → **FAIL** (look-ahead/repaint risk). Fix: use closed-bar confirmation.
 
 ## Output Contract
 
