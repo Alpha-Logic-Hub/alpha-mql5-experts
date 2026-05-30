@@ -1,45 +1,45 @@
 # <skill-name>
 
-<One paragraph: what this skill protects or enables, who should invoke it, and why it matters.>
+<Un párrafo: qué protege o habilita esta skill, quién debería invocarla y por qué importa.>
 
-## When to use
+## Cuándo usarla
 
-Use this skill when:
+Usá esta skill cuando:
 
-- <Trigger or task context>
-- <File/path/context signal>
-- <Agent role or workflow gate>
+- <Trigger o contexto de tarea>
+- <Señal de archivo/path/contexto>
+- <Rol de agente o workflow gate>
 
-Do not use this skill when:
+No uses esta skill cuando:
 
-- <Boundary that belongs to another skill>
-- <Case where the skill would overreach>
+- <Límite que pertenece a otra skill>
+- <Caso donde la skill se excedería de su responsabilidad>
 
-## Quick path
+## Camino rápido
 
-1. Confirm the task matches the activation contract.
-2. Apply the hard rules in `SKILL.md`.
-3. Produce the required output contract.
-4. Escalate to the owning gate if the result is `BLOCKED`, `FAIL`, or `NEEDS_INFO`.
+1. Confirmar que la tarea coincide con el activation contract.
+2. Aplicar las hard rules de `SKILL.md`.
+3. Producir el output contract requerido.
+4. Escalar al gate dueño si el resultado es `BLOCKED`, `FAIL` o `NEEDS_INFO`.
 
-## Responsibilities
+## Responsabilidades
 
-| Area | This skill does | This skill does not do |
+| Área | Esta skill hace | Esta skill no hace |
 |---|---|---|
-| <domain area> | <specific responsibility> | <explicit non-responsibility> |
-| <domain area> | <specific responsibility> | <explicit non-responsibility> |
+| <área de dominio> | <responsabilidad específica> | <no-responsabilidad explícita> |
+| <área de dominio> | <responsabilidad específica> | <no-responsabilidad explícita> |
 
-## Required inputs
+## Inputs requeridos
 
-| Input | Why it matters | If missing |
+| Input | Por qué importa | Si falta |
 |---|---|---|
-| `<ea-name>` | Identifies the strategy under review. | Return `NEEDS_INFO`. |
-| `<symbol>` / `<timeframe>` | Prevents generic trading conclusions. | Return `NEEDS_INFO` unless irrelevant. |
-| `<evidence-file>` | Makes the decision reproducible. | Return `NEEDS_INFO` or `FAIL`, depending on the gate. |
+| `<ea-name>` | Identifica la estrategia bajo review. | Devolver `NEEDS_INFO`. |
+| `<symbol>` / `<timeframe>` | Evita conclusiones trading genéricas. | Devolver `NEEDS_INFO` salvo que sea irrelevante. |
+| `<evidence-file>` | Hace reproducible la decisión. | Devolver `NEEDS_INFO` o `FAIL`, según el gate. |
 
-## Output summary
+## Resumen del output
 
-The full output contract lives in `SKILL.md`. The README summary should stay short:
+El output contract completo vive en `SKILL.md`. El resumen del README debe mantenerse corto:
 
 ```yaml
 decision: PASS | FAIL | BLOCKED | NEEDS_INFO
@@ -56,37 +56,37 @@ next_steps:
 
 ## Smoke test prompts
 
-Use these prompts to validate that the skill activates correctly without anchoring to a specific strategy.
+Usá estos prompts para validar que la skill se active correctamente sin anclarse a una estrategia concreta.
 
-### Happy path
-
-```text
-<Prompt that provides enough context and should produce PASS or a clear review result.>
-```
-
-### Ambiguous path
+### Camino feliz
 
 ```text
-<Prompt with missing EA/symbol/timeframe/evidence that should produce NEEDS_INFO.>
+<Prompt con suficiente contexto que debería producir PASS o un resultado claro de review.>
 ```
 
-### Dangerous path
+### Camino ambiguo
 
 ```text
-<Prompt that asks the agent to bypass a gate or accept weak evidence; should be blocked.>
+<Prompt con EA/símbolo/timeframe/evidencia faltante que debería producir NEEDS_INFO.>
 ```
 
-## Related skills
+### Camino peligroso
 
-| Skill | Relationship |
+```text
+<Prompt que pide saltear un gate o aceptar evidencia débil; debería bloquearse.>
+```
+
+## Skills relacionadas
+
+| Skill | Relación |
 |---|---|
-| `<other-skill>` | <When to hand off or combine.> |
-| `<other-skill>` | <Boundary or escalation path.> |
+| `<other-skill>` | <Cuándo delegar o combinar.> |
+| `<other-skill>` | <Límite o camino de escalamiento.> |
 
-## Maintenance checklist
+## Checklist de mantenimiento
 
-- [ ] README matches `SKILL.md` activation and output contract.
-- [ ] No concrete EA, symbol, ticket, magic number, or strategy setup appears unless required by current task context.
-- [ ] Examples use placeholders: `<ea-name>`, `<symbol>`, `<timeframe>`, `<magic>`.
-- [ ] Boundaries are explicit enough to prevent skill overlap.
-- [ ] Smoke tests include happy, ambiguous, and dangerous prompts.
+- [ ] El README coincide con el activation contract y output contract de `SKILL.md`.
+- [ ] No aparecen EA, símbolos, tickets, magic numbers ni setups concretos salvo que la tarea actual lo requiera.
+- [ ] Los ejemplos usan placeholders: `<ea-name>`, `<symbol>`, `<timeframe>`, `<magic>`.
+- [ ] Los límites son lo bastante explícitos para evitar solapamiento entre skills.
+- [ ] Los smoke tests incluyen camino feliz, ambiguo y peligroso.

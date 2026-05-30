@@ -1,85 +1,85 @@
-# Alpha Logic Hub Skills
+# Skills de Alpha Logic Hub
 
-Runtime skills live in `.skills/`. They are operational rules for agents, not long-form tutorials.
+Las skills runtime viven en `.skills/`. Son reglas operativas para agentes, no tutoriales largos.
 
-Use this README to choose the right skill, check coverage, and spot missing responsibilities before adding new skills.
+Usá este README para elegir la skill correcta, revisar cobertura y detectar responsabilidades faltantes antes de crear nuevas skills.
 
-## Quick routing
+## Ruteo rápido
 
-| Work type | Primary skill | Supporting skills | Gate owner |
+| Tipo de trabajo | Skill principal | Skills de apoyo | Dueño del gate |
 |---|---|---|---|
-| New strategy idea | `strategy-hypothesis` | `strategy-research`, `edge-strategy-reviewer` | `STRATEGIST` |
-| Research and falsification | `strategy-research` | `edge-candidate-agent`, `data-quality-checker` | `RESEARCHER` |
-| MQL5 implementation | `mql5-enterprise-coder` | `mql5-risk-guardrail`, `execution-safety-review` | `MQL5_ENGINEER` |
-| Risk, sizing, and deploy safety | `mql5-risk-guardrail` | `market-regime-check`, `economic-calendar-risk` | `RISK_GUARDIAN` |
-| Backtest validation | `backtest-validation` | `walk-forward-audit`, `trading-metrics-reporter` | `BACKTEST_AUDITOR` |
-| Execution review | `execution-safety-review` | `mql5-risk-guardrail`, `signal-postmortem` | `EXECUTION_REVIEWER` |
-| Market context | `market-regime-check` | `economic-calendar-risk`, `data-quality-checker` | `MARKET_REGIME_ANALYST` |
-| Trade memory and lessons | `trade-memory-core` | `signal-postmortem`, `trading-metrics-reporter` | `TRADE_MEMORY_ANALYST` |
-| Git safety | `git-safety-release` | `skill-quality-reviewer` when skill files changed | `GIT_GUARDIAN` |
-| Skill maintenance | `skill-quality-reviewer` | `.atl/skill-registry.md` | `SKILL_CURATOR` |
+| Nueva idea de estrategia | `strategy-hypothesis` | `strategy-research`, `edge-strategy-reviewer` | `STRATEGIST` |
+| Research y falsación | `strategy-research` | `edge-candidate-agent`, `data-quality-checker` | `RESEARCHER` |
+| Implementación MQL5 | `mql5-enterprise-coder` | `mql5-risk-guardrail`, `execution-safety-review` | `MQL5_ENGINEER` |
+| Riesgo, sizing y seguridad de deploy | `mql5-risk-guardrail` | `market-regime-check`, `economic-calendar-risk` | `RISK_GUARDIAN` |
+| Validación de backtest | `backtest-validation` | `walk-forward-audit`, `trading-metrics-reporter` | `BACKTEST_AUDITOR` |
+| Revisión de ejecución | `execution-safety-review` | `mql5-risk-guardrail`, `signal-postmortem` | `EXECUTION_REVIEWER` |
+| Contexto de mercado | `market-regime-check` | `economic-calendar-risk`, `data-quality-checker` | `MARKET_REGIME_ANALYST` |
+| Memoria y lecciones de trades | `trade-memory-core` | `signal-postmortem`, `trading-metrics-reporter` | `TRADE_MEMORY_ANALYST` |
+| Seguridad de Git | `git-safety-release` | `skill-quality-reviewer` si cambiaron archivos de skills | `GIT_GUARDIAN` |
+| Mantenimiento de skills | `skill-quality-reviewer` | `.atl/skill-registry.md` | `SKILL_CURATOR` |
 
-## Coverage matrix
+## Matriz de cobertura
 
-| Capability | Covered by | Status | Notes |
+| Capacidad | Cubierta por | Estado | Notas |
 |---|---|---|---|
-| Falsifiable hypothesis | `strategy-hypothesis` | Covered | Blocks coding until metric and invalidation are explicit. |
-| Evidence search / disproof | `strategy-research` | Covered | Should challenge assumptions before implementation. |
-| Candidate edge intake | `edge-candidate-agent` | Covered | Converts observations into research tickets. |
-| Pre-backtest edge critique | `edge-strategy-reviewer` | Covered | Screens plausibility and overfit risk early. |
-| MQL5 modular coding | `mql5-enterprise-coder` | Covered | Code quality only; does not decide risk. |
-| Risk guardrails | `mql5-risk-guardrail` | Covered | Blocking authority for sizing, SL, DD, spread, and unsafe execution risk. |
-| Execution safety | `execution-safety-review` | Covered | Focuses on order lifecycle, retcodes, tick budget, and silent failures. |
-| Data quality | `data-quality-checker` | Covered | Validates OHLCV/tick/timezone/point-price assumptions. |
-| Regime filter | `market-regime-check` | Covered | Produces ALLOWED / CAUTION / NO-TRADE context. |
-| News/calendar risk | `economic-calendar-risk` | Covered | Blocks or reduces exposure around high-impact events. |
-| Backtest acceptance | `backtest-validation` | Covered | Requires reproducible costs, period, params, metrics, and commit hash. |
-| Walk-forward robustness | `walk-forward-audit` | Covered | Tests OOS consistency and WFE. |
-| Trading metrics report | `trading-metrics-reporter` | Covered | Normalizes report output for review. |
-| Trade journal memory | `trade-memory-core` | Covered | Stores lessons using reusable placeholders, not anchored examples. |
-| Signal postmortem | `signal-postmortem` | Covered | Explains GOOD / BAD / UGLY outcomes after signals or trades. |
-| Commit / push safety | `git-safety-release` | Covered | Checks diff, secrets, and release discipline. |
-| Skill quality audit | `skill-quality-reviewer` | Covered | Reviews runtime skill clarity and anti-anchoring compliance. |
-| Per-skill README docs | `README.template.md` | Needs rollout | Add one README per skill only after validating this template. |
-| Prompt smoke tests | Future `tests/skills/` docs | Missing | Recommended next: 2-3 test prompts per skill. |
+| Hipótesis falsable | `strategy-hypothesis` | Cubierta | Bloquea coding hasta que métrica e invalidación estén explícitas. |
+| Búsqueda de evidencia / disproof | `strategy-research` | Cubierta | Debe desafiar supuestos antes de implementar. |
+| Entrada de edge candidato | `edge-candidate-agent` | Cubierta | Convierte observaciones en tickets de research. |
+| Crítica pre-backtest del edge | `edge-strategy-reviewer` | Cubierta | Revisa plausibilidad y riesgo de overfit temprano. |
+| Coding modular MQL5 | `mql5-enterprise-coder` | Cubierta | Solo calidad de código; no decide riesgo. |
+| Guardrails de riesgo | `mql5-risk-guardrail` | Cubierta | Autoridad bloqueante para sizing, SL, DD, spread y riesgo de ejecución insegura. |
+| Seguridad de ejecución | `execution-safety-review` | Cubierta | Se enfoca en ciclo de órdenes, retcodes, tick budget y fallos silenciosos. |
+| Calidad de datos | `data-quality-checker` | Cubierta | Valida supuestos de OHLCV/ticks/timezone/point-price. |
+| Filtro de régimen | `market-regime-check` | Cubierta | Produce contexto ALLOWED / CAUTION / NO-TRADE. |
+| Riesgo de noticias/calendario | `economic-calendar-risk` | Cubierta | Bloquea o reduce exposición alrededor de eventos de alto impacto. |
+| Aceptación de backtest | `backtest-validation` | Cubierta | Exige costos, período, params, métricas y commit hash reproducibles. |
+| Robustez walk-forward | `walk-forward-audit` | Cubierta | Testea consistencia OOS y WFE. |
+| Reporte de métricas trading | `trading-metrics-reporter` | Cubierta | Normaliza output de reportes para review. |
+| Memoria de trade journal | `trade-memory-core` | Cubierta | Guarda lecciones con placeholders reutilizables, sin ejemplos anclados. |
+| Postmortem de señales | `signal-postmortem` | Cubierta | Explica resultados GOOD / BAD / UGLY después de señales o trades. |
+| Seguridad commit / push | `git-safety-release` | Cubierta | Revisa diff, secretos y disciplina de release. |
+| Auditoría de calidad de skills | `skill-quality-reviewer` | Cubierta | Revisa claridad runtime y cumplimiento anti-anchoring. |
+| READMEs por skill | `README.template.md` | En rollout | Agregar un README por skill después de validar este template. |
+| Smoke tests de prompts | Futuros docs `tests/skills/` | Faltante | Próximo recomendado: 2-3 prompts de prueba por skill. |
 
-## Responsibility boundaries
+## Límites de responsabilidad
 
-| Skill | Must do | Must not do |
+| Skill | Debe hacer | No debe hacer |
 |---|---|---|
-| `mql5-enterprise-coder` | Implement modular, compilable MQL5. | Approve position sizing, deploy risk, or strategy validity. |
-| `mql5-risk-guardrail` | Block unsafe risk, sizing, spread, SL, DD, or martingale behavior. | Refactor code style unless it creates risk. |
-| `backtest-validation` | Validate evidence quality and reproducibility. | Promote a strategy without risk and execution gates. |
-| `strategy-hypothesis` | Define measurable thesis and invalidation. | Write production MQL5 before the hypothesis is clear. |
-| `trade-memory-core` | Extract reusable lessons from trade history. | Invent context not present in the current task. |
-| `git-safety-release` | Protect commits, pushes, secrets, and release hygiene. | Override domain vetoes from risk, backtest, or execution reviewers. |
+| `mql5-enterprise-coder` | Implementar MQL5 modular y compilable. | Aprobar sizing, riesgo de deploy o validez estratégica. |
+| `mql5-risk-guardrail` | Bloquear riesgo, sizing, spread, SL, DD o martingala inseguros. | Refactorizar estilo de código salvo que cree riesgo. |
+| `backtest-validation` | Validar calidad y reproducibilidad de evidencia. | Promover una estrategia sin gates de riesgo y ejecución. |
+| `strategy-hypothesis` | Definir tesis medible e invalidación. | Escribir MQL5 productivo antes de que la hipótesis esté clara. |
+| `trade-memory-core` | Extraer lecciones reutilizables desde historial de trades. | Inventar contexto que no esté en la tarea actual. |
+| `git-safety-release` | Proteger commits, pushes, secretos e higiene de release. | Ignorar vetos de riesgo, backtest o ejecución. |
 
-## Documentation rollout plan
+## Plan de rollout de documentación
 
-1. Validate `README.template.md` against 2-3 representative skills.
-2. Add per-skill READMEs in small batches:
+1. Validar `README.template.md` contra 2-3 skills representativas.
+2. Agregar READMEs por skill en batches chicos:
    - Batch 1: `mql5-enterprise-coder`, `mql5-risk-guardrail`, `backtest-validation`.
-   - Batch 2: strategy and research skills.
-   - Batch 3: market, memory, git, and quality skills.
-3. Add prompt smoke tests after README shape is approved.
-4. Refresh `.atl/skill-registry.md` only if triggers, names, or paths change.
+   - Batch 2: skills de estrategia y research.
+   - Batch 3: skills de mercado, memoria, git y calidad.
+3. Agregar smoke tests de prompts después de aprobar la forma de los README.
+4. Refrescar `.atl/skill-registry.md` solo si cambian triggers, nombres o paths.
 
-## Quality checklist for every skill
+## Checklist de calidad para cada skill
 
-- [ ] Trigger is clear and specific.
-- [ ] Activation contract says when to use it.
-- [ ] Hard rules are runtime instructions, not tutorial prose.
-- [ ] Decision gates are explicit.
-- [ ] Output contract is machine-checkable.
-- [ ] Boundaries say what the skill must not decide.
-- [ ] Examples use placeholders like `<ea-name>`, `<symbol>`, `<timeframe>`, and `<magic>`.
-- [ ] No concrete EA, symbol, ticket, magic number, or strategy setup is used unless it comes from the active task.
+- [ ] El trigger es claro y específico.
+- [ ] El activation contract dice cuándo usarla.
+- [ ] Las hard rules son instrucciones runtime, no prosa tutorial.
+- [ ] Los decision gates son explícitos.
+- [ ] El output contract es machine-checkable.
+- [ ] Los límites dicen qué NO debe decidir la skill.
+- [ ] Los ejemplos usan placeholders como `<ea-name>`, `<symbol>`, `<timeframe>` y `<magic>`.
+- [ ] No aparecen EA, símbolos, tickets, magic numbers ni setups concretos salvo que vengan de la tarea activa.
 
-## References
+## Referencias
 
-| Resource | Path |
+| Recurso | Path |
 |---|---|
 | Skill registry | `.atl/skill-registry.md` |
 | Runtime skills | `.skills/<skill-name>/SKILL.md` |
-| Per-skill README template | `.skills/README.template.md` |
-| Legacy skill archive | `.factory/skills/README.md` |
+| Template de README por skill | `.skills/README.template.md` |
+| Archivo legacy de skills | `.factory/skills/README.md` |
