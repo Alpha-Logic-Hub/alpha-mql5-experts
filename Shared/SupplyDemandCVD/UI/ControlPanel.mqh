@@ -18,7 +18,7 @@ double g_sumLosses    = 0;
 
 // --- Runtime state (mirrors inputs but can be changed from panel) ---
 bool   g_panelAutoTrading = true;
-bool   g_useSMC           = true;
+bool   g_useSMC           = false;
 bool   g_useShark         = true;
 bool   g_useVP            = true;
 double g_riskPercent      = 0.15;
@@ -194,7 +194,7 @@ void CloseAllPanelPositions()
 void InitControlPanel()
 {
    g_panelAutoTrading = true;
-   g_useSMC = InpUseOTE;
+   g_useSMC = false;
    g_useShark = InpUseMomentumBreakout;
    g_useVP = InpUseVolumeProfile;
    g_riskPercent = InpRiskPercent;

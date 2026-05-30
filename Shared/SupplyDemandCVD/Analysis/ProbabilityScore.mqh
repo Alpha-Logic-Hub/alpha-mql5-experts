@@ -176,6 +176,5 @@ double ScoreToRR(double score, double rrHigh, double rrMid, double rrLow,
 //+------------------------------------------------------------------+
 double ScoreToLotMult(double score, double threshMid)
 {
-   if(score >= threshMid) return 1.0;
-   return 0.5;
+   return 1.0;
 }

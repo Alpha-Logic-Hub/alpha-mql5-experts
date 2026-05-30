@@ -43,8 +43,8 @@ input bool     InpUseHTFFilter        = true;
 input bool     InpCloseOnOpposite     = false;
 input bool     InpUseTrailingStop     = true;
 input double   InpTrailingTriggerUSD  = 0.50;
-input double   InpTrailATRMult        = 0.5;
-input double   InpTrailingDistance    = 10;
+input double   InpTrailATRMult        = 0.8;
+input double   InpTrailingDistance    = 30;
 input bool     InpUseTrendFilter      = false;
 
 input group "=== FILTROS MATEMATICOS ALGEBRAICOS ==="

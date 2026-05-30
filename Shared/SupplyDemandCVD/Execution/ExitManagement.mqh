@@ -69,11 +69,7 @@ void UpdateTrailingStop()
       double tp = p.TakeProfit();
       double profitUSD = p.Profit();
 
-      double profitRatio = profitUSD / MathMax(InpTrailingTriggerUSD, 0.01);
       double trailMult = InpTrailATRMult;
-      if(profitRatio >= 8.0) trailMult = InpTrailATRMult * 0.3;
-      else if(profitRatio >= 4.0) trailMult = InpTrailATRMult * 0.5;
-      else if(profitRatio >= 2.0) trailMult = InpTrailATRMult * 0.7;
 
       double dynAtrPts = (atrBuf[0] * trailMult) / _Point;
       double finalTrailPoints = MathMax(dynAtrPts, MathMax(trailingDistPoints, minDistance));
