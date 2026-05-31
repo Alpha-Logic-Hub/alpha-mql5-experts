@@ -110,8 +110,23 @@ void UpdateDashboard(double bScore, double sScore, int htfBias,
    else if(per==16396)tfStr="H12";else if(per==16408)tfStr="D1";else if(per==32769)tfStr="W1";
    else if(per==49153)tfStr="MN";else tfStr=IntegerToString(per);
    string symShort = StringSubstr(Symbol(), 0, 6);
-   MakeTxt(DPF+"TR_TF", X+190, Y+4, tfStr+" | "+symShort, C_GRAY, 7, "Arial");
-   Y += H+sep;
+    MakeTxt(DPF+"TR_TF", X+190, Y+4, tfStr+" | "+symShort, C_GRAY, 7, "Arial");
+    Y += H+sep;
+
+    // ── Market regime row (v2.3) ───────────────────────────────────
+    if(InpUseRegimeFilter)
+    {
+       MarketRegime r = g_regime;
+       color regC = r.regime==REGIME_TRENDING ? C_GREEN :
+                    r.regime==REGIME_WEAK_TRENDING ? C_YELLOW :
+                    r.regime==REGIME_RANGING ? C_ORANGE :
+                    r.regime==REGIME_VOLATILE ? C_RED : C_GRAY;
+       string regTxt = r.name + " (ADX " + DoubleToString(r.adx,0) + ")";
+       MakeRect(DPF+"RG_BG", X, Y, W, H, C_HEADER, regC);
+       MakeTxt (DPF+"RG_L",  X+8,   Y+4, "REGIME", C_GRAY, 7, "Arial");
+       MakeTxt (DPF+"RG_V",  X+100, Y+4, regTxt,  regC,   8, "Arial Bold");
+       Y += H+sep;
+    }
 
    // ── Score row
    color scC = actScore>=7?C_GREEN:actScore>=5?C_YELLOW:C_RED;

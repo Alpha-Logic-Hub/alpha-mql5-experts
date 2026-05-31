@@ -4,7 +4,7 @@
 //|                           Developer: Hammad Dilber / Ported       |
 //+------------------------------------------------------------------+
 #property copyright "PrecisionSniper EA"
-#property version   "2.2"
+#property version   "2.3"
 #property strict
 
 #include <Trade\Trade.mqh>
@@ -92,6 +92,15 @@ input int               InpMaxDailyTrades    = 5;
 input int               InpEmergencyCloseHour = 20;
 input int               InpEmergencyCloseMin  = 55;
 
+input group "=== MARKET REGIME (v2.3) ==="
+input bool              InpUseRegimeFilter       = true;
+input int               InpRegimeADXPeriod       = 14;
+input int               InpRegimeATRPeriod       = 14;
+input double            InpRegimeTrendThreshold   = 25.0;
+input double            InpRegimeRangingThreshold = 20.0;
+input double            InpRegimeVolatilitySpike  = 2.0;
+input int               InpRegimeCacheSeconds     = 60;
+
 input group "=== VISUAL ==="
 input bool              ShowDashboard = true;
 input bool              ShowTPSL      = true;
@@ -103,6 +112,7 @@ input bool              ShowTrail     = true;
 //| MODULES                                                           |
 //+------------------------------------------------------------------+
 #include "Core\Definitions.mqh"
+#include "Core\MarketRegime.mqh"
 #include "Signals\PrecisionSignals.mqh"
 #include "Engine\PrecisionEngine.mqh"
 #include "UI\PrecisionUI.mqh"
@@ -286,6 +296,17 @@ int OnInit()
    ResetDailyShield(g_state, InpMagicNumber, _Symbol, g_pos);
    g_lastTradeWasLoss = LoadLossState();
 
+   // Market regime filter (v2.3)
+   if(InpUseRegimeFilter)
+   {
+      g_regimeTrendThreshold   = InpRegimeTrendThreshold;
+      g_regimeRangingThreshold = InpRegimeRangingThreshold;
+      g_regimeVolatilitySpike  = InpRegimeVolatilitySpike;
+      g_regimeCacheSeconds     = InpRegimeCacheSeconds;
+      if(!InitRegimeFilter(_Symbol, PERIOD_CURRENT, InpRegimeADXPeriod, InpRegimeATRPeriod))
+         Print("[PrecSniper] WARNING: Regime filter init failed — continuing without");
+   }
+
    IndicatorSetString(INDICATOR_SHORTNAME, "PrecSniper EA");
    return INIT_SUCCEEDED;
 }
@@ -300,6 +321,7 @@ void OnDeinit(const int reason)
    IndicatorRelease(hATR);      IndicatorRelease(hMACD);
    IndicatorRelease(hADX);      IndicatorRelease(hHTFFast);
    IndicatorRelease(hHTFSlow);
+   ReleaseRegimeFilter();
    ClearDashboard();
    ClearVisuals();
    ObjectsDeleteAll(0, "PSL_");
@@ -356,7 +378,16 @@ void OnTick()
    if(newBar)
    {
       if(!MQLInfoInteger(MQL_TESTER)) DrawEMAs();
-      if(IsWithinSession())
+
+      // Regime gate (v2.3)
+      bool regimeBlocked = IsRegimeBlocked();
+      if(regimeBlocked)
+      {
+         static bool regimeWarned = false;
+         if(!regimeWarned) { Print("[PrecSniper] BLOCKED: Volatile regime — no new trades"); regimeWarned = true; }
+      }
+
+      if(IsWithinSession() && !regimeBlocked)
       {
          EvaluateSignals();
          ExecuteSignal();

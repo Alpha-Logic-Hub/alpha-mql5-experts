@@ -192,16 +192,31 @@ bool OpenTrade(int direction, double score, double entryPrice,
       }
    }
 
-   // ── Lot sizing: dynamic (risk-based) or fixed ──
-   double lot;
-   if(InpFixedLot > 0)
-   {
-      lot = MathMin(InpFixedLot, InpMaxLot);
-   }
-   else
-   {
-      lot = CalculateLotSize(riskDist, InpMaxLot, 0, InpRiskPercent, _Symbol);
-   }
+    // ── Lot sizing: dynamic (risk-based) or fixed ──
+    double lot;
+    if(InpFixedLot > 0)
+    {
+       lot = MathMin(InpFixedLot, InpMaxLot);
+    }
+    else
+    {
+       lot = CalculateLotSize(riskDist, InpMaxLot, 0, InpRiskPercent, _Symbol);
+    }
+
+    // Regime lot multiplier (v2.3)
+    double regimeMult = GetRegimeLotMultiplier();
+    if(regimeMult <= 0.0)
+    {
+       Print("[PrecSniper] BLOCKED: Market regime forbids trading");
+       return false;
+    }
+    if(regimeMult < 0.99)
+    {
+       double oldLot = lot;
+       lot *= regimeMult;
+       lot = MathMax(lot, SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN));
+       Print("[PrecSniper] Regime: lot reduced ", DoubleToString(oldLot,2), " → ", DoubleToString(lot,2), " (x", DoubleToString(regimeMult,2), ")");
+    }
 
    ENUM_ORDER_TYPE type = (direction == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
 
