@@ -382,7 +382,11 @@ void OnTick()
 
    uint elapsed = GetTickCount() - startMs;
    if(elapsed > 50)
-      Print("[PrecSniper] WARNING: OnTick budget exceeded: ", elapsed, "ms (limit: 50ms)");
+   {
+      static int budgetWarns = 0;
+      if(++budgetWarns <= 3)
+         Print("[PrecSniper] WARNING: OnTick budget exceeded: ", elapsed, "ms (limit: 50ms)");
+   }
 }
 //+------------------------------------------------------------------+
 

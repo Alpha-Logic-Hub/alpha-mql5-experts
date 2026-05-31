@@ -94,7 +94,12 @@ void EvaluateSignals()
    g_signal.sScore = 0;
 
    int bars = iBars(_Symbol, _Period);
-   if(bars < pTrend + 60) return;
+   if(bars < pTrend + 60)
+   {
+      static bool once1 = false;
+      if(!once1){Print("[PrecSniper] TRACE: Not enough bars (", bars, " < ", pTrend+60, ")"); once1=true;}
+      return;
+   }
 
    int bufSize = 5;
 
@@ -106,25 +111,29 @@ void EvaluateSignals()
    ArraySetAsSeries(adx,true); ArraySetAsSeries(dip,true); ArraySetAsSeries(dim,true);
    ArraySetAsSeries(htfF,true); ArraySetAsSeries(htfS,true);
 
-   if(CopyBuffer(hEmaFast, 0, 0, bufSize, ef) <= 0)   return;
-   if(CopyBuffer(hEmaSlow, 0, 0, bufSize, es) <= 0)   return;
-   if(CopyBuffer(hEmaTrend,0, 0, bufSize, et) <= 0)   return;
-   if(CopyBuffer(hRSI,     0, 0, bufSize, rsi) <= 0)  return;
-   if(CopyBuffer(hATR,     0, 0, bufSize, atr) <= 0)  return;
-   if(CopyBuffer(hMACD,    0, 0, bufSize, mm) <= 0)   return;
-   if(CopyBuffer(hMACD,    1, 0, bufSize, ms) <= 0)   return;
-   if(CopyBuffer(hADX,     0, 0, bufSize, adx) <= 0)  return;
-   if(CopyBuffer(hADX,     1, 0, bufSize, dip) <= 0)  return;
-   if(CopyBuffer(hADX,     2, 0, bufSize, dim) <= 0)  return;
+   if(CopyBuffer(hEmaFast, 0, 0, bufSize, ef) <= 0)   {static bool o1=false;if(!o1){Print("[PrecSniper] TRACE: hEmaFast CopyBuffer failed");o1=true;}return;}
+   if(CopyBuffer(hEmaSlow, 0, 0, bufSize, es) <= 0)   {static bool o2=false;if(!o2){Print("[PrecSniper] TRACE: hEmaSlow CopyBuffer failed");o2=true;}return;}
+   if(CopyBuffer(hEmaTrend,0, 0, bufSize, et) <= 0)   {static bool o3=false;if(!o3){Print("[PrecSniper] TRACE: hEmaTrend CopyBuffer failed");o3=true;}return;}
+   if(CopyBuffer(hRSI,     0, 0, bufSize, rsi) <= 0)  {static bool o4=false;if(!o4){Print("[PrecSniper] TRACE: hRSI CopyBuffer failed");o4=true;}return;}
+   if(CopyBuffer(hATR,     0, 0, bufSize, atr) <= 0)  {static bool o5=false;if(!o5){Print("[PrecSniper] TRACE: hATR CopyBuffer failed");o5=true;}return;}
+   if(CopyBuffer(hMACD,    0, 0, bufSize, mm) <= 0)   {static bool o6=false;if(!o6){Print("[PrecSniper] TRACE: hMACD main CopyBuffer failed");o6=true;}return;}
+   if(CopyBuffer(hMACD,    1, 0, bufSize, ms) <= 0)   {static bool o7=false;if(!o7){Print("[PrecSniper] TRACE: hMACD signal CopyBuffer failed");o7=true;}return;}
+   if(CopyBuffer(hADX,     0, 0, bufSize, adx) <= 0)  {static bool o8=false;if(!o8){Print("[PrecSniper] TRACE: hADX main CopyBuffer failed");o8=true;}return;}
+   if(CopyBuffer(hADX,     1, 0, bufSize, dip) <= 0)  {static bool o9=false;if(!o9){Print("[PrecSniper] TRACE: hADX +DI CopyBuffer failed");o9=true;}return;}
+   if(CopyBuffer(hADX,     2, 0, bufSize, dim) <= 0)  {static bool oa=false;if(!oa){Print("[PrecSniper] TRACE: hADX -DI CopyBuffer failed");oa=true;}return;}
 
    int htfCopy = (HTF == PERIOD_CURRENT) ? bufSize : MathMin(bufSize, 5);
-   if(CopyBuffer(hHTFFast, 0, 0, htfCopy, htfF) <= 0) return;
-   if(CopyBuffer(hHTFSlow, 0, 0, htfCopy, htfS) <= 0) return;
+   if(CopyBuffer(hHTFFast, 0, 0, htfCopy, htfF) <= 0) {static bool ob=false;if(!ob){Print("[PrecSniper] TRACE: hHTFFast CopyBuffer failed");ob=true;}return;}
+   if(CopyBuffer(hHTFSlow, 0, 0, htfCopy, htfS) <= 0) {static bool oc=false;if(!oc){Print("[PrecSniper] TRACE: hHTFSlow CopyBuffer failed");oc=true;}return;}
 
    // ── Bar data (r=1 is last completed bar) ────────────────────────
    int r  = 1;
    int r1 = 2;
-   if(r1 >= ArraySize(ef) || r1 >= ArraySize(es)) return;
+   if(r1 >= ArraySize(ef) || r1 >= ArraySize(es))
+   {
+      static bool od=false;if(!od){Print("[PrecSniper] TRACE: ArraySize too small ef=",ArraySize(ef)," es=",ArraySize(es));od=true;}
+      return;
+   }
 
    double cEf  = ef[r],  cEs  = es[r],  cEt  = et[r];
    double pEf  = ef[r1], pEs  = es[r1];
@@ -136,7 +145,7 @@ void EvaluateSignals()
    double cHtfF = htfF[htfR], cHtfS = htfS[htfR];
 
    MqlRates prev[1];
-   if(CopyRates(_Symbol, _Period, 1, 1, prev) <= 0) return;
+   if(CopyRates(_Symbol, _Period, 1, 1, prev) <= 0) {static bool oe=false;if(!oe){Print("[PrecSniper] TRACE: CopyRates failed");oe=true;}return;}
    double open_  = prev[0].open;
    double high_  = prev[0].high;
    double low_   = prev[0].low;
@@ -262,6 +271,13 @@ void EvaluateSignals()
    g_signal.adx        = cAdx;
    g_signal.trendStr   = trendStr;
    g_signal.volRegStr  = volRegStr;
+
+   static int callCount = 0;
+   callCount++;
+   if(callCount % 20 == 1)
+      Print("[PrecSniper] EvaluateSignals OK (call #", callCount, "): buy=", doBuy, " sell=", doSell,
+            " bSc=", DoubleToString(bScore,1), " sSc=", DoubleToString(sScore,1),
+            " bullX=", bullCross, " bearX=", bearCross);
 }
 
 #endif // _PSNIPER_SIGNALS_
