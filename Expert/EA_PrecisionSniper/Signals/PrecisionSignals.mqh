@@ -223,6 +223,35 @@ void EvaluateSignals()
 
    if(doBuy && doSell) doSell = false;
 
+   // ── One-shot diagnostic: dump ALL indicator values on first bar ──
+   static bool diagnosticDone = false;
+   if(!diagnosticDone && (cEf > 0 || cEs > 0))
+   {
+      diagnosticDone = true;
+      Print("═══ PrecisionSniper DIAGNOSTIC ═══");
+      Print("  Symbol: ", _Symbol, " TF: ", EnumToString(PERIOD_CURRENT), " Bars: ", bars);
+      Print("  Preset: pFast=", pFast, " pSlow=", pSlow, " pTrend=", pTrend, " pScore=", pScore);
+      Print("  EMA Fast=", DoubleToString(cEf,5), " Slow=", DoubleToString(cEs,5), " Trend=", DoubleToString(cEt,5));
+      Print("  EMA prev: Fast=", DoubleToString(pEf,5), " Slow=", DoubleToString(pEs,5));
+      Print("  Price: O=", DoubleToString(open_,5), " H=", DoubleToString(high_,5), " L=", DoubleToString(low_,5), " C=", DoubleToString(close_,5));
+      Print("  RSI=", DoubleToString(cRsi,1), " pRSI=", DoubleToString(pRsiVal,1));
+      Print("  ATR=", DoubleToString(cAtr,5), " ATR_SMA42=", DoubleToString(atrSma,5), " VRatio=", DoubleToString(atrSma>0?cAtr/atrSma:0,2));
+      Print("  ADX=", DoubleToString(cAdx,1), " +DI=", DoubleToString(cDip,1), " -DI=", DoubleToString(cDim,1), " Strong=", strong);
+      Print("  MACD main=", DoubleToString(cMm,5), " sig=", DoubleToString(cMs,5));
+      Print("  HTF F=", DoubleToString(cHtfF,5), " S=", DoubleToString(cHtfS,5), " Bias=", htfBias, " Enabled=", htfEnabled);
+      Print("  Volume: tick=", prev[0].tick_volume, " avg=", DoubleToString(volAvg,0), " spike=", volAbove);
+      double diagBody = MathAbs(close_-open_);
+      double diagBodyTh = cAtr*(barSec<=60?0.03:barSec<=300?0.05:barSec<=900?0.07:0.10);
+      Print("  Body=", DoubleToString(diagBody,5), " threshold=", DoubleToString(diagBodyTh,5), " OK=", realBody);
+      Print("  BULL: cross=", bullCross, " trend=", aboveTrend, " rsiOK=", (cRsi<72), " body=", realBody, " extend=", notExtended);
+      Print("  BEAR: cross=", bearCross, " trend=", belowTrend, " rsiOK=", (cRsi>28), " body=", realBody, " extend=", notExtended);
+      Print("  bScore=", DoubleToString(bScore,1), " sScore=", DoubleToString(sScore,1), " minScore=", pScore, " grade=", GetGrade(MathMax(bScore,sScore)));
+      Print("  Cooldown: bars=", effectiveCooldown, " lastBar=", g_eBar, " idx=", currentIdx, " OK=", cooldownOK);
+      Print("  g_lastDir=", g_lastDir, " FilterOK(b)=", FilterOK(bScore), " FilterOK(s)=", FilterOK(sScore));
+      Print("  DECISION: doBuy=", doBuy, " doSell=", doSell);
+      Print("══════════════════════════════════════");
+   }
+
    // ── Diagnostic: log WHY a cross was rejected ───────────────────
    if(!doBuy && bullCross)
    {

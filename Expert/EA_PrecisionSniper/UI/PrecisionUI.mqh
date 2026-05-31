@@ -162,13 +162,16 @@ void UpdateDashboard(double bScore, double sScore, int htfBias,
    // ── Data rows
    string htfStr = htfBias==1?"▲ Bullish":htfBias==-1?"▼ Bearish":"● Neutral";
    color  htfC   = htfBias==1?C_GREEN:htfBias==-1?C_RED:C_YELLOW;
-   color  rsiC   = rsi>70?C_RED:rsi<30?C_GREEN:rsi>50?C_GREEN:C_RED;
-   color  adxC   = strongTrend?C_GREEN:C_ORANGE;
-   color  volC   = volReg=="High"?C_RED:volReg=="Low"?C_GRAY:C_GREEN;
+    color  rsiC   = rsi>70?C_RED:rsi<30?C_GREEN:rsi>50?C_GREEN:C_RED;
+    color  adxC   = strongTrend?C_GREEN:C_ORANGE;
+    color  volC   = volReg=="High"?C_RED:volReg=="Low"?C_GRAY:C_GREEN;
+
+    string rsiLabel = (rsi > 0) ? DoubleToString(rsi,1)+(rsi>70?" OB":rsi<30?" OS":"") : "--";
+    string adxLabel = (adx > 0) ? DoubleToString(adx,1)+(strongTrend?" Strong":" Weak") : "--";
 
    Row(DPF+"D0", X,Y,W,H,LW, "HTF Bias",   htfStr, htfC); Y+=H+sep;
-   Row(DPF+"D1", X,Y,W,H,LW, "RSI",        DoubleToString(rsi,1)+(rsi>70?" OB":rsi<30?" OS":""), rsiC); Y+=H+sep;
-   Row(DPF+"D2", X,Y,W,H,LW, "ADX",        DoubleToString(adx,1)+(strongTrend?" Strong":" Weak"), adxC); Y+=H+sep;
+    Row(DPF+"D1", X,Y,W,H,LW, "RSI",        rsiLabel, rsiC); Y+=H+sep;
+    Row(DPF+"D2", X,Y,W,H,LW, "ADX",        adxLabel, adxC); Y+=H+sep;
    Row(DPF+"D3", X,Y,W,H,LW, "Volatility", volReg, volC); Y+=H+sep;
    Row(DPF+"D4", X,Y,W,H,LW, "Grade Filter", gradeNames[(int)GradeFilter], C_WHITE); Y+=H+sep;
 
