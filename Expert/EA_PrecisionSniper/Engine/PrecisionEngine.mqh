@@ -154,6 +154,7 @@ bool OpenTrade(int direction, double score, double entryPrice,
    // Double-check: no orphan positions
    if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) > 0)
    {
+      Print("[PrecSniper] BLOCKED: Orphan position detected");
       g_ticket = 0;
       return false;
    }
@@ -161,7 +162,10 @@ bool OpenTrade(int direction, double score, double entryPrice,
    // Risk shield check
    if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity,
                                           g_state.dailyPL, g_state.effShieldPercent))
+   {
+      Print("[PrecSniper] BLOCKED: Daily risk shield triggered (PL=", DoubleToString(g_state.dailyPL,2), ")");
       return false;
+   }
 
    // Daily trade limit
    datetime today = StringToTime(TimeToString(TimeCurrent(), TIME_DATE));
@@ -171,7 +175,10 @@ bool OpenTrade(int direction, double score, double entryPrice,
       g_dailyTradeCount = 0;
    }
    if(InpMaxDailyTrades > 0 && g_dailyTradeCount >= InpMaxDailyTrades)
+   {
+      Print("[PrecSniper] BLOCKED: Daily trade limit reached (", g_dailyTradeCount, "/", InpMaxDailyTrades, ")");
       return false;
+   }
 
    // Spread filter (moved inside OpenTrade — auditor pattern)
    if(InpMaxSpreadPoints > 0)

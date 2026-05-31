@@ -361,6 +361,11 @@ void OnTick()
          EvaluateSignals();
          ExecuteSignal();
       }
+      else
+      {
+         static bool sessionLogged = false;
+         if(!sessionLogged) { Print("[PrecSniper] BLOCKED: Outside session hours"); sessionLogged = true; }
+      }
    }
 
    // ── Dashboard update (new bar only, skip in tester) ─────────────

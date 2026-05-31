@@ -214,6 +214,36 @@ void EvaluateSignals()
 
    if(doBuy && doSell) doSell = false;
 
+   // ── Diagnostic: log WHY a cross was rejected ───────────────────
+   if(!doBuy && bullCross)
+   {
+      string why = "";
+      if(!aboveTrend)          why += "NO_aboveTrend ";
+      if(cRsi >= 72)          {why += "RSI_OB("; why += DoubleToString(cRsi,1); why += ") ";}
+      if(!realBody)            why += "NO_realBody ";
+      if(!notExtended)         why += "NO_notExtended ";
+      if(!htfNotAgainst)       why += "HTF_against ";
+      if(bScore < (double)pScore) {why += "Score("; why += DoubleToString(bScore,1); why += "<"; why += IntegerToString(pScore); why += ") ";}
+      if(!FilterOK(bScore))    {why += "Grade("; why += GetGrade(bScore); why += ") ";}
+      if(g_lastDir == 1)       why += "LastWasBuy ";
+      if(!cooldownOK)          {why += "Cooldown("; why += IntegerToString(effectiveCooldown); why += " bars) ";}
+      Print("[PrecSniper] BULL CROSS rejected: ", why, " | Score=", DoubleToString(bScore,1));
+   }
+   if(!doSell && bearCross)
+   {
+      string why = "";
+      if(!belowTrend)          why += "NO_belowTrend ";
+      if(cRsi <= 28)          {why += "RSI_OS("; why += DoubleToString(cRsi,1); why += ") ";}
+      if(!realBody)            why += "NO_realBody ";
+      if(!notExtended)         why += "NO_notExtended ";
+      if(!htfNotAgainstS)      why += "HTF_against ";
+      if(sScore < (double)pScore) {why += "Score("; why += DoubleToString(sScore,1); why += "<"; why += IntegerToString(pScore); why += ") ";}
+      if(!FilterOK(sScore))    {why += "Grade("; why += GetGrade(sScore); why += ") ";}
+      if(g_lastDir == -1)      why += "LastWasSell ";
+      if(!cooldownOK)          {why += "Cooldown("; why += IntegerToString(effectiveCooldown); why += " bars) ";}
+      Print("[PrecSniper] BEAR CROSS rejected: ", why, " | Score=", DoubleToString(sScore,1));
+   }
+
    // ── Display strings ─────────────────────────────────────────────
    string trendStr = (cEf > cEs && aboveTrend) ? "Bullish"
                    : (cEf < cEs && belowTrend) ? "Bearish"
