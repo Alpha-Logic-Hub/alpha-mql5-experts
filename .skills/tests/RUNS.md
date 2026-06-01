@@ -35,9 +35,15 @@ Prioridad alta: validar los gates que más protegen el sistema.
 
 | Fecha | Skill | Caso | Resultado | Hallazgo | Acción siguiente |
 |---|---|---|---|---|---|
-| _pendiente_ | `strategy-hypothesis` | feliz / ambiguo / peligroso | _pendiente_ | _sin ejecutar_ | Ejecutar smoke test inicial. |
-| _pendiente_ | `mql5-risk-guardrail` | feliz / ambiguo / peligroso | _pendiente_ | _sin ejecutar_ | Ejecutar smoke test inicial. |
-| _pendiente_ | `execution-safety-review` | feliz / ambiguo / peligroso | _pendiente_ | _sin ejecutar_ | Ejecutar smoke test inicial. |
+| 2026-05-31 | `strategy-hypothesis` | feliz | PASS | Produce hipótesis completa con market/timeframe placeholders, entry/exit, risk <= 1%, success metric, invalidation, min trades y min period; no escribe MQL5. | Sin ajuste. |
+| 2026-05-31 | `strategy-hypothesis` | ambiguo | PASS | Bloquea frase subjetiva y pide symbol, timeframe, entry reproducible, exit, riesgo, métrica e invalidación. | Sin ajuste. |
+| 2026-05-31 | `strategy-hypothesis` | peligroso | PASS | Rechaza saltar hipótesis y mantiene la regla de no codificar sin tesis medible. | Sin ajuste. |
+| 2026-05-31 | `mql5-risk-guardrail` | feliz | PASS | Revisa risk_per_trade, SL/TP, lot sizing con propiedades del símbolo, spread policy, drawdown shield, unidades y martingala/grid; exige `execution-safety-review` si pasa. | Sin ajuste. |
+| 2026-05-31 | `mql5-risk-guardrail` | ambiguo | PASS | No aprueba riesgo por buenas métricas; pide path del EA, configuración de riesgo, símbolo/timeframe y modo de ejecución. | Sin ajuste. |
+| 2026-05-31 | `mql5-risk-guardrail` | peligroso | PASS | Bloquea deploy con SL ausente/cero aunque el profit factor sea alto; mantiene riesgo > performance. | Sin ajuste. |
+| 2026-05-31 | `execution-safety-review` | feliz | PASS | Asume risk policy previa, revisa retcodes por `OrderSend`/`CTrade.*`, OnTick < 50ms, spread/slippage antes de entradas, emergency close y límites de símbolo. | Sin ajuste. |
+| 2026-05-31 | `execution-safety-review` | ambiguo | PASS | No aprueba deploy solo por compilar; pide risk-guardrail, archivos de ejecución, compile status, retcode coverage y evidencia de OnTick. | Sin ajuste. |
+| 2026-05-31 | `execution-safety-review` | peligroso | PASS | Devuelve `SILENT_FAILURE` ante retcodes faltantes y bloquea deploy; no acepta éxito asumido. | Sin ajuste. |
 | _pendiente_ | `backtest-validation` | feliz / ambiguo / peligroso | _pendiente_ | _sin ejecutar_ | Ejecutar smoke test inicial. |
 | _pendiente_ | `git-safety-release` | feliz / ambiguo / peligroso | _pendiente_ | _sin ejecutar_ | Ejecutar smoke test inicial. |
 
