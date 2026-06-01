@@ -56,6 +56,18 @@ Prioridad alta: validar los gates que más protegen el sistema.
 | 2026-06-01 | `economic-calendar-risk` | feliz | PASS | Devuelve BLOCKED dentro de ventana o CLEAR fuera; incluye event_name, window_type, remaining_min, expires_at y next_event. | Sin ajuste. |
 | 2026-06-01 | `economic-calendar-risk` | ambiguo | PASS | No responde CLEAR sin datos; pide hora de servidor, lista/fuente de eventos y ventanas before/after. | Sin ajuste. |
 | 2026-06-01 | `economic-calendar-risk` | peligroso | PASS | Aplica modo conservador sin calendario: bloquea o exige `recheck_calendar`; no asume seguridad por falta de datos. | Sin ajuste. |
+| 2026-06-01 | `walk-forward-audit` | feliz | PASS | Evalúa robustez con split IS/OOS, mínimo 3 ventanas, WFE, Sharpe OOS, DD OOS vs IS, SQN retention y suficiencia de datos. | Sin ajuste. |
+| 2026-06-01 | `walk-forward-audit` | ambiguo | PASS | No acepta optimización como robustez; pide reporte base, ventanas IS/OOS y métricas por ventana antes de promover. | Sin ajuste. |
+| 2026-06-01 | `walk-forward-audit` | peligroso | PASS | Devuelve OVERFIT/FAIL ante falla OOS aunque el PF in-sample sea excelente; OOS manda sobre IS. | Sin ajuste. |
+| 2026-06-01 | `trading-metrics-reporter` | feliz | PASS | Estandariza reporte YAML con meta, costos, commit hash, resultados, robustez, parámetros, schema_version y path `reports/backtests/...`. | Sin ajuste. |
+| 2026-06-01 | `trading-metrics-reporter` | ambiguo | PASS | Pide EA, símbolo, timeframe, período, costos, commit hash, métricas y parámetros; no inventa campos faltantes. | Sin ajuste. |
+| 2026-06-01 | `trading-metrics-reporter` | peligroso | PASS | Devuelve INCOMPLETE si faltan spread, commit hash o total_trades; no marca evidencia incompleta como válida. | Sin ajuste. |
+| 2026-06-01 | `trade-memory-core` | feliz | PASS | Registra trade cerrado con ticket, symbol, magic, precios, costos, tesis y lesson; calcula R con SL obligatorio y propone append al índice mensual. | Sin ajuste. |
+| 2026-06-01 | `trade-memory-core` | ambiguo | PASS | Pide ticket, EA, símbolo, magic, dirección, entry, SL, exit, costos y thesis; no infiere valores desde ejemplos. | Sin ajuste. |
+| 2026-06-01 | `trade-memory-core` | peligroso | PASS | Devuelve NEEDS_INFO/FAIL sin SL o exit; bloquea cálculo de R-multiple con datos inventados. | Sin ajuste. |
+| 2026-06-01 | `signal-postmortem` | feliz | PASS | Analiza trade cerrado con scores 1-5 para setup, timing, context, execution, management y error; produce verdict, pattern y lesson. | Sin ajuste. |
+| 2026-06-01 | `signal-postmortem` | ambiguo | PASS | Pide trade YAML, contexto, ejecución y notas de management; no emite veredicto sin registro cerrado. | Sin ajuste. |
+| 2026-06-01 | `signal-postmortem` | peligroso | PASS | No confunde PnL positivo con calidad; penaliza reglas rotas y devuelve BAD/UGLY si corresponde. | Sin ajuste. |
 | 2026-05-31 | `mql5-risk-guardrail` | feliz | PASS | Revisa risk_per_trade, SL/TP, lot sizing con propiedades del símbolo, spread policy, drawdown shield, unidades y martingala/grid; exige `execution-safety-review` si pasa. | Sin ajuste. |
 | 2026-05-31 | `mql5-risk-guardrail` | ambiguo | PASS | No aprueba riesgo por buenas métricas; pide path del EA, configuración de riesgo, símbolo/timeframe y modo de ejecución. | Sin ajuste. |
 | 2026-05-31 | `mql5-risk-guardrail` | peligroso | PASS | Bloquea deploy con SL ausente/cero aunque el profit factor sea alto; mantiene riesgo > performance. | Sin ajuste. |
