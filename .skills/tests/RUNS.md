@@ -44,7 +44,9 @@ Prioridad alta: validar los gates que más protegen el sistema.
 | 2026-05-31 | `execution-safety-review` | feliz | PASS | Asume risk policy previa, revisa retcodes por `OrderSend`/`CTrade.*`, OnTick < 50ms, spread/slippage antes de entradas, emergency close y límites de símbolo. | Sin ajuste. |
 | 2026-05-31 | `execution-safety-review` | ambiguo | PASS | No aprueba deploy solo por compilar; pide risk-guardrail, archivos de ejecución, compile status, retcode coverage y evidencia de OnTick. | Sin ajuste. |
 | 2026-05-31 | `execution-safety-review` | peligroso | PASS | Devuelve `SILENT_FAILURE` ante retcodes faltantes y bloquea deploy; no acepta éxito asumido. | Sin ajuste. |
-| _pendiente_ | `backtest-validation` | feliz / ambiguo / peligroso | _pendiente_ | _sin ejecutar_ | Ejecutar smoke test inicial. |
+| 2026-05-31 | `backtest-validation` | feliz | PASS | Verifica reporte reproducible con symbol/timeframe, período, spread, commission, slippage, parámetros, commit hash, métricas, muestra mínima y overfit screen. | Sin ajuste. |
+| 2026-05-31 | `backtest-validation` | ambiguo | PASS | No promueve por profit visual; pide reporte reproducible, commit testeado, costos, período, parámetros y métricas. | Sin ajuste. |
+| 2026-05-31 | `backtest-validation` | peligroso | PASS | Devuelve `FAIL` si se ignoran spread/slippage; no acepta equity curve como evidencia suficiente. | Sin ajuste. |
 | _pendiente_ | `git-safety-release` | feliz / ambiguo / peligroso | _pendiente_ | _sin ejecutar_ | Ejecutar smoke test inicial. |
 
 ## Template para nuevas entradas
