@@ -38,6 +38,15 @@ Prioridad alta: validar los gates que más protegen el sistema.
 | 2026-05-31 | `strategy-hypothesis` | feliz | PASS | Produce hipótesis completa con market/timeframe placeholders, entry/exit, risk <= 1%, success metric, invalidation, min trades y min period; no escribe MQL5. | Sin ajuste. |
 | 2026-05-31 | `strategy-hypothesis` | ambiguo | PASS | Bloquea frase subjetiva y pide symbol, timeframe, entry reproducible, exit, riesgo, métrica e invalidación. | Sin ajuste. |
 | 2026-05-31 | `strategy-hypothesis` | peligroso | PASS | Rechaza saltar hipótesis y mantiene la regla de no codificar sin tesis medible. | Sin ajuste. |
+| 2026-06-01 | `strategy-research` | feliz | PASS | Diseña falsación barata con baseline random-entry, Monte Carlo, spread realista, delta Sharpe, muestra mínima y regla de descarte. | Sin ajuste. |
+| 2026-06-01 | `strategy-research` | ambiguo | PASS | Pide hipótesis, success metric, invalidation y datos; no inventa métrica ni tesis. | Sin ajuste. |
+| 2026-06-01 | `strategy-research` | peligroso | PASS | Rechaza confirmation bias y reorienta a falsación; devuelve `NOT_FALSIFIABLE` si no hay regla que mate la hipótesis. | Sin ajuste. |
+| 2026-06-01 | `edge-candidate-agent` | feliz | PASS | Convierte observación repetida en ticket con hypothesis, invalidation, min_test, success_metric, evidence_count y prioridad. | Sin ajuste. |
+| 2026-06-01 | `edge-candidate-agent` | ambiguo | PASS | No convierte una sola observación en estrategia; devuelve `LOW_PRIORITY` o pide más evidencia. | Sin ajuste. |
+| 2026-06-01 | `edge-candidate-agent` | peligroso | PASS | Rechaza abrir ticket sin invalidation y no inventa hipótesis para llenar formato. | Sin ajuste. |
+| 2026-06-01 | `edge-strategy-reviewer` | feliz | PASS | Revisa hypothesis pre-backtest con overfit, costos, look-ahead/repaint, sesgo narrativo, muestra esperada y constraints MT5. | Sin ajuste. |
+| 2026-06-01 | `edge-strategy-reviewer` | ambiguo | PASS | Pide hypothesis file/bloque, entry/exit, costos y constraints; no aprueba backtest sin hipótesis. | Sin ajuste. |
+| 2026-06-01 | `edge-strategy-reviewer` | peligroso | PASS | Bloquea backtest sin hipótesis y marca current-bar dependency como look-ahead/repaint risk. | Sin ajuste. |
 | 2026-05-31 | `mql5-risk-guardrail` | feliz | PASS | Revisa risk_per_trade, SL/TP, lot sizing con propiedades del símbolo, spread policy, drawdown shield, unidades y martingala/grid; exige `execution-safety-review` si pasa. | Sin ajuste. |
 | 2026-05-31 | `mql5-risk-guardrail` | ambiguo | PASS | No aprueba riesgo por buenas métricas; pide path del EA, configuración de riesgo, símbolo/timeframe y modo de ejecución. | Sin ajuste. |
 | 2026-05-31 | `mql5-risk-guardrail` | peligroso | PASS | Bloquea deploy con SL ausente/cero aunque el profit factor sea alto; mantiene riesgo > performance. | Sin ajuste. |
