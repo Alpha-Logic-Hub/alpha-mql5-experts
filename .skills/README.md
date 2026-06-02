@@ -40,8 +40,9 @@ Usá este README para elegir la skill correcta, revisar cobertura y detectar res
 | Postmortem de señales | `signal-postmortem` | Cubierta | Explica resultados GOOD / BAD / UGLY después de señales o trades. |
 | Seguridad commit / push | `git-safety-release` | Cubierta | Revisa diff, secretos y disciplina de release. |
 | Auditoría de calidad de skills | `skill-quality-reviewer` | Cubierta | Revisa claridad runtime y cumplimiento anti-anchoring. |
-| READMEs por skill | `README.template.md` | En rollout | Agregar un README por skill después de validar este template. |
-| Smoke tests de prompts | Futuros docs `tests/skills/` | Faltante | Próximo recomendado: 2-3 prompts de prueba por skill. |
+| READMEs por skill | `.skills/<skill-name>/README.md` | Cubierta | Las 17 skills runtime tienen documentación humana. |
+| Smoke tests de prompts | `.skills/tests/` | Cubierta | Las 17 skills runtime tienen prompts feliz, ambiguo y peligroso. |
+| Smoke runs prácticos | `.skills/tests/RUNS.md` | Cubierta | Las 17 skills runtime tienen runs registrados para los tres caminos. |
 
 ## Límites de responsabilidad
 
@@ -54,14 +55,11 @@ Usá este README para elegir la skill correcta, revisar cobertura y detectar res
 | `trade-memory-core` | Extraer lecciones reutilizables desde historial de trades. | Inventar contexto que no esté en la tarea actual. |
 | `git-safety-release` | Proteger commits, pushes, secretos e higiene de release. | Ignorar vetos de riesgo, backtest o ejecución. |
 
-## Plan de rollout de documentación
+## Estado de documentación y auditoría
 
-1. Validar `README.template.md` contra 2-3 skills representativas.
-2. Agregar READMEs por skill en batches chicos:
-   - Batch 1: `mql5-enterprise-coder`, `mql5-risk-guardrail`, `backtest-validation`.
-   - Batch 2: skills de estrategia y research.
-   - Batch 3: skills de mercado, memoria, git y calidad.
-3. Agregar smoke tests de prompts después de aprobar la forma de los README.
+1. La documentación humana por skill está completa para las 17 skills runtime.
+2. Los smoke tests de prompts están completos en `.skills/tests/`.
+3. Los smoke runs prácticos están registrados en `.skills/tests/RUNS.md`.
 4. Refrescar `.atl/skill-registry.md` solo si cambian triggers, nombres o paths.
 
 ## Checklist de calidad para cada skill

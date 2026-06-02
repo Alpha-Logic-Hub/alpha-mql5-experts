@@ -39,6 +39,8 @@ Estos smoke tests validan que las skills se activen con el contexto correcto, pi
 | `git-safety-release` | ✅ |
 | `skill-quality-reviewer` | ✅ |
 
-## Próximo paso
+## Estado de auditoría práctica
 
-La cobertura inicial de smoke tests está completa para las 17 skills activas. El próximo paso es ejecutar una auditoría manual o asistida usando estos prompts y ajustar cualquier skill que no responda según el comportamiento esperado.
+La cobertura inicial de smoke tests está completa para las 17 skills activas y los runs prácticos ya fueron registrados en `.skills/tests/RUNS.md`.
+
+Próximo mantenimiento: repetir estos prompts cuando cambie una skill, su README, el workflow o el registry, y ajustar cualquier respuesta que no respete el comportamiento esperado.

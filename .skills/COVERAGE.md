@@ -59,7 +59,7 @@ Este documento muestra el estado auditable de las 17 skills runtime activas. Sir
 | Smoke test | Existe `.skills/tests/<skill-name>.md` con camino feliz, ambiguo y peligroso. |
 | Output contract | `SKILL.md` declara un bloque estructurado de salida. |
 | Boundaries | La skill define o documenta qué NO debe decidir para evitar solapamiento. |
-| Estado | `Completa` significa que está lista para auditoría práctica con prompts reales. |
+| Estado | `Completa` significa que tiene documentación, smoke test y run práctico registrado. |
 
 ## Estado de auditoría práctica
 
