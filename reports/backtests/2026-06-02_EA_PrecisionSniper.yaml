@@ -1,0 +1,133 @@
+# Backtest Validation Report — EA_PrecisionSniper
+# Status: INCOMPLETE — this is a reproducibility contract, not performance evidence.
+# Date: 2026-06-02
+# Commit: 30bc5b1
+
+schema_version: "1.0"
+
+validation:
+  decision: INCOMPLETE
+  reason: "No Strategy Tester result export has been provided yet. Do not promote or deploy from this file."
+  required_fields_present: false
+  missing_fields:
+    - symbol.name
+    - symbol.timeframe
+    - testing.model
+    - testing.deposit
+    - period.from
+    - period.to
+    - costs.spread_pts
+    - costs.commission
+    - costs.slippage
+    - results.total_trades
+    - results.profit_factor
+    - results.net_profit
+    - results.max_drawdown_pct
+    - results.max_drawdown_usd
+    - results.sharpe_ratio
+    - results.sqn
+    - results.win_rate_pct
+    - results.expected_payoff
+    - robustness.wfe
+    - robustness.psr
+    - robustness.dsr
+    - robustness.mc95_dd_pct
+    - robustness.pbo
+
+meta:
+  ea: EA_PrecisionSniper
+  main_file: Expert/EA_PrecisionSniper/PrecisionSniper_EA.mq5
+  version: "2.3"
+  magic: 999456
+  commit_hash: 30bc5b1
+  compile_report: reports/compile/2026-06-02_EA_PrecisionSniper.md
+  hypothesis: null
+
+symbol:
+  name: null
+  timeframe: null
+
+testing:
+  platform: MetaTrader 5 Strategy Tester
+  model: null
+  optimization: false
+  forward: null
+  deposit: null
+  currency: USD
+  leverage: null
+  delay: null
+
+period:
+  from: null
+  to: null
+  forward_from: null
+  forward_to: null
+
+costs:
+  spread_pts: null
+  commission: null
+  slippage: null
+  swap_long: null
+  swap_short: null
+
+parameters:
+  Preset: PRESET_DEFAULT
+  HTF: PERIOD_H1
+  GradeFilter: GRADE_A_PLUS_A
+  InpUseSessionFilter: true
+  InpSessionStartHour: 6
+  InpSessionStartMin: 0
+  InpSessionEndHour: 18
+  InpSessionEndMin: 0
+  InpFixedLot: 0.0
+  InpRiskPercent: 1.0
+  InpMaxLot: 0.10
+  InpMagicNumber: 999456
+  InpUseShield: true
+  InpShieldPercent: 5.0
+  InpRiskProfile: 1
+  InpRR: 1.33
+  InpStopLoss: 150
+  InpMaxSpreadPoints: 30
+  InpMaxDailyTrades: 5
+  InpEmergencyCloseHour: 20
+  InpEmergencyCloseMin: 55
+  InpUseRegimeFilter: true
+  InpRegimeADXPeriod: 14
+  InpRegimeATRPeriod: 14
+  InpRegimeTrendThreshold: 25.0
+  InpRegimeRangingThreshold: 20.0
+  InpRegimeVolatilitySpike: 2.0
+  InpRegimeCacheSeconds: 60
+
+results:
+  total_trades: null
+  profit_factor: null
+  net_profit: null
+  max_drawdown_pct: null
+  max_drawdown_usd: null
+  sharpe_ratio: null
+  sqn: null
+  win_rate_pct: null
+  expected_payoff: null
+
+robustness:
+  wfe: null
+  psr: null
+  dsr: null
+  mc95_dd_pct: null
+  pbo: null
+
+acceptance_gates:
+  compile_gate: PASS
+  backtest_validation: NEEDS_RESULTS
+  walk_forward: NEEDS_RESULTS
+  risk:
+    max_risk_per_trade: "1.0%"
+    max_daily_dd: "5.0%"
+    spread_policy_pts: 30
+
+next_required_action:
+  - Run MetaTrader 5 Strategy Tester for `EA_PrecisionSniper` using the compiled artifact from `reports/compile/2026-06-02_EA_PrecisionSniper.md`.
+  - Export the full tester report and fill symbol, timeframe, period, costs, parameters, and result metrics above.
+  - Do not run `walk-forward-audit` or claim promotion until this report is COMPLETE.
