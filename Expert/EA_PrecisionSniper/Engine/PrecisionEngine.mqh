@@ -84,6 +84,33 @@ double CalcRealR(ulong ticket)
 }
 
 //+------------------------------------------------------------------+
+//| FindActivePositionTicket — resolve real position ticket            |
+//|                                                                   |
+//| CTrade::ResultOrder() returns an order ticket, not guaranteed to   |
+//| match the active position ticket. Resolve the position by magic +  |
+//| symbol before storing g_ticket for close/R calculations.           |
+//+------------------------------------------------------------------+
+ulong FindActivePositionTicket(int magic, string sym)
+{
+   for(int i = PositionsTotal() - 1; i >= 0; i--)
+   {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0) continue;
+
+      if(PositionSelectByTicket(ticket))
+      {
+         long positionMagic = PositionGetInteger(POSITION_MAGIC);
+         string positionSymbol = PositionGetString(POSITION_SYMBOL);
+
+         if((int)positionMagic == magic && positionSymbol == sym)
+            return ticket;
+      }
+   }
+
+   return 0;
+}
+
+//+------------------------------------------------------------------+
 //| CloseTrade — close the active position and record result           |
 //+------------------------------------------------------------------+
 void CloseTrade()
@@ -254,9 +281,20 @@ bool OpenTrade(int direction, double score, double entryPrice,
    if(g_trade.PositionOpen(_Symbol, type, lot, entryPrice, sl, tp, "PrecSniper"))
    {
       uint retcode = g_trade.ResultRetcode();
-      g_ticket    = g_trade.ResultOrder();
       if(retcode != TRADE_RETCODE_DONE)
-         Print("[PrecSniper] ERR-003: OpenTrade retcode=", retcode, " ticket=", g_ticket);
+      {
+         Print("[PrecSniper] ERR-003: OpenTrade retcode=", retcode, " order=", g_trade.ResultOrder());
+         return false;
+      }
+
+      ulong positionTicket = FindActivePositionTicket(InpMagicNumber, _Symbol);
+      if(positionTicket == 0)
+      {
+         Print("[PrecSniper] CRITICAL: Position opened but position ticket could not be resolved. order=", g_trade.ResultOrder());
+         return false;
+      }
+
+      g_ticket    = positionTicket;
       g_entry     = entryPrice;
       g_sl        = sl;
       g_tp1       = tp1;

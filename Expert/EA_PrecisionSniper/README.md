@@ -1,4 +1,4 @@
-# PrecisionSniper EA — v2.2
+# PrecisionSniper EA — v2.3
 
 Expert Advisor modular para MetaTrader 5 basado en cruce de EMAs con scoring multi-factor, gestión escalonada de take profits y auditoría de riesgo completa.
 
@@ -47,6 +47,20 @@ El EA detecta **cruces de medias móviles exponenciales (EMA)** en la dirección
 - Daily risk shield (loss diario máximo)
 
 ---
+
+## Novedades v2.3
+
+### Market Regime Filter
+- **Filtro de régimen**: ADX + ATR ratio clasifican mercado en trending, weak trending, ranging, volatile o unknown.
+- **Bloqueo por volatilidad**: régimen `REGIME_VOLATILE` bloquea nuevas entradas.
+- **Reducción por rango**: régimen `REGIME_RANGING` reduce lote al 50%.
+- **Cache configurable**: `InpRegimeCacheSeconds` evita recalcular régimen en exceso.
+
+### Compile gate
+- `scripts/build.ps1` ahora soporta EAs cuyo archivo principal no se llama igual que la carpeta, como `EA_PrecisionSniper/PrecisionSniper_EA.mq5`.
+
+### Fixes de ejecución
+- `g_ticket` ahora guarda el ticket real de la posición activa resuelto por magic + symbol, no el ticket de orden devuelto por `ResultOrder()`.
 
 ## Novedades v2.2
 
@@ -112,10 +126,13 @@ El EA detecta **cruces de medias móviles exponenciales (EMA)** en la dirección
 - `InpUseSessionFilter` — activar filtro horario (soporta sesiones overnight)
 - `InpSessionStartHour/Min`, `InpSessionEndHour/Min` — ventana horaria
 
-### Protección (nuevo v2.2)
+### Protección
 - `InpMaxSpreadPoints` — spread máximo en puntos (0 = off, default 30)
 - `InpMaxDailyTrades` — máximo de trades por día (0 = unlimited, default 5)
 - `InpEmergencyCloseHour/Min` — cierre forzoso de posiciones (default 20:55 = 4:55 PM ET)
+- `InpUseRegimeFilter` — activar filtro de régimen de mercado
+- `InpRegimeADXPeriod / InpRegimeATRPeriod` — períodos para clasificación de régimen
+- `InpRegimeTrendThreshold / InpRegimeRangingThreshold / InpRegimeVolatilitySpike` — umbrales de contexto
 
 ### Riesgo
 - `InpFixedLot` — lote fijo (0 = dinámico por % riesgo)
