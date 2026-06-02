@@ -10,6 +10,7 @@ Este documento muestra el estado auditable de las 17 skills runtime activas. Sir
 | `SKILL.md` presentes | 17/17 ✅ |
 | `README.md` por skill | 17/17 ✅ |
 | Smoke tests por skill | 17/17 ✅ |
+| Smoke runs prácticos registrados | 17/17 ✅ |
 | Workflow visual | `.skills/WORKFLOW.md` ✅ |
 | README central | `.skills/README.md` ✅ |
 | Template de README | `.skills/README.template.md` ✅ |
@@ -60,19 +61,14 @@ Este documento muestra el estado auditable de las 17 skills runtime activas. Sir
 | Boundaries | La skill define o documenta qué NO debe decidir para evitar solapamiento. |
 | Estado | `Completa` significa que está lista para auditoría práctica con prompts reales. |
 
-## Próximo paso recomendado
+## Estado de auditoría práctica
 
-La cobertura documental está completa. El siguiente paso no es escribir más docs: es **ejecutar auditoría práctica**.
+La cobertura documental y la auditoría práctica están completas para las 17 skills runtime activas.
 
-1. Elegir 3-5 skills críticas:
-   - `strategy-hypothesis`
-   - `mql5-risk-guardrail`
-   - `execution-safety-review`
-   - `backtest-validation`
-   - `git-safety-release`
-2. Ejecutar sus smoke tests contra un agente.
-3. Registrar cualquier desvío entre respuesta real y comportamiento esperado.
-4. Ajustar `SKILL.md`, README o smoke test según corresponda.
+1. Cada skill tiene `SKILL.md`, README, smoke test y output contract.
+2. Cada skill tiene runs registrados para camino feliz, ambiguo y peligroso en `.skills/tests/RUNS.md`.
+3. No quedaron ajustes pendientes derivados de los smoke runs registrados.
+4. El próximo mantenimiento recomendado es revisar nuevamente cuando cambie una skill, el registry o el workflow.
 
 ## Archivos relacionados
 
