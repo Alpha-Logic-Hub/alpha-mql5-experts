@@ -156,3 +156,4 @@ Write-Host "Compile log: $compileLog" -ForegroundColor Green
 Write-Host "Artifact: $ex5" -ForegroundColor Green
 
 Write-Host "`n=== Build Complete ===" -ForegroundColor Cyan
+exit 0
