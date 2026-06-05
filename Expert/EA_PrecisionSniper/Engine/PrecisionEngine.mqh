@@ -1,117 +1,52 @@
 //+------------------------------------------------------------------+
 //|                                     Engine/PrecisionEngine.mqh     |
-//|                          PrecisionSniper EA — Trade Execution      |
+//|            PrecisionSniper EA — Execution + Sound + Auto BE        |
 //+------------------------------------------------------------------+
 #ifndef _PSNIPER_ENGINE_
 #define _PSNIPER_ENGINE_
 
+// ── Config (set from inputs) ────────────────────────────────────────
+bool   g_useSound    = true;
+bool   g_useAutoBE   = true;
+int    g_beTriggerTP = 1;      // which TP triggers BE (1, 2, or 3)
+double g_beBufferPts = 5;      // buffer points beyond entry for BE
+double g_statLastR   = 0;      // R of last closed trade
+
 //+------------------------------------------------------------------+
-//| SyncRuntimeRiskState — copy input risk params to runtime state     |
+//| PlaySound — safe sound player                                      |
 //+------------------------------------------------------------------+
-void SyncRuntimeRiskState()
+void PlaySnd(string snd)
 {
-   g_state.effRiskPercent   = MathMin(1.0, MathMax(0.01, InpRiskPercent));
-   g_state.effShieldPercent = InpShieldPercent;
-   g_state.effRR            = 1.33;
+   if(!g_useSound) return;
+   if(!MQLInfoInteger(MQL_TESTER)) PlaySound(snd);
 }
 
 //+------------------------------------------------------------------+
-//| SaveLossState — persist loss flag via GlobalVariable               |
+//| RecordTradeStat — update running stats                             |
 //+------------------------------------------------------------------+
-void SaveLossState(bool wasLoss)
+void RecordTradeStat(double r)
 {
-   string keyTime = "PrecSniper_LossTime_" + IntegerToString(InpMagicNumber);
-   if(wasLoss)
-      GlobalVariableSet(keyTime, (double)TimeCurrent());
-   else
-      GlobalVariableDel(keyTime);
-}
+   g_statTotal++;
+   g_statTotalR += r;
+   g_statLastR = r;
 
-//+------------------------------------------------------------------+
-//| LoadLossState — check if a loss was recent (<24h ago)              |
-//+------------------------------------------------------------------+
-bool LoadLossState()
-{
-   string keyTime = "PrecSniper_LossTime_" + IntegerToString(InpMagicNumber);
-   if(!GlobalVariableCheck(keyTime)) return false;
-   double lossTime = GlobalVariableGet(keyTime);
-   if(lossTime <= 0) return false;
-   return (TimeCurrent() - (datetime)lossTime < 86400);
-}
+   if(r > 0)      { g_statWins++;  g_statWinR  += r; if(r > g_statBestR) g_statBestR = r; }
+   else if(r < 0) { g_statLosses++; g_statLossR += MathAbs(r); if(r < g_statWorstR || g_statWorstR > -998) g_statWorstR = r; }
+   else           { g_statBE++; }
 
-//+------------------------------------------------------------------+
-//| RecordTrade — update backtest statistics                           |
-//+------------------------------------------------------------------+
-void RecordTrade(double r, datetime tradeTime, bool isForcedClose)
-{
-   g_btTotal++;
-   g_btTotR += r;
-   if(r > 0)       { g_btWins++;  g_btGW += r; }
-   else if(r < 0)  { g_btLoss++;  g_btGL += MathAbs(r); }
-   else            { g_btBE++; }
-
-   if(g_tp3h)                        g_btTP3++;
-   else if(g_tp2h)                   g_btTP2++;
-   else if(g_tp1h)                   g_btTP1++;
-   else if(r < 0 && !isForcedClose)  g_btSL++;
-}
-
-//+------------------------------------------------------------------+
-//| CalcRealR — compute actual R-multiple from position profit         |
-//+------------------------------------------------------------------+
-double CalcRealR(ulong ticket)
-{
-   if(ticket == 0) return 0;
-
-   if(!PositionSelectByTicket(ticket))
+   // Track drawdown from peak
+   double curEquity = AccountInfoDouble(ACCOUNT_EQUITY);
+   if(curEquity > g_statPeakEquity)
+      g_statPeakEquity = curEquity;
+   else if(g_statPeakEquity > 0)
    {
-      if(!HistorySelectByPosition(ticket)) return 0;
+      double dd = (g_statPeakEquity - curEquity) / g_statPeakEquity * 100.0;
+      if(dd > g_statMaxDDpct) g_statMaxDDpct = dd;
    }
-
-   double profit = PositionGetDouble(POSITION_PROFIT)
-                 + PositionGetDouble(POSITION_SWAP);
-   // Commission omitted — POSITION_COMMISSION deprecated in MT5 build 4755+
-
-   double tickValue = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
-   double tickSize  = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
-
-   if(tickSize <= 0 || g_risk <= 0 || g_lotSize <= 0) return 0;
-
-   double riskMoney = g_risk * g_lotSize * tickValue / tickSize;
-   if(riskMoney <= 0) return 0;
-
-   return profit / riskMoney;
 }
 
 //+------------------------------------------------------------------+
-//| FindActivePositionTicket — resolve real position ticket            |
-//|                                                                   |
-//| CTrade::ResultOrder() returns an order ticket, not guaranteed to   |
-//| match the active position ticket. Resolve the position by magic +  |
-//| symbol before storing g_ticket for close/R calculations.           |
-//+------------------------------------------------------------------+
-ulong FindActivePositionTicket(int magic, string sym)
-{
-   for(int i = PositionsTotal() - 1; i >= 0; i--)
-   {
-      ulong ticket = PositionGetTicket(i);
-      if(ticket == 0) continue;
-
-      if(PositionSelectByTicket(ticket))
-      {
-         long positionMagic = PositionGetInteger(POSITION_MAGIC);
-         string positionSymbol = PositionGetString(POSITION_SYMBOL);
-
-         if((int)positionMagic == magic && positionSymbol == sym)
-            return ticket;
-      }
-   }
-
-   return 0;
-}
-
-//+------------------------------------------------------------------+
-//| CloseTrade — close the active position and record result           |
+//| CloseTrade — close the active position                              |
 //+------------------------------------------------------------------+
 void CloseTrade()
 {
@@ -119,8 +54,6 @@ void CloseTrade()
 
    if(g_ticket > 0)
    {
-      double rv = CalcRealR(g_ticket);
-
       if(PositionSelectByTicket(g_ticket))
       {
          g_trade.PositionClose(g_ticket);
@@ -128,17 +61,28 @@ void CloseTrade()
          if(retcode != TRADE_RETCODE_DONE)
             Print("[PrecSniper] ERR-003: CloseTrade retcode=", retcode, " ticket=", g_ticket);
       }
-
-      RecordTrade(rv, g_entryTime, false);
-      g_lastTradeWasLoss = (rv < 0);
-      if(g_lastTradeWasLoss) SaveLossState(true);
-      g_ticket = 0;
+       g_ticket = 0;
    }
+
+   if(g_slh)
+      PlaySnd("timeout.wav");
+   else
+      PlaySnd("ok.wav");
+
+   double rResult = 0;
+   if(g_risk > 0 && g_entry > 0)
+   {
+      double exitPrice = (g_dir==1) ? SymbolInfoDouble(_Symbol, SYMBOL_BID)
+                                    : SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      rResult = g_dir==1 ? (exitPrice-g_entry)/g_risk : (g_entry-exitPrice)/g_risk;
+   }
+   RecordTradeStat(rResult);
 
    g_dir     = 0;
    g_lastDir = 0;
-   g_eBar    = -1;
    g_lotSize = 0;
+   g_beLocked = false;
+   Signal_OnTradeClosed();
 }
 
 //+------------------------------------------------------------------+
@@ -151,63 +95,67 @@ void ManageTrade(double barHigh, double barLow)
    if(g_dir == 1)
    {
       double pt = g_trail;
-      if(barHigh >= g_tp1 && !g_tp1h){ g_tp1h = true; if(UseTrail) g_trail = g_entry; }
-      if(barHigh >= g_tp2 && !g_tp2h){ g_tp2h = true; if(UseTrail) g_trail = g_tp1;   }
-      if(barHigh >= g_tp3 && !g_tp3h){ g_tp3h = true; if(UseTrail) g_trail = g_tp2;   }
+      if(barHigh >= g_tp1 && !g_tp1h){ g_tp1h = true; if(UseTrail) g_trail = g_entry; PlaySnd("alert.wav"); }
+      if(barHigh >= g_tp2 && !g_tp2h){ g_tp2h = true; if(UseTrail) g_trail = g_tp1;   PlaySnd("alert.wav"); }
+      if(barHigh >= g_tp3 && !g_tp3h){ g_tp3h = true; if(UseTrail) g_trail = g_tp2;   PlaySnd("alert.wav"); }
+      // Auto BE
+      if(g_useAutoBE && !g_beLocked)
+      {
+         bool beTrigger = false;
+         if(g_beTriggerTP == 1 && g_tp1h) beTrigger = true;
+         if(g_beTriggerTP == 2 && g_tp2h) beTrigger = true;
+         if(g_beTriggerTP == 3 && g_tp3h) beTrigger = true;
+         if(beTrigger)
+         {
+            g_trail = g_entry + g_beBufferPts * _Point;
+            g_beLocked = true;
+            Print("[Sniper] BE: Locked at entry + ", g_beBufferPts, " pts");
+         }
+      }
       if(barLow  <= pt)                CloseTrade();
    }
    else
    {
       double pt = g_trail;
-      if(barLow  <= g_tp1 && !g_tp1h){ g_tp1h = true; if(UseTrail) g_trail = g_entry; }
-      if(barLow  <= g_tp2 && !g_tp2h){ g_tp2h = true; if(UseTrail) g_trail = g_tp1;   }
-      if(barLow  <= g_tp3 && !g_tp3h){ g_tp3h = true; if(UseTrail) g_trail = g_tp2;   }
+      if(barLow  <= g_tp1 && !g_tp1h){ g_tp1h = true; if(UseTrail) g_trail = g_entry; PlaySnd("alert.wav"); }
+      if(barLow  <= g_tp2 && !g_tp2h){ g_tp2h = true; if(UseTrail) g_trail = g_tp1;   PlaySnd("alert.wav"); }
+      if(barLow  <= g_tp3 && !g_tp3h){ g_tp3h = true; if(UseTrail) g_trail = g_tp2;   PlaySnd("alert.wav"); }
+      // Auto BE
+      if(g_useAutoBE && !g_beLocked)
+      {
+         bool beTrigger = false;
+         if(g_beTriggerTP == 1 && g_tp1h) beTrigger = true;
+         if(g_beTriggerTP == 2 && g_tp2h) beTrigger = true;
+         if(g_beTriggerTP == 3 && g_tp3h) beTrigger = true;
+         if(beTrigger)
+         {
+            g_trail = g_entry - g_beBufferPts * _Point;
+            g_beLocked = true;
+            Print("[Sniper] BE: Locked at entry - ", g_beBufferPts, " pts");
+         }
+      }
       if(barHigh >= pt)                CloseTrade();
    }
 }
 
 //+------------------------------------------------------------------+
-//| OpenTrade — dynamic or fixed lot sizing, emergency SL to broker    |
-//|                                                                   |
-//| Parameters passed by reference (slPrice, tp1-3, riskDist) so      |
-//| emergency SL fallback can update TPs consistently.                 |
+//| OpenTrade — lot sizing, spread filter, emergency SL fallback       |
 //+------------------------------------------------------------------+
-bool OpenTrade(int direction, double score, double entryPrice,
+bool OpenTrade(int direction, double entryPrice,
                double &slPrice, double &tp1, double &tp2, double &tp3,
                double &riskDist)
 {
    if(g_ticket > 0) return false;
 
    // Double-check: no orphan positions
-   if(CountActivePositions(InpMagicNumber, _Symbol, g_pos) > 0)
+   if(CountActivePositions(InpMagicNumber, _Symbol) > 0)
    {
       Print("[PrecSniper] BLOCKED: Orphan position detected");
       g_ticket = 0;
       return false;
    }
 
-   // Risk shield check
-   if(InpUseShield && IsShieldTriggered(InpUseShield, g_state.startOfDayEquity,
-                                          g_state.dailyPL, g_state.effShieldPercent))
-   {
-      Print("[PrecSniper] BLOCKED: Daily risk shield triggered (PL=", DoubleToString(g_state.dailyPL,2), ")");
-      return false;
-   }
-
-   // Daily trade limit
-   datetime today = StringToTime(TimeToString(TimeCurrent(), TIME_DATE));
-   if(g_dailyTradeDate != today)
-   {
-      g_dailyTradeDate  = today;
-      g_dailyTradeCount = 0;
-   }
-   if(InpMaxDailyTrades > 0 && g_dailyTradeCount >= InpMaxDailyTrades)
-   {
-      Print("[PrecSniper] BLOCKED: Daily trade limit reached (", g_dailyTradeCount, "/", InpMaxDailyTrades, ")");
-      return false;
-   }
-
-   // Spread filter (moved inside OpenTrade — auditor pattern)
+   // Spread filter
    if(InpMaxSpreadPoints > 0)
    {
       double spreadPts = (SymbolInfoDouble(_Symbol, SYMBOL_ASK)
@@ -219,35 +167,16 @@ bool OpenTrade(int direction, double score, double entryPrice,
       }
    }
 
-    // ── Lot sizing: dynamic (risk-based) or fixed ──
-    double lot;
-    if(InpFixedLot > 0)
-    {
-       lot = MathMin(InpFixedLot, InpMaxLot);
-    }
-    else
-    {
-       lot = CalculateLotSize(riskDist, InpMaxLot, 0, InpRiskPercent, _Symbol);
-    }
-
-    // Regime lot multiplier (v2.3)
-    double regimeMult = GetRegimeLotMultiplier();
-    if(regimeMult <= 0.0)
-    {
-       Print("[PrecSniper] BLOCKED: Market regime forbids trading");
-       return false;
-    }
-    if(regimeMult < 0.99)
-    {
-       double oldLot = lot;
-       lot *= regimeMult;
-       lot = MathMax(lot, SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN));
-       Print("[PrecSniper] Regime: lot reduced ", DoubleToString(oldLot,2), " → ", DoubleToString(lot,2), " (x", DoubleToString(regimeMult,2), ")");
-    }
+   // Lot sizing: dynamic (risk-based) or fixed
+   double lot;
+   if(InpFixedLot > 0)
+      lot = MathMin(InpFixedLot, InpMaxLot);
+   else
+      lot = CalculateLotSize(riskDist, InpMaxLot, InpRiskPercent);
 
    ENUM_ORDER_TYPE type = (direction == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
 
-   // ── Emergency broker SL (NEVER 0.0) ──
+   // Emergency broker SL (NEVER 0.0)
    double sl = slPrice;
    if(sl <= 0 || (direction == 1 && sl >= entryPrice) || (direction == -1 && sl <= entryPrice))
    {
@@ -258,7 +187,6 @@ bool OpenTrade(int direction, double score, double entryPrice,
       sl = (direction == 1) ? entryPrice - minAtr : entryPrice + minAtr;
       Print("[PrecSniper] WARNING: SL was invalid, using fallback ATR SL=", sl);
 
-      // Recalculate riskDist and TPs from the corrected SL
       riskDist = MathAbs(entryPrice - sl);
       if(direction == 1)
       {
@@ -281,20 +209,9 @@ bool OpenTrade(int direction, double score, double entryPrice,
    if(g_trade.PositionOpen(_Symbol, type, lot, entryPrice, sl, tp, "PrecSniper"))
    {
       uint retcode = g_trade.ResultRetcode();
+      g_ticket    = g_trade.ResultOrder();
       if(retcode != TRADE_RETCODE_DONE)
-      {
-         Print("[PrecSniper] ERR-003: OpenTrade retcode=", retcode, " order=", g_trade.ResultOrder());
-         return false;
-      }
-
-      ulong positionTicket = FindActivePositionTicket(InpMagicNumber, _Symbol);
-      if(positionTicket == 0)
-      {
-         Print("[PrecSniper] CRITICAL: Position opened but position ticket could not be resolved. order=", g_trade.ResultOrder());
-         return false;
-      }
-
-      g_ticket    = positionTicket;
+         Print("[PrecSniper] ERR-003: OpenTrade retcode=", retcode, " ticket=", g_ticket);
       g_entry     = entryPrice;
       g_sl        = sl;
       g_tp1       = tp1;
@@ -308,10 +225,9 @@ bool OpenTrade(int direction, double score, double entryPrice,
       g_tp2h      = false;
       g_tp3h      = false;
       g_slh       = false;
+      g_beLocked  = false;
       g_entryTime = TimeCurrent();
-      g_lastTradeWasLoss = false;
-
-      g_dailyTradeCount++;
+      PlaySnd("ok.wav");
       return true;
    }
    return false;
@@ -324,8 +240,6 @@ void CloseOpposite()
 {
    if(g_ticket > 0)
    {
-      double rv = CalcRealR(g_ticket);
-
       if(PositionSelectByTicket(g_ticket))
       {
          g_trade.PositionClose(g_ticket);
@@ -333,204 +247,12 @@ void CloseOpposite()
          if(retcode != TRADE_RETCODE_DONE)
             Print("[PrecSniper] ERR-003: CloseOpposite retcode=", retcode, " ticket=", g_ticket);
       }
-
-      RecordTrade(rv, g_entryTime, true);
-      g_lastTradeWasLoss = (rv < 0);
-      if(g_lastTradeWasLoss) SaveLossState(true);
       g_ticket = 0;
    }
    g_dir     = 0;
-   g_lotSize = 0;
-}
-
-//+------------------------------------------------------------------+
-//| CatchUpFromHistory — one-pass scan of last 500 bars               |
-//|                                                                   |
-//| Replays the OnCalculate loop on history so the EA's internal trade |
-//| state matches the indicator when attached mid-session.             |
-//| NOW USES ComputeBarScores() — single source of truth for scoring.  |
-//+------------------------------------------------------------------+
-void CatchUpFromHistory()
-{
-   static bool done = false;
-   if(done) return;
-   done = true;
-
-   int total = iBars(_Symbol, _Period);
-   if(total < pTrend + 60) return;
-
-   int cnt = MathMin(total - 1, 500);
-   long barSec = PeriodSeconds(PERIOD_CURRENT);
-
-   double ef[], es[], et[], rsi[], atr[], mm[], ms[], adx[], dip[], dim[], htfF[], htfS[];
-   ArraySetAsSeries(ef,true); ArraySetAsSeries(es,true); ArraySetAsSeries(et,true);
-   ArraySetAsSeries(rsi,true); ArraySetAsSeries(atr,true);
-   ArraySetAsSeries(mm,true); ArraySetAsSeries(ms,true);
-   ArraySetAsSeries(adx,true); ArraySetAsSeries(dip,true); ArraySetAsSeries(dim,true);
-   ArraySetAsSeries(htfF,true); ArraySetAsSeries(htfS,true);
-
-   if(CopyBuffer(hEmaFast,0,0,cnt,ef)<=0) return;
-   if(CopyBuffer(hEmaSlow,0,0,cnt,es)<=0) return;
-   if(CopyBuffer(hEmaTrend,0,0,cnt,et)<=0) return;
-   if(CopyBuffer(hRSI,0,0,cnt,rsi)<=0) return;
-   if(CopyBuffer(hATR,0,0,cnt,atr)<=0) return;
-   if(CopyBuffer(hMACD,0,0,cnt,mm)<=0) return;
-   if(CopyBuffer(hMACD,1,0,cnt,ms)<=0) return;
-   if(CopyBuffer(hADX,0,0,cnt,adx)<=0) return;
-   if(CopyBuffer(hADX,1,0,cnt,dip)<=0) return;
-   if(CopyBuffer(hADX,2,0,cnt,dim)<=0) return;
-
-   int htfCopy = (HTF==PERIOD_CURRENT)?cnt:MathMin(cnt,500);
-   if(CopyBuffer(hHTFFast,0,0,htfCopy,htfF)<=0) return;
-   if(CopyBuffer(hHTFSlow,0,0,htfCopy,htfS)<=0) return;
-
-   MqlRates rates[];
-   ArraySetAsSeries(rates,true);
-   if(CopyRates(_Symbol,_Period,0,cnt,rates)<=0) return;
-
-   int szEF=ArraySize(ef),szES=ArraySize(es),szET=ArraySize(et);
-   int szRS=ArraySize(rsi),szAT=ArraySize(atr);
-   int szMM=ArraySize(mm),szMS=ArraySize(ms);
-   int szAD=ArraySize(adx),szDP=ArraySize(dip),szDM=ArraySize(dim);
-   int szHF=ArraySize(htfF),szHS=ArraySize(htfS);
-   int szR = ArraySize(rates);
-   int safeC = cnt;
-   safeC = MathMin(safeC, szR);
-   safeC = MathMin(safeC, szEF); safeC = MathMin(safeC, szES); safeC = MathMin(safeC, szET);
-   safeC = MathMin(safeC, szRS); safeC = MathMin(safeC, szAT); safeC = MathMin(safeC, szMM);
-   safeC = MathMin(safeC, szMS); safeC = MathMin(safeC, szAD); safeC = MathMin(safeC, szDP);
-   safeC = MathMin(safeC, szDM);
-
-   int start = 1;
-   int end = safeC - 1;
-   bool htfEnabled = (HTF != PERIOD_CURRENT);
-
-   for(int i = start; i < end; i++)
-   {
-      int r = safeC - 1 - i;
-      int r1 = r + 1;
-      if(r1 >= szEF || r1 >= szES) continue;
-      if(r >= szET || r >= szRS || r >= szAT || r >= szMM || r >= szMS) continue;
-      if(r >= szAD || r >= szDP || r >= szDM) continue;
-
-      double cEf=ef[r],cEs=es[r],cEt=et[r],pEf=ef[r1],pEs=es[r1];
-      double cRsi=rsi[r],cAtr=atr[r];
-      double cMm=mm[r],cMs=ms[r],cAdx=adx[r],cDip=dip[r],cDim=dim[r];
-      int htfR=(r<szHF&&r<szHS)?r:0;
-      double cHtfF=htfF[htfR],cHtfS=htfS[htfR];
-      double cl=rates[r].close, hi=rates[r].high, lo=rates[r].low, op=rates[r].open;
-
-      // Volume avg (20-bar lookback within available range)
-      double volSum=0;
-      int volCnt=MathMin(20,i+1);
-      for(int k=0;k<volCnt&&(r+k)<szR;k++) volSum+=(double)rates[r+k].tick_volume;
-      double volAvg = (volCnt>0)?volSum/volCnt:0;
-      bool volAbove = (volAvg>0) ? (rates[r].tick_volume > volAvg*1.2) : false;
-
-      // ATR SMA (42-bar lookback)
-      double atrSum=0;
-      int atrCnt=MathMin(42,i+1);
-      for(int k=0;k<atrCnt;k++){int rk=r+k;if(rk>=0&&rk<szAT)atrSum+=atr[rk];}
-      double atrSma=(atrCnt>0)?atrSum/atrCnt:cAtr;
-
-      bool strong=(cAdx>20.0);
-      int htfBias=(cHtfF>cHtfS)?1:(cHtfF<cHtfS)?-1:0;
-
-      double pRsiVal=(r+1<szRS)?rsi[r+1]:cRsi;
-
-      // ── Unified scoring via ComputeBarScores() ──────────────────
-      double bScore=0, sScore=0;
-      bool bullCross, bearCross, aboveTrend, belowTrend;
-      bool notExtended, realBody, htfNotAgainst, htfNotAgainstS;
-
-      ComputeBarScores(
-         cEf, cEs, cEt, pEf, pEs,
-         cRsi, pRsiVal,
-         cAdx, cDip, cDim,
-         cMm, cMs, (r+1<szMM)?mm[r+1]:cMm, (r+1<szMS)?ms[r+1]:cMs,
-         cAtr,
-         cl, op, hi, lo,
-         volAbove, strong, htfBias, htfEnabled,
-         barSec,
-         bScore, sScore,
-         bullCross, bearCross,
-         aboveTrend, belowTrend,
-         notExtended, realBody,
-         htfNotAgainst, htfNotAgainstS
-      );
-
-      // Cooldown
-      int effectiveCooldown=GetEffectiveCooldown();
-      bool cooldownOK=(g_eBar<0)||((i-g_eBar)>=effectiveCooldown);
-
-      bool doBuy=bullCross&&aboveTrend&&(cRsi<72)&&realBody&&notExtended&&htfNotAgainst
-                  &&(bScore>=(double)pScore)&&FilterOK(bScore)&&(g_lastDir!=1)&&cooldownOK;
-      bool doSell=bearCross&&belowTrend&&(cRsi>28)&&realBody&&notExtended&&htfNotAgainstS
-                    &&(sScore>=(double)pScore)&&FilterOK(sScore)&&(g_lastDir!=-1)&&cooldownOK;
-      if(doBuy&&doSell)doSell=false;
-
-      // ── Trade state (paper-only, no actual orders) ──
-      if(doBuy)
-      {
-         if(g_dir==-1&&!g_slh&&g_eBar>=0){g_dir=0;g_slh=true;g_lastDir=0;}
-         g_entry=cl; g_dir=1; g_lastDir=1; g_eBar=i;
-         if(StructureSL)
-         {
-            double swL=lo;
-            for(int k=1;k<=SwingLB&&(r+k)<szR;k++) swL=MathMin(swL,rates[r+k].low);
-            g_sl=swL-cAtr*0.2; if(cl-g_sl<cAtr*0.5)g_sl=cl-cAtr*0.5;
-         }
-         else g_sl=cl-cAtr*pSLMult;
-         g_risk=MathAbs(cl-g_sl);
-         g_tp1=cl+g_risk*TP1_RR; g_tp2=cl+g_risk*TP2_RR; g_tp3=cl+g_risk*TP3_RR;
-         g_trail=g_sl; g_tp1h=false; g_tp2h=false; g_tp3h=false; g_slh=false;
-         if(ShowSignals) DrawSignalArrow(rates[r].time, lo - cAtr * 0.8, 1);
-      }
-      else if(doSell)
-      {
-         if(g_dir==1&&!g_slh&&g_eBar>=0){g_dir=0;g_slh=true;g_lastDir=0;}
-         g_entry=cl; g_dir=-1; g_lastDir=-1; g_eBar=i;
-         if(StructureSL)
-         {
-            double swH=hi;
-            for(int k=1;k<=SwingLB&&(r+k)<szR;k++) swH=MathMax(swH,rates[r+k].high);
-            g_sl=swH+cAtr*0.2; if(g_sl-cl<cAtr*0.5)g_sl=cl+cAtr*0.5;
-         }
-         else g_sl=cl+cAtr*pSLMult;
-         g_risk=MathAbs(cl-g_sl);
-         g_tp1=cl-g_risk*TP1_RR; g_tp2=cl-g_risk*TP2_RR; g_tp3=cl-g_risk*TP3_RR;
-         g_trail=g_sl; g_tp1h=false; g_tp2h=false; g_tp3h=false; g_slh=false;
-         if(ShowSignals) DrawSignalArrow(rates[r].time, hi + cAtr * 0.8, -1);
-      }
-
-      // Trail management during history replay
-      if(g_eBar>=0&&i>g_eBar&&g_dir!=0&&!g_slh)
-      {
-         if(g_dir==1)
-         {
-            double pt=g_trail;
-            if(hi>=g_tp1&&!g_tp1h){g_tp1h=true;if(UseTrail)g_trail=g_entry;}
-            if(hi>=g_tp2&&!g_tp2h){g_tp2h=true;if(UseTrail)g_trail=g_tp1;}
-            if(hi>=g_tp3&&!g_tp3h){g_tp3h=true;if(UseTrail)g_trail=g_tp2;}
-            if(lo<=pt){g_slh=true;g_lastDir=0;g_dir=0;g_eBar=-1;}
-         }
-         else
-         {
-            double pt=g_trail;
-            if(lo<=g_tp1&&!g_tp1h){g_tp1h=true;if(UseTrail)g_trail=g_entry;}
-            if(lo<=g_tp2&&!g_tp2h){g_tp2h=true;if(UseTrail)g_trail=g_tp1;}
-            if(lo<=g_tp3&&!g_tp3h){g_tp3h=true;if(UseTrail)g_trail=g_tp2;}
-            if(hi>=pt){g_slh=true;g_lastDir=0;g_dir=0;g_eBar=-1;}
-         }
-      }
-   }
-
-   // Reset — catch-up is paper-only, don't block next real signal
    g_lastDir = 0;
-   g_eBar    = -1;
-
-   // Load persisted loss state
-   g_lastTradeWasLoss = LoadLossState();
+   g_lotSize = 0;
+   Signal_OnTradeClosed();
 }
 
 #endif // _PSNIPER_ENGINE_

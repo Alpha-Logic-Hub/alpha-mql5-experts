@@ -1,447 +1,401 @@
 //+------------------------------------------------------------------+
 //|                                            PrecisionSniper_EA.mq5 |
-//|                           Converted from PrecisionSniper v1.0      |
-//|                           Developer: Hammad Dilber / Ported       |
+//|                 PrecisionSniper — Terminal Hacker Edition          |
+//|                           Developer: Alpha Logic Hub               |
 //+------------------------------------------------------------------+
 #property copyright "PrecisionSniper EA"
-#property version   "2.3"
-#property strict
+#property version   "2.8"
 
 #include <Trade\Trade.mqh>
 #include <Trade\PositionInfo.mqh>
 #include <Trade\SymbolInfo.mqh>
-#include "..\..\Shared\Core\Definitions.mqh"
-#include "..\..\Shared\Risk\RiskGuardrail.mqh"
-
-//+------------------------------------------------------------------+
-//| ENUMS (must be before inputs — used in parameter declarations)     |
-//+------------------------------------------------------------------+
-enum ENUM_PRESET
-{
-   PRESET_AUTO         = 0,
-   PRESET_SCALPING     = 1,
-   PRESET_AGGRESSIVE   = 2,
-   PRESET_DEFAULT      = 3,
-   PRESET_CONSERVATIVE = 4,
-   PRESET_SWING        = 5,
-   PRESET_CRYPTO       = 6,
-   PRESET_GOLD         = 7,
-   PRESET_CUSTOM       = 8,
-};
-
-enum ENUM_GRADE_FILTER
-{
-   GRADE_ALL      = 0,
-   GRADE_A_PLUS_A = 1,
-   GRADE_A_PLUS   = 2,
-};
 
 //+------------------------------------------------------------------+
 //| INPUT PARAMETERS                                                  |
 //+------------------------------------------------------------------+
 input group "=== ESTRATEGIA ==="
-input ENUM_PRESET       Preset        = PRESET_DEFAULT;
-input ENUM_TIMEFRAMES   HTF           = PERIOD_H1;
 input int               C_EmaFast     = 9;
 input int               C_EmaSlow     = 21;
 input int               C_EmaTrend    = 55;
-input int               C_RSI         = 13;
 input int               C_ATR         = 14;
-input int               C_MinScore    = 5;
-input double            C_SLMult      = 1.5;
 
-input group "=== TOMA DE GANANCIAS ==="
-input double            TP1_RR        = 1.0;
-input double            TP2_RR        = 2.0;
-input double            TP3_RR        = 3.0;
-input double            SLMult        = 1.5;
-input int               CooldownBars  = 5;
-input bool              UseTrail      = true;
+input group "=== STOP LOSS ==="
+input double   SLMult        = 2.0;
 input bool              StructureSL   = true;
 input int               SwingLB       = 10;
 
-input group "=== FILTROS ==="
-input ENUM_GRADE_FILTER GradeFilter   = GRADE_A_PLUS_A;
-input bool              HideCGrade    = true;
-input bool              UseHTFFilter  = true;
-
-input group "=== FILTRO HORARIO ==="
-input bool              InpUseSessionFilter = true;
-input int               InpSessionStartHour = 6;
-input int               InpSessionStartMin  = 0;
-input int               InpSessionEndHour   = 18;
-input int               InpSessionEndMin    = 0;
+input group "=== TOMA DE GANANCIAS ==="
+input double            TP1_RR        = 1.0;
+input double            TP2_RR        = 3.0;
+input double            TP3_RR        = 4.0;
+input bool              UseTrail      = true;
 
 input group "=== GESTION DE RIESGO ==="
-input double            InpFixedLot     = 0.0;
+input double            InpFixedLot     = 0.01;
 input double            InpRiskPercent  = 1.0;
 input double            InpMaxLot       = 0.10;
 input int               InpMagicNumber  = 999456;
-input bool              InpUseShield    = true;
-input double            InpShieldPercent = 5.0;
-input int               InpRiskProfile  = 1;
-input double            InpRR           = 1.33;
-input int               InpStopLoss     = 150;
-
-input group "=== COOLDOWN ==="
-input double            InpCooldownMultLoss = 2.0;
 
 input group "=== PROTECCION ==="
-input double            InpMaxSpreadPoints   = 30;
-input int               InpMaxDailyTrades    = 5;
+input double            InpMaxSpreadPoints   = 100;
 input int               InpEmergencyCloseHour = 20;
 input int               InpEmergencyCloseMin  = 55;
 
-input group "=== MARKET REGIME (v2.3) ==="
-input bool              InpUseRegimeFilter       = true;
-input int               InpRegimeADXPeriod       = 14;
-input int               InpRegimeATRPeriod       = 14;
-input double            InpRegimeTrendThreshold   = 25.0;
-input double            InpRegimeRangingThreshold = 20.0;
-input double            InpRegimeVolatilitySpike  = 2.0;
-input int               InpRegimeCacheSeconds     = 60;
-
 input group "=== VISUAL ==="
-input bool              ShowDashboard = true;
-input bool              ShowTPSL      = true;
-input bool              ShowSignals   = true;
-input bool              ShowEMA       = true;
-input bool              ShowTrail     = true;
+input bool              ShowEMA    = true;
+input bool              ShowSignals = true;
+input bool              ShowTPSL   = true;
+input bool              ShowPanel  = true;
+input bool              ShowSMC    = true;
+input bool              ShowFibOTE = true;
+input int               UIStyle    = 0;  // 0=Bayesian Glass, 1=Terminal Hacker
+
+input group "=== SMART MONEY PRO ==="
+input bool              SMC_MTF_Enabled   = true;
+input bool              SMC_FibOTE_Enabled = true;
+input bool              SMC_DailyBias_Enabled = true;
+input int               SMC_InitConfluence = 1;  // Initial min confirmations
+int    SMC_MinConf = 1;  // runtime-modifiable
+
+input group "=== SESSION / NEWS (Info) ==="
+input bool              ShowSessionInfo = true;
+input bool              News_ShowAlerts = true;
+
+input group "=== SOUND + TRAIL ==="
+input bool              UseSound      = true;
+input bool              UseAutoBE     = true;
+input int               BE_TriggerTP  = 1;
+input double            BE_BufferPts  = 5;
+input bool              UseSmartTrail = false;
+input double   SmartTrailATR = 2.5;
 
 //+------------------------------------------------------------------+
 //| MODULES                                                           |
 //+------------------------------------------------------------------+
 #include "Core\Definitions.mqh"
-#include "Core\MarketRegime.mqh"
+#include "Core\Killzones.mqh"
+#include "Core\SMC_Engine.mqh"
+#include "Core\SMC_Pro.mqh"
 #include "Signals\PrecisionSignals.mqh"
-#include "Engine\PrecisionEngine.mqh"
-#include "UI\PrecisionUI.mqh"
+#include "Engine\MultiEngine.mqh"
+#include "UI\TerminalUI.mqh"
+#include "UI\BayesianUI.mqh"
 
 //+------------------------------------------------------------------+
-//| ExecuteSignal — act on the signal result from EvaluateSignals()    |
+//| ExecuteSignal                                                      |
 //+------------------------------------------------------------------+
-void ExecuteSignal()
+void ProcessSignals()
 {
-   if(!g_signal.doBuy && !g_signal.doSell) return;
-
-   datetime signalBarTime = iTime(_Symbol, _Period, 1);
-   int bars = iBars(_Symbol, _Period);
-
-   // ── BUY ───────────────────────────────────────────────────────
-   if(g_signal.doBuy)
+   // Process each strategy independently, but prevent opposite trades same bar
+   int lastDir = 0;
+   for(int si=0; si<MAX_STRATEGIES; si++)
    {
-      // Close opposite position if active
-      if(g_dir == -1 && !g_slh)
-         CloseOpposite();
+      if(!g_signals[si].doBuy && !g_signals[si].doSell) continue;
+      if(!Multi_IsSlotFree(si)) continue;
 
-      if(g_dir == 0)
+      int dir = g_signals[si].doBuy ? 1 : -1;
+      if(g_signals[si].doBuy && g_signals[si].doSell) dir = 1;
+
+      // Block if already max positions open
+      if(GetActiveCount() >= 2) continue;
+      lastDir = dir;
+
+      // Skip if news is active (for non-EMA strats)
+      if(si > 0 && IsNearNews()) continue;
+
+      // ── Confluence filter ────────────────────────────────────────
+      int confCount = 0;
+      MqlRates pv[1]; CopyRates(_Symbol,_Period,1,1,pv);
+      double efC[2],esC[2],etC[2];
+      ArraySetAsSeries(efC,true);ArraySetAsSeries(esC,true);ArraySetAsSeries(etC,true);
+      CopyBuffer(hEmaFast,0,0,2,efC);CopyBuffer(hEmaSlow,0,0,2,esC);CopyBuffer(hEmaTrend,0,0,2,etC);
+
+      if(dir==1)
       {
-         double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
-         double sl;
+         if(pv[0].close > etC[1]) confCount++;                      // Above trend EMA
+         if(g_bosUp || g_chochUp) confCount++;                      // Structure bullish
+         { for(int i=0;i<ArraySize(g_fvgs);i++) if(!g_fvgs[i].filled && g_fvgs[i].bull) {confCount++;break;} } // Bullish FVG
+         if(g_liquiditySweepDn) confCount++;                        // Liquidity sweep bullish
+         { for(int i=0;i<ArraySize(g_obs);i++) if(!g_obs[i].mitigated && g_obs[i].bull) {confCount++;break;} } // Bullish OB
+      }
+      else
+      {
+         if(pv[0].close < etC[1]) confCount++;
+         if(g_bosDn || g_chochDn) confCount++;
+         { for(int i=0;i<ArraySize(g_fvgs);i++) if(!g_fvgs[i].filled && !g_fvgs[i].bull) {confCount++;break;} }
+         if(g_liquiditySweepUp) confCount++;
+         { for(int i=0;i<ArraySize(g_obs);i++) if(!g_obs[i].mitigated && !g_obs[i].bull) {confCount++;break;} }
+      }
 
-         // Last completed bar OHLC for SL calculation
-         MqlRates prev[1];
-         if(CopyRates(_Symbol, _Period, 1, 1, prev) <= 0) return;
+      if(confCount < SMC_MinConf)
+      {
+         static int confSkip = 0;
+         if(++confSkip <= 3)
+            Print("[Sniper] ", g_stratNames[si], " skipped: confluence ", confCount, "/", SMC_MinConf);
+         g_signals[si].doBuy = false; g_signals[si].doSell = false;
+         continue;
+      }
+
+      double price = (dir==1) ? SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+                              : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double sl;
+      MqlRates prev[1];
+      if(CopyRates(_Symbol, _Period, 1, 1, prev) <= 0) continue;
+      double atrBuf[1]; double cAtr = 0;
+      if(CopyBuffer(hATR, 0, 1, 1, atrBuf) > 0) cAtr = atrBuf[0];
+
+      if(dir == 1)
+      {
          double low_ = prev[0].low;
-
-         // ATR for SL distance
-         double atrBuf[1];
-         double cAtr = 0;
-         if(CopyBuffer(hATR, 0, 1, 1, atrBuf) > 0) cAtr = atrBuf[0];
-
          if(StructureSL)
          {
-            double swL = low_;
-            for(int k = 1; k <= SwingLB && k < bars; k++)
-            {
-               MqlRates rr[1];
-               if(CopyRates(_Symbol, _Period, k, 1, rr) > 0)
-                  swL = MathMin(swL, rr[0].low);
-            }
-            sl = swL - cAtr * 0.2;
-            if(ask - sl < cAtr * 0.5) sl = ask - cAtr * 0.5;
+            double swL = low_; int bars = iBars(_Symbol, _Period);
+            for(int k=1; k<=SwingLB && k<bars; k++)
+            { MqlRates rr[1]; if(CopyRates(_Symbol,_Period,k,1,rr)>0) swL=MathMin(swL,rr[0].low); }
+            sl = swL - cAtr*0.2; if(price-sl < cAtr*0.5) sl = price - cAtr*0.5;
+            // Cap SL: max 5x ATR from entry
+            double maxSL = price - cAtr * 5.0;
+            if(sl < maxSL) sl = maxSL;
          }
-         else sl = ask - cAtr * pSLMult;
-
-         double riskDist = MathAbs(ask - sl);
-         double tp1 = ask + riskDist * TP1_RR;
-         double tp2 = ask + riskDist * TP2_RR;
-         double tp3 = ask + riskDist * TP3_RR;
-
-         if(OpenTrade(1, g_signal.bScore, ask, sl, tp1, tp2, tp3, riskDist))
-         {
-            int currentIdx = bars - 1 - 1;
-            g_eBar    = currentIdx;
-            g_lastDir = 1;
-            Print("PrecSniper: LONG signal | Score=", g_signal.bScore, " Lot=", g_lotSize);
-            if(!MQLInfoInteger(MQL_TESTER))
-            {
-               DrawTPSLLines();
-               if(ShowSignals) DrawSignalArrow(signalBarTime, low_ - cAtr * 0.8, 1);
-            }
-         }
+         else sl = price - cAtr*SLMult;
       }
-   }
-   // ── SELL ──────────────────────────────────────────────────────
-   else if(g_signal.doSell)
-   {
-      if(g_dir == 1 && !g_slh)
-         CloseOpposite();
-
-      if(g_dir == 0)
+      else
       {
-         double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-         double sl;
-
-         MqlRates prev[1];
-         if(CopyRates(_Symbol, _Period, 1, 1, prev) <= 0) return;
          double high_ = prev[0].high;
-
-         double atrBuf[1];
-         double cAtr = 0;
-         if(CopyBuffer(hATR, 0, 1, 1, atrBuf) > 0) cAtr = atrBuf[0];
-
          if(StructureSL)
          {
-            double swH = high_;
-            for(int k = 1; k <= SwingLB && k < bars; k++)
-            {
-               MqlRates rr[1];
-               if(CopyRates(_Symbol, _Period, k, 1, rr) > 0)
-                  swH = MathMax(swH, rr[0].high);
-            }
-            sl = swH + cAtr * 0.2;
-            if(sl - bid < cAtr * 0.5) sl = bid + cAtr * 0.5;
+            double swH = high_; int bars = iBars(_Symbol, _Period);
+            for(int k=1; k<=SwingLB && k<bars; k++)
+            { MqlRates rr[1]; if(CopyRates(_Symbol,_Period,k,1,rr)>0) swH=MathMax(swH,rr[0].high); }
+            sl = swH + cAtr*0.2; if(sl-price < cAtr*0.5) sl = price + cAtr*0.5;
+            // Cap SL: max 5x ATR from entry
+            double maxSL = price + cAtr * 5.0;
+            if(sl > maxSL) sl = maxSL;
          }
-         else sl = bid + cAtr * pSLMult;
+         else sl = price + cAtr*SLMult;
+      }
 
-         double riskDist = MathAbs(bid - sl);
-         double tp1 = bid - riskDist * TP1_RR;
-         double tp2 = bid - riskDist * TP2_RR;
-         double tp3 = bid - riskDist * TP3_RR;
+      double riskDist = MathAbs(price - sl);
+      double tp1 = (dir==1) ? price+riskDist*TP1_RR : price-riskDist*TP1_RR;
+      double tp2 = (dir==1) ? price+riskDist*TP2_RR : price-riskDist*TP2_RR;
+      double tp3 = (dir==1) ? price+riskDist*TP3_RR : price-riskDist*TP3_RR;
 
-         if(OpenTrade(-1, g_signal.sScore, bid, sl, tp1, tp2, tp3, riskDist))
+      if(Multi_OpenTrade(si, dir, price, sl, tp1, tp2, tp3, riskDist))
+      {
+         Print("[Sniper] ", g_stratNames[si], " ", dir==1?"LONG":"SHORT",
+               " | entry=", DoubleToString(price,_Digits),
+               " | sl=", DoubleToString(sl,_Digits));
+         if(!MQLInfoInteger(MQL_TESTER))
          {
-            int currentIdx = bars - 1 - 1;
-            g_eBar    = currentIdx;
-            g_lastDir = -1;
-            Print("PrecSniper: SHORT signal | Score=", g_signal.sScore, " Lot=", g_lotSize);
-            if(!MQLInfoInteger(MQL_TESTER))
-            {
-               DrawTPSLLines();
-               if(ShowSignals) DrawSignalArrow(signalBarTime, high_ + cAtr * 0.8, -1);
-            }
+            if(ShowTPSL) DrawTPSLLines();
+            if(ShowSignals) DrawSignalArrow(dir);
+         }
+      }
+      // Clear signal after attempt (success or fail)
+      g_signals[si].doBuy = false;
+      g_signals[si].doSell = false;
+   }
+}
+
+//+------------------------------------------------------------------+
+//| CheckZoneSignals — light zone-touch check for FVG/OB every tick    |
+//+------------------------------------------------------------------+
+void CheckZoneSignals()
+{
+   // ── FVG touch (strategy 1) ──────────────────────────────────────
+   if(Multi_IsSlotFree(1) && !IsNearNews())
+   {
+      double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      MqlRates prev[1];
+      if(CopyRates(_Symbol,_Period,1,1,prev) <= 0) return;
+      double close_ = prev[0].close;
+      double ef[], es[], et[];
+      ArraySetAsSeries(ef,true); ArraySetAsSeries(es,true); ArraySetAsSeries(et,true);
+      CopyBuffer(hEmaFast,0,0,2,ef); CopyBuffer(hEmaSlow,0,0,2,es); CopyBuffer(hEmaTrend,0,0,2,et);
+
+      for(int i=0; i<ArraySize(g_fvgs); i++)
+      {
+         if(g_fvgs[i].filled) continue;
+         static int lastFvgIdx = -1;
+         if(g_fvgs[i].bull && ask <= g_fvgs[i].hi && bid >= g_fvgs[i].lo)
+         {
+            if(i != lastFvgIdx && close_ > et[1])
+               { g_signals[1].strategy=1; g_signals[1].doBuy=true; g_signals[1].doSell=false; lastFvgIdx=i; break; }
+         }
+         if(!g_fvgs[i].bull && bid >= g_fvgs[i].lo && ask <= g_fvgs[i].hi)
+         {
+            if(i != lastFvgIdx && close_ < et[1])
+               { g_signals[1].strategy=1; g_signals[1].doBuy=false; g_signals[1].doSell=true; lastFvgIdx=i; break; }
+         }
+      }
+   }
+
+   // ── OB touch (strategy 2) ───────────────────────────────────────
+   if(Multi_IsSlotFree(2) && !IsNearNews())
+   {
+      double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      MqlRates prev[1]; CopyRates(_Symbol,_Period,1,1,prev);
+      double ef[],es[],et[];
+      ArraySetAsSeries(ef,true);ArraySetAsSeries(es,true);ArraySetAsSeries(et,true);
+      CopyBuffer(hEmaFast,0,0,2,ef); CopyBuffer(hEmaSlow,0,0,2,es); CopyBuffer(hEmaTrend,0,0,2,et);
+
+      static int lastObIdx = -1;
+      for(int i=0; i<ArraySize(g_obs); i++)
+      {
+         if(g_obs[i].mitigated) continue;
+         if(g_obs[i].bull && ask <= g_obs[i].hi+_Point*5 && bid >= g_obs[i].lo-_Point*5)
+         {
+            if(i != lastObIdx && prev[0].close > et[1])
+               { g_signals[2].strategy=2; g_signals[2].doBuy=true; g_signals[2].doSell=false; lastObIdx=i; break; }
+         }
+         if(!g_obs[i].bull && bid >= g_obs[i].lo-_Point*5 && ask <= g_obs[i].hi+_Point*5)
+         {
+            if(i != lastObIdx && prev[0].close < et[1])
+               { g_signals[2].strategy=2; g_signals[2].doBuy=false; g_signals[2].doSell=true; lastObIdx=i; break; }
          }
       }
    }
 }
 
 //+------------------------------------------------------------------+
-//| IsWithinSession — time-of-day filter (server time)                 |
-//|                                                                   |
-//| When InpUseSessionFilter is true, signals are only allowed         |
-//| between InpSessionStartHour:InpSessionStartMin and                 |
-//| InpSessionEndHour:InpSessionEndMin (server time).                  |
-//| Useful to avoid low-volatility sessions like Asia for Gold.        |
-//+------------------------------------------------------------------+
-bool IsWithinSession()
-{
-   if(!InpUseSessionFilter) return true;
-
-   MqlDateTime dt;
-   TimeToStruct(TimeCurrent(), dt);
-
-   int nowMinutes  = dt.hour * 60 + dt.min;
-   int startMinutes = InpSessionStartHour * 60 + InpSessionStartMin;
-   int endMinutes   = InpSessionEndHour   * 60 + InpSessionEndMin;
-
-   if(startMinutes < endMinutes)
-      return (nowMinutes >= startMinutes && nowMinutes < endMinutes);
-   else
-      return (nowMinutes >= startMinutes || nowMinutes < endMinutes);
-}
-
-//+------------------------------------------------------------------+
-//| OnInit                                                            |
+//| OnInit                                                             |
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   ApplyPreset();
+   ObjectsDeleteAll(0,"PS_EA_"); ObjectsDeleteAll(0,"PSL_");
+   ObjectsDeleteAll(0,"PSV_");   ObjectsDeleteAll(0,"pnl_");
+   ObjectsDeleteAll(0,"trm_");   ObjectsDeleteAll(0,"smc_");
+   ObjectsDeleteAll(0,"mx_");    Comment("");
+
    g_trade.SetExpertMagicNumber(InpMagicNumber);
+   hEmaFast=iMA(_Symbol,PERIOD_CURRENT,C_EmaFast,0,MODE_EMA,PRICE_CLOSE);
+   hEmaSlow=iMA(_Symbol,PERIOD_CURRENT,C_EmaSlow,0,MODE_EMA,PRICE_CLOSE);
+   hEmaTrend=iMA(_Symbol,PERIOD_CURRENT,C_EmaTrend,0,MODE_EMA,PRICE_CLOSE);
+   hATR=iATR(_Symbol,PERIOD_CURRENT,C_ATR);
+   if(hEmaFast==INVALID_HANDLE||hEmaSlow==INVALID_HANDLE||hEmaTrend==INVALID_HANDLE||hATR==INVALID_HANDLE){ Print("[Sniper] ERR: indicator handles failed"); return INIT_FAILED; }
+   pFast=C_EmaFast; pSlow=C_EmaSlow; pTrend=C_EmaTrend; pATR=C_ATR;
 
-   hEmaFast  = iMA(_Symbol, PERIOD_CURRENT, pFast,  0, MODE_EMA, PRICE_CLOSE);
-   hEmaSlow  = iMA(_Symbol, PERIOD_CURRENT, pSlow,  0, MODE_EMA, PRICE_CLOSE);
-   hEmaTrend = iMA(_Symbol, PERIOD_CURRENT, pTrend, 0, MODE_EMA, PRICE_CLOSE);
-   hRSI      = iRSI(_Symbol, PERIOD_CURRENT, pRSI, PRICE_CLOSE);
-   hATR      = iATR(_Symbol, PERIOD_CURRENT, pATR);
-   h_atr     = hATR;
-   hMACD     = iMACD(_Symbol, PERIOD_CURRENT, 12, 26, 9, PRICE_CLOSE);
-   hADX      = iADX(_Symbol, PERIOD_CURRENT, 14);
+   Print("+------------------------------------------------+");
+   Print("| PRECISION_SNIPER v2.7 [SMC TERMINAL]         |");
+   Print("| ",_Symbol," ",EnumToString(Period())," | ema:",pFast,"/",pSlow,"/",pTrend," | atr:",pATR);
+   Print("| risk:",InpRiskPercent,"% | max_lot:",InpMaxLot," | magic:",InpMagicNumber);
+   Print("+------------------------------------------------+");
+   Print("$ system online. awaiting signal...");
 
-   ENUM_TIMEFRAMES htf = (HTF == PERIOD_CURRENT) ? PERIOD_CURRENT : HTF;
-   hHTFFast  = iMA(_Symbol, htf, pFast, 0, MODE_EMA, PRICE_CLOSE);
-   hHTFSlow  = iMA(_Symbol, htf, pSlow, 0, MODE_EMA, PRICE_CLOSE);
+   // ── Apply session/news settings ─────────────────────────────────
+   g_newsFilterEnabled = News_ShowAlerts;
+   g_useSound      = UseSound;
+   g_useAutoBE     = UseAutoBE;
+   g_beTriggerTP   = BE_TriggerTP;
+   g_beBufferPts   = BE_BufferPts;
+   g_useSmartTrail = UseSmartTrail;
+   g_smartTrailATR = SmartTrailATR;
 
-   if(hEmaFast==INVALID_HANDLE || hEmaSlow==INVALID_HANDLE ||
-      hEmaTrend==INVALID_HANDLE|| hRSI==INVALID_HANDLE ||
-      hATR==INVALID_HANDLE     || hMACD==INVALID_HANDLE ||
-      hADX==INVALID_HANDLE     || hHTFFast==INVALID_HANDLE ||
-      hHTFSlow==INVALID_HANDLE)
-   {
-      Print("PrecisionSniper EA: Failed to create indicator handles");
-      return INIT_FAILED;
-   }
+   // ── Apply Pro settings ──────────────────────────────────────────
+   g_mtfEnabled = SMC_MTF_Enabled;
+   SMC_MinConf = SMC_InitConfluence;
 
-   ApplyRiskProfile(g_state);
-   ResetDailyShield(g_state, InpMagicNumber, _Symbol, g_pos);
-   g_lastTradeWasLoss = LoadLossState();
-
-   // Market regime filter (v2.3)
-   if(InpUseRegimeFilter)
-   {
-      g_regimeTrendThreshold   = InpRegimeTrendThreshold;
-      g_regimeRangingThreshold = InpRegimeRangingThreshold;
-      g_regimeVolatilitySpike  = InpRegimeVolatilitySpike;
-      g_regimeCacheSeconds     = InpRegimeCacheSeconds;
-      if(!InitRegimeFilter(_Symbol, PERIOD_CURRENT, InpRegimeADXPeriod, InpRegimeATRPeriod))
-         Print("[PrecSniper] WARNING: Regime filter init failed — continuing without");
-   }
-
-   IndicatorSetString(INDICATOR_SHORTNAME, "PrecSniper EA");
+   InitMatrix();
+   if(SMC_MTF_Enabled) InitMTF();
+   InitMultiEngine();
+   LoadStats();
+   EventSetMillisecondTimer(200);
    return INIT_SUCCEEDED;
 }
 
 //+------------------------------------------------------------------+
-//| OnDeinit                                                          |
+//| OnDeinit                                                           |
 //+------------------------------------------------------------------+
-void OnDeinit(const int reason)
+void OnDeinit(const int reason){ EventKillTimer(); ReleaseMTF(); IndicatorRelease(hEmaFast);IndicatorRelease(hEmaSlow);IndicatorRelease(hEmaTrend);IndicatorRelease(hATR); ObjectsDeleteAll(0,"PSL_"); ClearVisuals(); ClearTerminal(); ClearBayesian(); ClearMatrix(); ClearSMC(); ClearFibLevels(); Comment(""); }
+
+//+------------------------------------------------------------------+
+//| OnTimer — fluid UI animation, independent of ticks                 |
+//+------------------------------------------------------------------+
+void OnTimer()
 {
-   IndicatorRelease(hEmaFast);  IndicatorRelease(hEmaSlow);
-   IndicatorRelease(hEmaTrend); IndicatorRelease(hRSI);
-   IndicatorRelease(hATR);      IndicatorRelease(hMACD);
-   IndicatorRelease(hADX);      IndicatorRelease(hHTFFast);
-   IndicatorRelease(hHTFSlow);
-   ReleaseRegimeFilter();
-   ClearDashboard();
-   ClearVisuals();
-   ObjectsDeleteAll(0, "PSL_");
-   ObjectsDeleteAll(0, "PSV_");
-   ObjectsDeleteAll(0, "PS_");
+   UpdateMatrix();
+   if(UIStyle == 0) { SyncBayState(); UpdateDashboard(); }
+   else DrawTerminal();
+
+   static int emaTick = 0;
+   emaTick++;
+   if(emaTick >= 5){ emaTick = 0; DrawEMAs(); if(ShowSMC) DrawSMC(); if(ShowFibOTE) DrawFibLevels(); }
 }
 
 //+------------------------------------------------------------------+
-//| OnTick — thin orchestrator                                         |
+//| OnTick                                                             |
 //+------------------------------------------------------------------+
 void OnTick()
 {
-   uint startMs = GetTickCount();
+   datetime currentBar=iTime(_Symbol,_Period,0);
+   bool newBar=(currentBar!=g_lastBarTime);
+   if(newBar) g_lastBarTime=currentBar;
+   int bars=iBars(_Symbol,_Period);
+   if(bars < pTrend+10) return;
 
-   // ── Risk shield ───────────────────────────────────────────────
-   UpdateDailyShield(g_state, InpMagicNumber, _Symbol, g_pos);
-   SyncRuntimeRiskState();
+   Multi_ManageAll();
+   if(!MQLInfoInteger(MQL_TESTER)) UpdateTrailLine();
 
-   // ── New bar detection ─────────────────────────────────────────
-   datetime currentBar = iTime(_Symbol, _Period, 0);
-   bool newBar = (currentBar != g_lastBarTime);
-   if(newBar) g_lastBarTime = currentBar;
+    if(Multi_AnyActive()){ MqlDateTime et; TimeToStruct(TimeCurrent(),et); if(et.hour==InpEmergencyCloseHour && et.min>=InpEmergencyCloseMin){ Print("[Sniper] ! EMERGENCY CLOSE: ",InpEmergencyCloseHour,":",InpEmergencyCloseMin); Multi_EmergencyClose(); } }
 
-   int bars = iBars(_Symbol, _Period);
-   if(bars < pTrend + 60) return;
-
-   // ── Historical catch-up (once per session) ────────────────────
-   if(newBar) CatchUpFromHistory();
-
-   // ── Trade management (every tick) ─────────────────────────────
-   MqlRates rates[1];
-   if(CopyRates(_Symbol, _Period, 0, 1, rates) > 0)
-   {
-      ManageTrade(rates[0].high, rates[0].low);
-   }
-
-   // ── Trail line update (every tick when active) ─────────────────
-   if(!MQLInfoInteger(MQL_TESTER))
-      UpdateTrailLine();
-
-   // ── Emergency close: 4:55 PM ET cutoff (non-negotiable) ──────────
-   if(g_dir != 0 && !g_slh)
-   {
-      MqlDateTime etNow;
-      TimeToStruct(TimeCurrent(), etNow);
-      if(etNow.hour == InpEmergencyCloseHour && etNow.min >= InpEmergencyCloseMin)
-      {
-         Print("[PrecSniper] EMERGENCY CLOSE: ", InpEmergencyCloseHour, ":", InpEmergencyCloseMin, " cutoff");
-         CloseTrade();
-      }
-   }
-
-   // ── Signal evaluation + execution (new bar only) ──────────────
+   // ── Signal evaluation (new bar for EMA, throttled for zones) ───
    if(newBar)
    {
-      if(!MQLInfoInteger(MQL_TESTER)) DrawEMAs();
-
-      // Regime gate (v2.3)
-      bool regimeBlocked = IsRegimeBlocked();
-      if(regimeBlocked)
-      {
-         static bool regimeWarned = false;
-         if(!regimeWarned) { Print("[PrecSniper] BLOCKED: Volatile regime — no new trades"); regimeWarned = true; }
-      }
-
-      if(IsWithinSession() && !regimeBlocked)
-      {
-         EvaluateSignals();
-         ExecuteSignal();
-      }
-      else
-      {
-         static bool sessionLogged = false;
-         if(!sessionLogged) { Print("[PrecSniper] BLOCKED: Outside session hours"); sessionLogged = true; }
-      }
+      RunSMC();
+      DetectDailyBias();
+      EvaluateSignals();  // EMA cross + full analysis
    }
-
-   // ── Dashboard update (new bar only, skip in tester) ─────────────
-   if(newBar && !MQLInfoInteger(MQL_TESTER))
+   // Light zone check throttled to 3s to prevent spam
+   static datetime lastZoneCheck = 0;
+   if(TimeCurrent() - lastZoneCheck >= 3)
    {
-      string statusStr = "No Trade";
-      if(g_dir != 0 && !g_slh)
-         statusStr = g_tp3h ? "TP3 Hit" : g_tp2h ? "TP2 Hit" : g_tp1h ? "TP1 Hit" : "Active";
-
-      UpdateDashboard(g_signal.bScore, g_signal.sScore, g_signal.htfBias,
-                      g_signal.volRegStr, g_signal.trendStr, statusStr,
-                      g_signal.rsi, g_signal.adx, g_signal.strongTrend);
+      lastZoneCheck = TimeCurrent();
+      CheckZoneSignals();
    }
-
-   uint elapsed = GetTickCount() - startMs;
-   if(elapsed > 50)
-   {
-      static int budgetWarns = 0;
-      if(++budgetWarns <= 3)
-         Print("[PrecSniper] WARNING: OnTick budget exceeded: ", elapsed, "ms (limit: 50ms)");
-   }
+   ProcessSignals();
 }
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
-//| OnTester — fitness function for Genetic Optimizer                  |
-//|                                                                   |
-//| Composite score: profit factor × sqrt(total R) × (0.5 + win rate).|
-//| Returns 0 if fewer than 10 trades to avoid overfit to noise.       |
+//| OnChartEvent — handle button clicks                                |
 //+------------------------------------------------------------------+
-double OnTester()
+void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
 {
-   if(g_btTotal < 10) return 0;
+   int mx=0, my=0;
+   bool isCanvasClick = false;
 
-   double pf = g_btGL > 0 ? g_btGW / g_btGL : (g_btGW > 0 ? 999.0 : 0.0);
-   if(pf < 0.5) return 0;
+   if(id == CHARTEVENT_OBJECT_CLICK && sparam == "bay_canvas")
+   {
+      mx = (int)lparam - BX;
+      my = (int)dparam - BY;
+      isCanvasClick = true;
+   }
+   else if(id == CHARTEVENT_CLICK)
+   {
+      mx = (int)lparam - BX;
+      my = (int)dparam - BY;
+      isCanvasClick = true;
+   }
 
-   double wr = g_btTotal > 0 ? (double)g_btWins / g_btTotal : 0;
-   double score = pf * MathSqrt(MathAbs(g_btTotR)) * (0.5 + wr);
-
-   Print("OnTester: Trades=", g_btTotal, " PF=", DoubleToString(pf,2),
-         " WinRate=", DoubleToString(wr*100,1), "%",
-         " TotalR=", DoubleToString(g_btTotR,2),
-         " Score=", DoubleToString(score,2));
-
-   return score;
+   if(!isCanvasClick) return;
+      
+      if(mx >= BTN_TAB0_X1 && mx <= BTN_TAB0_X2 && my >= BTN_TAB0_Y1 && my <= BTN_TAB0_Y2) g_bayTab = 0;
+      if(mx >= BTN_TAB1_X1 && mx <= BTN_TAB1_X2 && my >= BTN_TAB1_Y1 && my <= BTN_TAB1_Y2) g_bayTab = 1;
+      if(mx >= BTN_TAB2_X1 && mx <= BTN_TAB2_X2 && my >= BTN_TAB2_Y1 && my <= BTN_TAB2_Y2) g_bayTab = 2;
+      if(mx >= BTN_TAB3_X1 && mx <= BTN_TAB3_X2 && my >= BTN_TAB3_Y1 && my <= BTN_TAB3_Y2) g_bayTab = 3;
+      
+      if(mx >= BTN_CLOSE_X1 && mx <= BTN_CLOSE_X2 && my >= BTN_CLOSE_Y1 && my <= BTN_CLOSE_Y2)
+         { Multi_EmergencyClose(); Print("[Sniper] Cerrando todo"); }
+      if(mx >= BTN_STOP_X1 && mx <= BTN_STOP_X2 && my >= BTN_STOP_Y1 && my <= BTN_STOP_Y2)
+         { g_bayVisible = !g_bayVisible; Print("[Sniper] Panel ", g_bayVisible?"ON":"OFF"); }
+      if(mx >= BTN_RESET_X1 && mx <= BTN_RESET_X2 && my >= BTN_RESET_Y1 && my <= BTN_RESET_Y2)
+      {
+         Signal_ResetPending();
+         g_statTotal=0;g_statWins=0;g_statLosses=0;g_statBE=0;
+         g_statWinR=0;g_statLossR=0;g_statTotalR=0;g_statBestR=0;g_statWorstR=-999;g_statMaxDDpct=0;
+         Print("[Sniper] Stats reseteados");
+   }
 }
 //+------------------------------------------------------------------+

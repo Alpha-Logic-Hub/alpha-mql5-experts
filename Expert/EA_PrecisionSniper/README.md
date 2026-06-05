@@ -1,149 +1,111 @@
-# PrecisionSniper EA — v2.3
+# PrecisionSniper EA — v3.0 [Multi-Engine]
 
-Expert Advisor modular para MetaTrader 5 basado en cruce de EMAs con scoring multi-factor, gestión escalonada de take profits y auditoría de riesgo completa.
+Expert Advisor modular para MetaTrader 5. Motor multi-estrategia con Smart Money Concepts, cruce de EMAs, y ejecución independiente por tipo de señal.
 
 ---
 
-## Cómo funciona
+## Estrategias activas (4 slots independientes)
+
+| Slot | Estrategia | Magic | Trigger |
+|------|-----------|-------|---------|
+| 0 | **EMA Cross** | 999456 | Cruce EMA 9/21 + filtro de tendencia EMA 55 |
+| 1 | **FVG Touch** | 999457 | Precio toca Fair Value Gap + trend filter |
+| 2 | **OB Touch** | 999458 | Precio toca Order Block + trend filter |
+| 3 | **Structure BOS** | 999459 | Break of Structure / Change of Character |
+
+Cada estrategia puede tener 1 posición activa simultáneamente. SL, TP, trailing y auto-breakeven independientes.
+
+---
+
+## Pipeline de entrada (EMA Cross)
+
+1. **Daily Bias** — sesgo diario automático (bloquea trades contra tendencia del día)
+2. **Cruce EMA** — EMA 9 cruza EMA 21 en dirección de la EMA 55
+3. **Fib OTE** (opcional) — espera retroceso a zona 61.8%–78.6% del último swing
+4. **SMC Zone** (opcional) — espera touch de FVG u Order Block
+5. **Directo** — si no hay zona, entra al cruce inmediatamente
+
+---
+
+## Smart Money Concepts
+
+| Concepto | Descripción | Visual |
+|----------|-------------|--------|
+| **Market Structure** | Swing highs/lows, BOS, CHoCH | Flechas amarillas |
+| **Order Blocks** | Zonas de oferta/demanda | Rectángulos verde/rojo |
+| **Fair Value Gaps** | Imbalances de 3 velas | Rectángulos sombreados |
+| **Liquidity Sweeps** | Barridos de stops | Líneas punteadas |
+| **Fibonacci OTE** | Zona 61.8%–78.6% | Líneas + rectángulo OTE |
+| **Daily Bias** | Sesgo diario automático | ▲/▼ en panel |
+| **MTF H4** | Bias de timeframe superior | Confirmación/advertencia |
+
+---
+
+## Gestión de riesgo
+
+- **Stop Loss**: ATR × multiplicador o estructura (swing low/high)
+- **Take Profit**: 3 niveles (1:1, 1:2, 1:3 R:R)
+- **Trailing Stop**: avanza al tocar cada TP
+- **Auto Breakeven**: al tocar TP1, SL → entry + buffer
+- **Lot Sizing**: fijo o % riesgo dinámico
+- **Spread Filter**: bloquea entradas con spread > máximo
+- **Emergency Close**: cierre forzoso a hora configurable
+
+---
+
+## Parámetros
 
 ### Estrategia
+- `C_EmaFast / C_EmaSlow / C_EmaTrend` — períodos EMA (default 9/21/55)
+- `C_ATR` — período ATR para SL
 
-El EA detecta **cruces de medias móviles exponenciales (EMA)** en la dirección de la tendencia y los valida con un sistema de scoring de 8 factores antes de entrar.
+### Stop Loss
+- `SLMult` — multiplicador ATR
+- `StructureSL` — usar swing como SL
+- `SwingLB` — lookback para swing
 
-**Dirección**: solo opera a favor de la tendencia (EMA de tendencia como filtro direccional).
-
-**Entrada**: cruce de EMA rápida sobre EMA lenta + score mínimo alcanzado + filtros duros + spread filter + daily trade limit.
-
-**Salida**: 3 take profits escalonados (TP1, TP2, TP3) con trailing stop que avanza al llegar a cada TP:
-- Precio toca TP1 → SL se mueve a breakeven (entry)
-- Precio toca TP2 → SL se mueve a TP1
-- Precio toca TP3 → SL se mueve a TP2
-- Precio toca el trail → cierra la posición
-
-### Sistema de Scoring (0–10 puntos)
-
-| Factor | Buy | Sell | Peso |
-|--------|-----|------|------|
-| EMAs alineadas con separación mínima | EMA rápida > lenta | EMA rápida < lenta | 1.5 |
-| Precio vs tendencia | Sobre EMA tendencia | Bajo EMA tendencia | 1.5 |
-| RSI en zona + momentum | 50–70 subiendo | 30–50 bajando | 1.5 |
-| MACD histogram | Creciendo | Decreciendo | 1.0 |
-| VWAP | Precio > VWAP | Precio < VWAP | 0.5 |
-| Volumen | Sobre media 20 barras | Sobre media 20 barras | 0.5 |
-| ADX + DI | ADX > 20, +DI > -DI | ADX > 20, -DI > +DI | 1.0 |
-| HTF Bias | Higher TF bullish | Higher TF bearish | 2.0 |
-
-### Filtros duros (deben cumplirse todos)
-
-- Cruce de EMAs confirmado (no solo alineación)
-- Precio no extendido (>1.5× ATR de la EMA rápida)
-- HTF no en contra (si está activado)
-- Vela con cuerpo real (adaptativo por timeframe)
-- Cooldown respetado (adaptativo por timeframe + loss penalty)
-- Score ≥ mínimo del preset
-- Grade filter (A+, A, B, C)
-- Spread filter (puntos configurables)
-- Daily trade limit (configurable)
-- Daily risk shield (loss diario máximo)
-
----
-
-## Novedades v2.3
-
-### Market Regime Filter
-- **Filtro de régimen**: ADX + ATR ratio clasifican mercado en trending, weak trending, ranging, volatile o unknown.
-- **Bloqueo por volatilidad**: régimen `REGIME_VOLATILE` bloquea nuevas entradas.
-- **Reducción por rango**: régimen `REGIME_RANGING` reduce lote al 50%.
-- **Cache configurable**: `InpRegimeCacheSeconds` evita recalcular régimen en exceso.
-
-### Compile gate
-- `scripts/build.ps1` ahora soporta EAs cuyo archivo principal no se llama igual que la carpeta, como `EA_PrecisionSniper/PrecisionSniper_EA.mq5`.
-
-### Fixes de ejecución
-- `g_ticket` ahora guarda el ticket real de la posición activa resuelto por magic + symbol, no el ticket de orden devuelto por `ResultOrder()`.
-
-## Novedades v2.2
-
-### Rendimiento
-- **ATR SMA**: 42 CopyBuffer → 1 CopyBuffer (40× más rápido)
-- **Volumen avg**: 20 CopyRates → 1 CopyRates (20× más rápido)
-- **Dashboard**: solo en barra nueva (antes cada tick)
-- **OnTick budget guard**: alerta si excede 50ms
-
-### Riesgo & Seguridad (auditoría ALH)
-- **ResultRetcode audit** (`ERR-003`): cada `PositionOpen`/`PositionClose` verifica `TRADE_RETCODE_DONE`
-- **Real R-múltiplos**: calculados del profit real de la posición (no ideales)
-- **Spread filter** (`ERR-002`): adentro de `OpenTrade`, límite en puntos
-- **Emergency close path**: 20:55 server time (4:55 PM ET), configurable
-- **Daily trade limit**: `InpMaxDailyTrades` (default 5, 0 = unlimited)
-- **Position double-check**: `CountActivePositions()` antes de abrir
-- **Cooldown persistido**: `GlobalVariable` con expiración 24h — sobrevive reinicios del EA
-- **SL de emergencia recalcula TPs**: parámetros por referencia, consistencia garantizada
-
-### Fixes
-- **Sesiones overnight**: start > end ahora funciona (ej. 22:00–06:00)
-- **Trail visual en tiempo real**: la línea naranja se actualiza cada tick
-- **Scoring unificado**: `ComputeBarScores()` único para live y catch-up
-- **OnTester()**: fitness function para Genetic Optimizer: `PF × √TotalR × (0.5 + WR)`
-- **Diagnóstico**: cuando un cruce no opera, imprime la condición exacta que falló
-
----
-
-## Presets
-
-| Preset | EMAs | RSI | ATR | Score mín | SL Mult | Uso |
-|--------|------|-----|-----|-----------|---------|-----|
-| **Scalping** | 5/13/34 | 8 | 10 | 4 | 0.8× | M1–M5 |
-| **Aggressive** | 8/18/50 | 11 | 12 | 3 | 1.2× | M5–M15 |
-| **Default** | 9/21/55 | 13 | 14 | 5 | 1.5× | M15–H1 |
-| **Conservative** | 12/26/89 | 14 | 14 | 7 | 2.0× | H1–H4 |
-| **Swing** | 13/34/89 | 21 | 20 | 6 | 2.5× | H4–D1 |
-| **Crypto** | 9/21/55 | 14 | 20 | 5 | 2.0× | Cripto H1+ |
-| **Gold** | 21/55/200 | 21 | 20 | 7 | 2.5× | XAUUSD |
-| **Custom** | Manual | Manual | Manual | Manual | Manual | Cualquiera |
-| **Auto** | Automático según timeframe | — | — | — | — | — |
-
----
-
-## Parámetros clave
-
-### Estrategia
-- `Preset` — preset de parámetros (Default recomendado para empezar)
-- `HTF` — timeframe superior para filtro de tendencia
-- `C_MinScore` — score mínimo para entrar (solo en preset Custom)
-
-### Take Profits
-- `TP1_RR / TP2_RR / TP3_RR` — ratios riesgo:beneficio para cada TP
-- `SLMult` — multiplicador del ATR para el stop loss
-- `UseTrail` — activar trailing stop al tocar TPs
-- `StructureSL` — usar swing low/high como SL (más adaptativo)
-- `CooldownBars` — barras de espera entre entradas
-
-### Filtros
-- `GradeFilter` — filtrar por nota (All, A+ y A, solo A+)
-- `HideCGrade` — ocultar señales con nota C
-- `UseHTFFilter` — usar timeframe superior como filtro
-- `InpUseSessionFilter` — activar filtro horario (soporta sesiones overnight)
-- `InpSessionStartHour/Min`, `InpSessionEndHour/Min` — ventana horaria
-
-### Protección
-- `InpMaxSpreadPoints` — spread máximo en puntos (0 = off, default 30)
-- `InpMaxDailyTrades` — máximo de trades por día (0 = unlimited, default 5)
-- `InpEmergencyCloseHour/Min` — cierre forzoso de posiciones (default 20:55 = 4:55 PM ET)
-- `InpUseRegimeFilter` — activar filtro de régimen de mercado
-- `InpRegimeADXPeriod / InpRegimeATRPeriod` — períodos para clasificación de régimen
-- `InpRegimeTrendThreshold / InpRegimeRangingThreshold / InpRegimeVolatilitySpike` — umbrales de contexto
+### Take Profit
+- `TP1_RR / TP2_RR / TP3_RR` — ratios R:R
+- `UseTrail` — trailing stop
 
 ### Riesgo
-- `InpFixedLot` — lote fijo (0 = dinámico por % riesgo)
-- `InpRiskPercent` — % de riesgo por trade (cap 1.0%)
-- `InpMaxLot` — lote máximo permitido
-- `InpUseShield` — activar escudo de pérdida diaria
-- `InpShieldPercent` — % de drawdown diario que bloquea nuevas entradas
-- `InpRiskProfile` — perfil de riesgo (Conservative/Balanced/Aggressive/Custom)
+- `InpFixedLot` — lote fijo (0 = dinámico)
+- `InpRiskPercent` — % riesgo por trade
+- `InpMaxLot` — lote máximo
 
-### Cooldown
-- `InpCooldownMultLoss` — multiplicador de cooldown tras un SL (default 2.0×)
+### Protección
+- `InpMaxSpreadPoints` — spread máximo
+- `InpEmergencyCloseHour/Min` — cierre forzoso
+
+### Smart Money Pro
+- `SMC_MTF_Enabled` — bias de H4
+- `SMC_FibOTE_Enabled` — entrada por Fibonacci OTE
+- `SMC_DailyBias_Enabled` — filtro de sesgo diario
+
+### Sound + Auto BE
+- `UseSound` — alertas de sonido
+- `UseAutoBE` — breakeven automático
+- `BE_TriggerTP` — qué TP activa BE (1/2/3)
+- `BE_BufferPts` — buffer en puntos
+
+### Visual
+- `ShowEMA` — líneas EMA en chart
+- `ShowSignals` — flechas de entrada
+- `ShowTPSL` — líneas TP/SL
+- `ShowPanel` — panel terminal
+- `ShowSMC` — dibujos SMC
+- `ShowFibOTE` — niveles Fibonacci
+
+---
+
+## UI — Terminal Hacker Edition
+
+- Panel de datos en vivo estilo terminal (fuente Consolas, verde fósforo)
+- Fondo del chart cambia por sesión (Asia/London/NY/LON+NY)
+- Lluvia de símbolos Matrix ($ ¥ ₿ €) en el fondo
+- Marca de agua "A" centrada + "ALPHA LOGIC HUB" al pie
+- Nombre de sesión centrado en la parte superior
+- Estadísticas de trades en vivo (win rate, profit factor, total R)
 
 ---
 
@@ -151,76 +113,57 @@ El EA detecta **cruces de medias móviles exponenciales (EMA)** en la dirección
 
 ```
 EA_PrecisionSniper/
-├── PrecisionSniper_EA.mq5      ← Orquestador: OnInit, OnTick, OnDeinit, OnTester
+├── PrecisionSniper_EA.mq5      ← Orquestador + UI completa
 ├── Core/
-│   └── Definitions.mqh         ← Enums, globales, presets, GetEffectiveCooldown
+│   ├── Definitions.mqh         ← Tipos, estado global, lot sizing inline
+│   ├── Killzones.mqh           ← Sesiones de mercado + detección de noticias
+│   ├── SMC_Engine.mqh          ← SMC: swings, FVGs, OBs, liquidez, dibujo
+│   └── SMC_Pro.mqh             ← Multi-TF, Fib OTE, Daily Bias
 ├── Signals/
-│   └── PrecisionSignals.mqh    ← ComputeBarScores() + EvaluateSignals()
-├── Engine/
-│   └── PrecisionEngine.mqh     ← OpenTrade, CloseTrade, ManageTrade, CatchUp, CalcRealR
-└── UI/
-    └── PrecisionUI.mqh         ← Dashboard, EMAs, flechas, TP/SL lines, UpdateTrailLine
+│   └── PrecisionSignals.mqh    ← Pipeline de señales con SMC
+└── Engine/
+    └── MultiEngine.mqh         ← Motor multi-posición (4 estrategias)
 ```
 
-### Responsabilidades
+---
 
-| Módulo | Qué hace | Modificar cuando... |
-|--------|----------|-------------------|
-| `PrecisionSniper_EA.mq5` | `OnInit`, `OnTick`, `OnDeinit`, `OnTester`, orquestación | Cambios en el flujo general |
-| `Core/Definitions.mqh` | Tipos, estado global, presets, filtros de grado, cooldown | Nuevos presets o enums |
-| `Signals/PrecisionSignals.mqh` | `ComputeBarScores()` (scoring unificado), `EvaluateSignals()` | Cambios en la lógica de entrada |
-| `Engine/PrecisionEngine.mqh` | `OpenTrade`, `CloseTrade`, `CloseOpposite`, `ManageTrade`, `CatchUpFromHistory`, `CalcRealR`, `SaveLossState`/`LoadLossState` | Cambios en gestión de trades o riesgo |
-| `UI/PrecisionUI.mqh` | Dashboard, líneas EMA/TP/SL, flechas, `UpdateTrailLine` | Cambios en la interfaz visual |
+## Ciclo de vida
+
+```
+OnInit → InitMatrix, InitMTF, InitMultiEngine, EventSetTimer(200ms)
+
+OnTimer (200ms):
+  ├── UpdateMatrix (lluvia símbolos, fondo sesión, watermark)
+  ├── DrawTerminal (panel datos en vivo)
+  └── DrawEMAs + DrawSMC + DrawFibLevels (cada 1s)
+
+OnTick:
+  ├── Multi_ManageAll (trail + BE para cada posición activa)
+  ├── Emergency close check
+  └── newBar → EvaluateSignals → ExecuteSignal
+```
 
 ---
 
-## Dependencias
-
-- `Shared/Core/Definitions.mqh` — tipos compartidos (`RiskState`, `ENUM_TIMEFRAMES`)
-- `Shared/Risk/RiskGuardrail.mqh` — `CalculateLotSize`, daily shield, `CountActivePositions`
-
----
-
-## Convenciones del proyecto
+## Convenciones
 
 - Prefijo `g_` para variables globales
-- Prefijo `PSL_` para objetos de líneas TP/SL
-- Prefijo `PSV_` para objetos visuales (EMAs, flechas)
-- Prefijo `PS_EA_` para objetos del dashboard
+- `PSL_` → líneas TP/SL, `PSV_` → visuales EMA/flechas
+- `trm_` → panel terminal, `mx_` → matrix/watermark
+- `smc_` → objetos SMC, `fib_` → niveles Fibonacci
 - `IndicatorRelease` en `OnDeinit`
-- `ResultRetcode` audit (`ERR-003`) en toda operación de apertura/cierre
-- `ERR-002` para spread bloqueante
-- No `#pragma once` — usar `#ifndef` guards
-- `color` no `Color` (MQL5 case-sensitive)
+- `EventKillTimer` en `OnDeinit`
+- `#ifndef` guards en todos los `.mqh`
 
 ---
 
-## Ciclo de vida de un trade
+## Historial de versiones
 
-```
-OnTick (new bar)
-  ├── CatchUpFromHistory (una vez)
-  ├── IsWithinSession?
-  ├── EvaluateSignals()
-  │     ├── CopyBuffer × 10 indicadores
-  │     ├── ComputeBarScores() → 8 factores + hard filters
-  │     └── Decisión: doBuy / doSell + diagnóstico si rechazado
-  ├── ExecuteSignal()
-  │     └── OpenTrade()
-  │           ├── CountActivePositions (double-check)
-  │           ├── Risk shield check
-  │           ├── Daily trade limit check
-  │           ├── Spread filter (ERR-002)
-  │           ├── Lot sizing (dinámico o fijo)
-  │           ├── Emergency SL fallback → recalcula TPs
-  │           ├── PositionOpen + ResultRetcode audit (ERR-003)
-  │           └── g_dailyTradeCount++
-  └── Dashboard (new bar only)
-
-OnTick (every tick)
-  ├── UpdateDailyShield
-  ├── ManageTrade (TP hits + trail stop)
-  ├── UpdateTrailLine (visual)
-  ├── Emergency close check
-  └── OnTick budget guard
-```
+| Versión | Cambios clave |
+|---------|--------------|
+| **v3.0** | Multi-engine 4 estrategias activas: EMA/FVG/OB/Structure. Panel multi-posición, sesiones, stats en vivo |
+| **v2.8** | SMC Pro: Killzones → Sesiones, Fib OTE, Daily Bias, MTF H4, News info |
+| **v2.7** | SMC Engine: Market Structure, Order Blocks, FVGs, Liquidity Sweeps. Entrada con retroceso |
+| **v2.5** | UI Terminal Hacker: fuente Consolas, verde fósforo, panel cyber, matrix rain |
+| **v2.4** | Simplificación: scoring 8 factores → cruce EMA puro + trend filter |
+| **v2.2** | Auditoría ALH: ResultRetcode, spread filter, emergency close, cooldown persistido |
