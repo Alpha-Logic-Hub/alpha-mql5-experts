@@ -44,9 +44,13 @@ Cada estrategia puede tener 1 posición activa simultáneamente. SL, TP, trailin
 ## Gestión de riesgo
 
 - **Stop Loss**: ATR × multiplicador o estructura (swing low/high)
-- **Take Profit**: 3 niveles (1:1, 1:2, 1:3 R:R)
-- **Trailing Stop**: avanza al tocar cada TP
+- **Take Profit**: 1 nivel (1:1 R:R) — cierra en TP1
+- **Trailing Stop**: solo se mueve al tocar TP1 → breakeven
 - **Auto Breakeven**: al tocar TP1, SL → entry + buffer
+- **Smart Trail**: desactivado por defecto (el simple funciona mejor)
+- **Cap de SL**: máximo 5× ATR con StructureSL (evita SLs extremos)
+- **Límite de posiciones**: máximo 2 activas simultáneas
+- **Confluencia mínima**: 2 confirmaciones requeridas (configurable 1-3)
 - **Lot Sizing**: fijo o % riesgo dinámico
 - **Spread Filter**: bloquea entradas con spread > máximo
 - **Emergency Close**: cierre forzoso a hora configurable
@@ -157,11 +161,21 @@ OnTick:
 
 ---
 
+## Backtesting
+
+- **Modo**: Deposit currency (NO pips)
+- **Depósito mínimo**: $500 para XAUUSD
+- **Lote**: `InpFixedLot=0.01` (recomendado para $500-$1000)
+- **Spread**: `InpMaxSpreadPoints=100` para oro
+
+---
+
 ## Historial de versiones
 
 | Versión | Cambios clave |
 |---------|--------------|
-| **v3.0** | Multi-engine 4 estrategias activas: EMA/FVG/OB/Structure. Panel multi-posición, sesiones, stats en vivo |
+| **v3.1** | Cap SL 5×ATR, máx 2 posiciones, confluencia configurable, trail simple por defecto, stats persistentes |
+| **v3.0** | Multi-engine 4 estrategias activas: EMA/FVG/OB/Structure. Panel Bayesian, sesiones, stats en vivo |
 | **v2.8** | SMC Pro: Killzones → Sesiones, Fib OTE, Daily Bias, MTF H4, News info |
 | **v2.7** | SMC Engine: Market Structure, Order Blocks, FVGs, Liquidity Sweeps. Entrada con retroceso |
 | **v2.5** | UI Terminal Hacker: fuente Consolas, verde fósforo, panel cyber, matrix rain |
