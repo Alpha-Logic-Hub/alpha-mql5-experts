@@ -79,6 +79,26 @@ This inventory is not a routing hint and MUST NOT be used to infer the active EA
 | EA_MA_RSI_Trend | Expert/EA_MA_RSI_Trend/ | 999001 | EMA 9 / SMA 21 + RSI 14 Filter |
 | EA_MultiSignal_Composite | Expert/EA_MultiSignal_Composite/ | 999002 | MA + RSI + MACD Weighted Voting |
 
+## User-Level Skills (shared across projects)
+
+These are installed at `~/.config/opencode/skills/`. They complement project-level skills and are available in any session.
+
+| # | Skill | Path | Triggers | Scope |
+|---|-------|------|----------|-------|
+| 18 | branch-pr | ~/.config/opencode/skills/branch-pr/ | PR creation, review prep, opening pull requests | user |
+| 19 | chained-pr | ~/.config/opencode/skills/chained-pr/ | PRs >400 lines, stacked PRs, review slices | user |
+| 20 | cognitive-doc-design | ~/.config/opencode/skills/cognitive-doc-design/ | guides, READMEs, RFCs, onboarding, architecture docs | user |
+| 21 | comment-writer | ~/.config/opencode/skills/comment-writer/ | PR feedback, issue replies, GitHub comments | user |
+| 22 | customize-opencode | ~/.config/opencode/skills/customize-opencode/ | opencode config, agents, subagents, MCP servers, plugins | user |
+| 23 | go-testing | ~/.config/opencode/skills/go-testing/ | Go tests, coverage, Bubbletea teatest, golden files | user |
+| 24 | issue-creation | ~/.config/opencode/skills/issue-creation/ | GitHub issues, bug reports, feature requests | user |
+| 25 | judgment-day | ~/.config/opencode/skills/judgment-day/ | dual review, adversarial review, blind review | user |
+| 26 | work-unit-commits | ~/.config/opencode/skills/work-unit-commits/ | commit splitting, chained PRs, test/docs with code | user |
+| 27 | skill-creator | ~/.config/opencode/skills/skill-creator/ | new skills, agent instructions, AI usage patterns | user |
+| 28 | skill-improver | ~/.config/opencode/skills/skill-improver/ | skill audit, refactor, quality upgrade | user |
+
+> **Total: 28 skills** (17 project + 11 user). SDD skills (sdd-init, sdd-propose, etc.) are loaded on-demand by the orchestrator and not registered here per convention.
+
 ## SDD Change History
 
 | Change | Date | Status |

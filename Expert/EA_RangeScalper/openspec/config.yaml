@@ -1,0 +1,57 @@
+# openspec/config.yaml — RangeScalper EA SDD
+schema: spec-driven
+
+context: |
+  Tech stack: MQL5 (MetaTrader 5), C-style EA, CTrade execution, EMA/RSI/ATR/Bollinger
+  Architecture: Modular (Core/Definitions → Signals/Range+Nyao+BB+Wick → Engine/ScalpEngine → UI Panel)
+  Testing: MetaEditor64 compilation gate (0 errors = pass); MQL5 has no unit test framework
+  Style: #include guards (_RANGE_DEFINITIONS_), g_ prefix globals, IndicatorRelease in OnDeinit, includes relative to EA dir
+  Market: XAUUSD M1, 4 scalping strategies (Range Reversion, Nyao Multi-Factor, Bollinger Bands, Wick Rejection)
+
+strict_tdd: false
+
+testing:
+  build_command: 'C:\Program Files\MetaTrader 5\metaeditor64.exe /compile:"RangeScalper_EA.mq5"'
+  framework: MetaEditor64 native compiler
+  coverage: unavailable (MQL5 has no coverage tools)
+  layers:
+    unit: false
+    integration: false
+    e2e: false
+  quality:
+    linter: false
+    type_checker: false
+    formatter: false
+  notes: |
+    MQL5 test execution is via Strategy Tester (backtest/forward). SDD verify phase
+    uses MetaEditor64 compilation (0 errors, 0 warnings) as pass/fail gate. No
+    RED-GREEN-REFACTOR cycle; compilation succeeds before any code is considered done.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Every strategy change MUST reference a falsifiable hypothesis
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Document architecture decisions with rationale (Core/Signals/Engine boundaries)
+    - Include OnTick budget analysis (< 50ms target)
+    - No look-ahead bias: verify CopyRates uses correct bar indices
+  tasks:
+    - Group by module (Core, Signals, Engine, UI)
+    - Keep tasks completable in one session
+    - Every code task MUST end with MetaEditor64 compilation
+  apply:
+    - Follow existing MQL5 patterns: #include guards, g_ prefix, IndicatorRelease in OnDeinit
+    - OrderSend MUST be followed by ResultRetcode() audit
+    - Never duplicate risk/execution logic into strategy files
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: metaeditor64 /compile:RangeScalper_EA.mq5 /log
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas into main specs
+    - All archived changes preserve original state.yaml for audit trail
