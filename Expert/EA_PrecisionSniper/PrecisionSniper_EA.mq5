@@ -23,10 +23,10 @@ input group "=== STOP LOSS ==="
 input double   SLMult        = 2.0;
 input bool              StructureSL  = false;
 input int               SwingLB      = 10;
-input double            FixedSLPts   = 500;    // fixed SL in points (0=ATR)
+input double            FixedSLPts   = 1000;   // fixed SL in points
 
 input group "=== TOMA DE GANANCIAS ==="
-input double            TP1_RR = 2.0;
+input double            TP1_RR = 2.5;
 input double            TP2_RR        = 3.0;
 input double            TP3_RR        = 4.0;
 input bool              UseTrail      = true;
