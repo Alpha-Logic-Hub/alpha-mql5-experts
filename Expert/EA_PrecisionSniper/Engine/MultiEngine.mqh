@@ -26,6 +26,7 @@ struct StrategyPos
    bool     tp1h, tp2h, tp3h, slh, beLocked;
    datetime entryTime;
    int      magic;
+   string   closeReason;  // SL / TRAIL / MANUAL / EMERGENCY
 };
 
 StrategyPos g_strat[MAX_STRATEGIES];
@@ -298,11 +299,12 @@ void Multi_CloseTrade(int stratIdx)
    PlaySnd(p.slh ? "timeout.wav" : "ok.wav");
    SaveStats();
    
-   double profit = rResult * p.risk * p.lotSize; // approx PnL
+   double profit = rResult * p.risk * p.lotSize;
    double exitPx = (p.direction==1) ? SymbolInfoDouble(_Symbol,SYMBOL_BID)
                                     : SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+   int duration = (int)(TimeCurrent() - p.entryTime);  // seconds
    Discord_TradeClose(g_stratNames[stratIdx], p.direction, p.entry, exitPx,
-                      profit, rResult, rResult > 0);
+                      profit, rResult, rResult > 0, p.closeReason, duration);
    
    Signal_OnTradeClosed();
 }
@@ -393,6 +395,12 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
          if(g_beTriggerTP==3 && p.tp3h) trig=true;
          if(trig){ p.trail=p.entry+g_beBufferPts*_Point; p.beLocked=true; }
       }
+      // Determine close reason
+      if(p.tp3h)            p.closeReason = "TP3";
+      else if(p.tp2h)       p.closeReason = "TP2";
+      else if(p.beLocked)   p.closeReason = "BE";
+      else if(p.trail != p.sl || g_useSmartTrail) p.closeReason = "TRAIL";
+      else                  p.closeReason = "SL";
       if(barLow <= p.trail) { g_strat[stratIdx] = p; Multi_CloseTrade(stratIdx); return; }
    }
    else
@@ -408,6 +416,11 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
          if(g_beTriggerTP==3 && p.tp3h) trig=true;
          if(trig){ p.trail=p.entry-g_beBufferPts*_Point; p.beLocked=true; }
       }
+      if(p.tp3h)            p.closeReason = "TP3";
+      else if(p.tp2h)       p.closeReason = "TP2";
+      else if(p.beLocked)   p.closeReason = "BE";
+      else if(p.trail != p.sl || g_useSmartTrail) p.closeReason = "TRAIL";
+      else                  p.closeReason = "SL";
       if(barHigh >= p.trail) { g_strat[stratIdx] = p; Multi_CloseTrade(stratIdx); return; }
    }
 
@@ -432,6 +445,7 @@ void Multi_EmergencyClose()
    {
       if(g_strat[i].active)
       {
+         g_strat[i].closeReason = "EMERGENCY";
          Print("[Multi] EMERGENCY CLOSE: ", g_stratNames[i]);
          Multi_CloseTrade(i);
       }
