@@ -66,8 +66,12 @@ input bool              UseSound      = true;
 input bool              UseAutoBE     = true;
 input int               BE_TriggerTP  = 1;
 input double            BE_BufferPts  = 5;
-input bool              UseSmartTrail = false;
+input bool              UseSmartTrail = true;
 input double   SmartTrailATR = 2.5;
+
+input group "=== DISCORD ==="
+input bool              DiscordEnabled = true;
+input string            DiscordWebhook = "https://discord.com/api/webhooks/1513560144754114650/XreJetMTyqYYzblDVoQwfcQ-N6IY2i8vybZJZn5Z5eKlmuFl6Y5dTfVeSeYoCaIjT3rt";
 
 //+------------------------------------------------------------------+
 //| MODULES                                                           |
@@ -80,6 +84,7 @@ input double   SmartTrailATR = 2.5;
 #include "Engine\MultiEngine.mqh"
 #include "UI\TerminalUI.mqh"
 #include "UI\BayesianUI.mqh"
+#include "..\..\..\Shared\Network\DiscordNotifier.mqh"
 
 //+------------------------------------------------------------------+
 //| ExecuteSignal                                                      |
@@ -292,6 +297,8 @@ int OnInit()
    g_beBufferPts   = BE_BufferPts;
    g_useSmartTrail = UseSmartTrail;
    g_smartTrailATR = SmartTrailATR;
+   g_discordWebhook = DiscordWebhook;
+   g_discordEnabled = DiscordEnabled;
 
    // ── Apply Pro settings ──────────────────────────────────────────
    g_mtfEnabled = SMC_MTF_Enabled;
@@ -302,6 +309,7 @@ int OnInit()
    InitMultiEngine();
    LoadStats();
    EventSetMillisecondTimer(200);
+   Discord_Status("PrecisionSniper ONLINE", _Symbol + " " + EnumToString(_Period) + " | risk:" + DoubleToString(InpRiskPercent,1) + "% | trail:" + (UseSmartTrail ? "smart" : "fixed"));
    return INIT_SUCCEEDED;
 }
 

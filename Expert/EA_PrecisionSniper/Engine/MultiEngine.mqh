@@ -259,6 +259,8 @@ bool Multi_OpenTrade(int stratIdx, int dir, double entryP,
             " | entry=", DoubleToString(entryP,_Digits),
             " | sl=", DoubleToString(sl,_Digits),
             " | lot=", DoubleToString(lot,2));
+      Discord_TradeOpen(g_stratNames[stratIdx], dir, entryP, sl, tp, lot,
+                        InpRiskPercent);
       return true;
    }
    return false;
@@ -295,6 +297,13 @@ void Multi_CloseTrade(int stratIdx)
    RecordTradeStat(rResult);
    PlaySnd(p.slh ? "timeout.wav" : "ok.wav");
    SaveStats();
+   
+   double profit = rResult * p.risk * p.lotSize; // approx PnL
+   double exitPx = (p.direction==1) ? SymbolInfoDouble(_Symbol,SYMBOL_BID)
+                                    : SymbolInfoDouble(_Symbol,SYMBOL_ASK);
+   Discord_TradeClose(g_stratNames[stratIdx], p.direction, p.entry, exitPx,
+                      profit, rResult, rResult > 0);
+   
    Signal_OnTradeClosed();
 }
 
@@ -309,7 +318,7 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
    StrategyPos p = g_strat[stratIdx];
 
    // ── Smart Trail (both directions) ───────────────────────────────
-   if(g_useSmartTrail && !p.tp1h && !p.beLocked)
+   if(g_useSmartTrail && !p.beLocked)
    {
       double atrB[1]; double atrVal = 0;
       if(CopyBuffer(hATR,0,1,1,atrB)>0) atrVal = atrB[0];
@@ -373,10 +382,10 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
    // ── TP checks + standard trail + auto BE ────────────────────────
    if(p.direction == 1)
    {
-      if(barHigh >= p.tp1 && !p.tp1h){ p.tp1h=true; if(UseTrail) p.trail=p.entry; PlaySnd("alert.wav"); }
-      if(barHigh >= p.tp2 && !p.tp2h){ p.tp2h=true; if(UseTrail) p.trail=p.tp1;   PlaySnd("alert.wav"); }
-      if(barHigh >= p.tp3 && !p.tp3h){ p.tp3h=true; if(UseTrail) p.trail=p.tp2;   PlaySnd("alert.wav"); }
-      if(g_useAutoBE && !p.beLocked)
+      if(barHigh >= p.tp1 && !p.tp1h){ p.tp1h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.entry; PlaySnd("alert.wav"); }
+      if(barHigh >= p.tp2 && !p.tp2h){ p.tp2h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.tp1;   PlaySnd("alert.wav"); }
+      if(barHigh >= p.tp3 && !p.tp3h){ p.tp3h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.tp2;   PlaySnd("alert.wav"); }
+      if(g_useAutoBE && !p.beLocked && !g_useSmartTrail)
       {
          bool trig = false;
          if(g_beTriggerTP==1 && p.tp1h) trig=true;
@@ -388,10 +397,10 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
    }
    else
    {
-      if(barLow <= p.tp1 && !p.tp1h){ p.tp1h=true; if(UseTrail) p.trail=p.entry; PlaySnd("alert.wav"); }
-      if(barLow <= p.tp2 && !p.tp2h){ p.tp2h=true; if(UseTrail) p.trail=p.tp1;   PlaySnd("alert.wav"); }
-      if(barLow <= p.tp3 && !p.tp3h){ p.tp3h=true; if(UseTrail) p.trail=p.tp2;   PlaySnd("alert.wav"); }
-      if(g_useAutoBE && !p.beLocked)
+      if(barLow <= p.tp1 && !p.tp1h){ p.tp1h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.entry; PlaySnd("alert.wav"); }
+      if(barLow <= p.tp2 && !p.tp2h){ p.tp2h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.tp1;   PlaySnd("alert.wav"); }
+      if(barLow <= p.tp3 && !p.tp3h){ p.tp3h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.tp2;   PlaySnd("alert.wav"); }
+      if(g_useAutoBE && !p.beLocked && !g_useSmartTrail)
       {
          bool trig = false;
          if(g_beTriggerTP==1 && p.tp1h) trig=true;

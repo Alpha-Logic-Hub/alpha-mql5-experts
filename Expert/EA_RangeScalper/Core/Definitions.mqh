@@ -24,6 +24,11 @@ double g_tp       = 0;
 double g_lotSize  = 0;
 bool   g_tradeOpen = false;
 
+// ── Trailing stop state ──────────────────────────────────────────────
+bool   g_trailActive    = false;   // virtual TP hit, trailing active
+double g_trailLevel     = 0;       // current trailing stop level
+bool   g_breakevenDone  = false;   // SL already moved to entry
+
 // ── Range state ─────────────────────────────────────────────────────
 double g_rangeHigh = 0;
 double g_rangeLow  = 0;

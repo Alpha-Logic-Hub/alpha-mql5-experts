@@ -175,9 +175,12 @@ bool CProDashboard::HandleClick(int mx, int my)
          {
             Print("[Dashboard] Emergency close-all: ", closed, " position(s) closed");
             // Reset trade state globals
-            g_tradeOpen = false;
-            g_dir       = 0;
-            g_ticket    = 0;
+            g_tradeOpen      = false;
+            g_dir            = 0;
+            g_ticket         = 0;
+            g_trailActive    = false;
+            g_trailLevel     = 0;
+            g_breakevenDone  = false;
          }
          else
          {
@@ -371,19 +374,66 @@ void CProDashboard::DrawTabTrades(int &y)
    m_canvas.LineHorizontal(16, PD_W - 16, y, PD_DIM);
    y += 6;
 
-   m_canvas.FontSet("Segoe UI", 13);
+   m_canvas.FontSet("Segoe UI", 12);
    m_canvas.TextOut(16, y,
       StringFormat("Rango: %.2f  —  %.2f", g_rangeLow, g_rangeHigh), PD_GRAY);
-   y += 20;
+   y += 18;
 
-   uint   spreadClr = (spread > g_maxSpread) ? PD_RED : PD_DIM;
+   // ATR
+   double atrNow[1]; ArraySetAsSeries(atrNow, true);
+   double cAtr = 0;
+   if(hATR != INVALID_HANDLE && CopyBuffer(hATR, 0, 0, 1, atrNow) > 0) cAtr = atrNow[0];
+   m_canvas.TextOut(16, y,
+      StringFormat("ATR: %.2f  |  TP virtual: %.2f", cAtr, g_tp), PD_GRAY);
+   y += 18;
+
+   // Trend (EMA50)
+   string trendTxt = "NEUTRAL";
+   uint   trendClr = PD_AMBER;
+   if(UseTrendFilter && hEma50 != INVALID_HANDLE)
+   {
+      double ema50[1]; ArraySetAsSeries(ema50, true);
+      if(CopyBuffer(hEma50, 0, 0, 1, ema50) > 0)
+      {
+         if(bid > ema50[0])      { trendTxt = "ALCISTA"; trendClr = PD_GREEN; }
+         else if(bid < ema50[0]) { trendTxt = "BAJISTA"; trendClr = PD_RED; }
+      }
+   }
+   m_canvas.TextOut(16, y,
+      StringFormat("Tendencia: %s", trendTxt), trendClr);
+   y += 18;
+
+   // Spread
+   uint spreadClr = (spread > g_maxSpread) ? PD_RED : (spread <= 0) ? PD_AMBER : PD_DIM;
    m_canvas.TextOut(16, y,
       StringFormat("Spread: %.1f pts  |  Max: %.0f", spread, g_maxSpread), spreadClr);
-   y += 20;
+   y += 18;
+
+   // Cooldown / Daily / Warmup
+   string cdTxt = "";
+   uint   cdClr = PD_DIM;
+   int barsNow = iBars(_Symbol, _Period);
+   int warmupLeft = g_warmupBars - (barsNow - g_barsAtStart);
+   if(warmupLeft > 0)
+   {
+      cdTxt = StringFormat("WARMUP: %d/%d barras", barsNow - g_barsAtStart, g_warmupBars);
+      cdClr = PD_AMBER;
+   }
+   else if(g_cooldown > 0)
+   {
+      cdTxt = StringFormat("COOLDOWN: %d barra(s)", g_cooldown);
+      cdClr = PD_AMBER;
+   }
+   else if(!g_tradeOpen)
+   {
+      cdTxt = "LISTO PARA OPERAR";
+      cdClr = PD_GREEN;
+   }
+   m_canvas.TextOut(16, y, cdTxt, cdClr);
+   y += 18;
 
    m_canvas.TextOut(16, y,
-      StringFormat("Cooldown: %d / %d  |  Diario: %d / %d",
-                   g_cooldown, CooldownBars, g_dailyTrades, MaxDailyTrades), PD_DIM);
+      StringFormat("Diario: %d / %d  |  Confluencia: %d+", g_dailyTrades, MaxDailyTrades, MinConfluence), PD_DIM);
 }
 
 //+------------------------------------------------------------------+
@@ -402,17 +452,29 @@ void CProDashboard::DrawTabEstrategias(int &y)
    double scores[6] = {0,0,0,0,0,0};
 
    // ── Range strategy ────────────────────────────────────────────
-   if(g_overHigh)
+   if(g_sigShort)
    {
-      statuses[0] = "SOBRECOMPRA";
+      statuses[0] = "SHORT → ENTRY";
       statusC[0]  = PD_RED;
-      scores[0]   = 85.0;
+      scores[0]   = 95.0;
+   }
+   else if(g_sigLong)
+   {
+      statuses[0] = "LONG → ENTRY";
+      statusC[0]  = PD_GREEN;
+      scores[0]   = 95.0;
+   }
+   else if(g_overHigh)
+   {
+      statuses[0] = "SOBRECOMPRA (esperando)";
+      statusC[0]  = PD_AMBER;
+      scores[0]   = 60.0;
    }
    else if(g_overLow)
    {
-      statuses[0] = "SOBREVENTA";
-      statusC[0]  = PD_GREEN;
-      scores[0]   = 85.0;
+      statuses[0] = "SOBREVENTA (esperando)";
+      statusC[0]  = PD_AMBER;
+      scores[0]   = 60.0;
    }
    else
    {
@@ -441,17 +503,29 @@ void CProDashboard::DrawTabEstrategias(int &y)
    }
 
    // ── Bollinger strategy ────────────────────────────────────────
-   if(g_bbOverUpper)
+   if(g_bbShort)
    {
-      statuses[2] = "TOQUE ^";
+      statuses[2] = "SHORT → ENTRY";
       statusC[2]  = PD_RED;
-      scores[2]   = 80.0;
+      scores[2]   = 95.0;
+   }
+   else if(g_bbLong)
+   {
+      statuses[2] = "LONG → ENTRY";
+      statusC[2]  = PD_GREEN;
+      scores[2]   = 95.0;
+   }
+   else if(g_bbOverUpper)
+   {
+      statuses[2] = "TOQUE ^ (esperando)";
+      statusC[2]  = PD_AMBER;
+      scores[2]   = 55.0;
    }
    else if(g_bbUnderLower)
    {
-      statuses[2] = "TOQUE v";
-      statusC[2]  = PD_GREEN;
-      scores[2]   = 80.0;
+      statuses[2] = "TOQUE v (esperando)";
+      statusC[2]  = PD_AMBER;
+      scores[2]   = 55.0;
    }
    else
    {
@@ -521,7 +595,7 @@ void CProDashboard::DrawTabEstrategias(int &y)
       // Progress bar
       DrawProgressBar(cx + 8, cy + 28, cw - 16, 16,
          scores[s] / 100.0,
-         scores[s] > 65 ? PD_GREEN : scores[s] > 35 ? PD_AMBER : PD_RED,
+         scores[s] > 65 ? PD_GREEN : scores[s] > 35 ? PD_AMBER : PD_DIM,
          PD_DIM);
 
       // Score text
