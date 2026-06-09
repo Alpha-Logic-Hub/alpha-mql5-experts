@@ -429,6 +429,18 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
 
 void Multi_ManageAll()
 {
+   // ── Detect manual closes ────────────────────────────────────────
+   for(int i=0; i<MAX_STRATEGIES; i++)
+   {
+      if(!g_strat[i].active) continue;
+      if(g_strat[i].ticket > 0 && !PositionSelectByTicket(g_strat[i].ticket))
+      {
+         // Position was closed externally (manual)
+         g_strat[i].closeReason = "MANUAL";
+         Multi_CloseTrade(i);
+      }
+   }
+
    MqlRates rates[1];
    if(CopyRates(_Symbol,_Period,0,1,rates) <= 0) return;
    double h = rates[0].high, l = rates[0].low;
