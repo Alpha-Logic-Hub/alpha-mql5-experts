@@ -67,6 +67,7 @@ input bool              UseAutoBE     = true;
 input int               BE_TriggerTP  = 1;
 input double            BE_BufferPts  = 5;
 input double            BE_Dollars    = 1.0;   // BE trigger: $ profit (0=use TP)
+input double            TargetDollars = 4.0;   // close trade at $ profit (0=use RR)
 input bool              UseSmartTrail = true;
 input double   SmartTrailATR = 2.5;
 
@@ -297,6 +298,7 @@ int OnInit()
    g_beTriggerTP   = BE_TriggerTP;
    g_beBufferPts   = BE_BufferPts;
    g_beDollars     = BE_Dollars;
+   g_targetDollars  = TargetDollars;
    g_useSmartTrail = UseSmartTrail;
    g_smartTrailATR = SmartTrailATR;
    g_discordWebhook = DiscordWebhook;

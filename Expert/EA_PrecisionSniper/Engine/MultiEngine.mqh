@@ -38,6 +38,7 @@ bool   g_useAutoBE     = true;
 int    g_beTriggerTP   = 1;
 double g_beBufferPts   = 5;
 double g_beDollars     = 0;       // $ profit to trigger BE
+double g_targetDollars  = 0;       // $ profit to close trade
 bool   g_useSmartTrail  = true;
 double g_smartTrailATR  = 1.5;
 
@@ -400,6 +401,18 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
                { p.trail = p.entry + g_beBufferPts*_Point; p.beLocked = true; }
          }
       }
+      // Dollar TP: close when profit target reached
+      if(g_targetDollars > 0)
+      {
+         double tV = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+         double tS = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+         if(tS > 0)
+         {
+            double pnl = (barHigh - p.entry) / tS * tV * p.lotSize;
+            if(pnl >= g_targetDollars)
+               { p.closeReason = "TP $"; g_strat[stratIdx] = p; Multi_CloseTrade(stratIdx); return; }
+         }
+      }
       if(g_useAutoBE && !p.beLocked && !g_useSmartTrail)
       {
          bool trig = false;
@@ -431,6 +444,18 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
             double pnl = (p.entry - barLow) / tS * tV * p.lotSize;
             if(pnl >= g_beDollars)
                { p.trail = p.entry - g_beBufferPts*_Point; p.beLocked = true; }
+         }
+      }
+      // Dollar TP: close when profit target reached
+      if(g_targetDollars > 0)
+      {
+         double tV = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+         double tS = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+         if(tS > 0)
+         {
+            double pnl = (p.entry - barLow) / tS * tV * p.lotSize;
+            if(pnl >= g_targetDollars)
+               { p.closeReason = "TP $"; g_strat[stratIdx] = p; Multi_CloseTrade(stratIdx); return; }
          }
       }
       if(g_useAutoBE && !p.beLocked && !g_useSmartTrail)
