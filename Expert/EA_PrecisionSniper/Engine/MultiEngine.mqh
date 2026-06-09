@@ -218,8 +218,17 @@ bool Multi_OpenTrade(int stratIdx, int dir, double entryP,
    else
       lot = CalculateLotSize(riskDist, InpMaxLot, InpRiskPercent);
 
-   // Emergency SL
+   // ── Fixed SL override ─────────────────────────────────────────
    double sl = slP;
+   if(FixedSLPts > 0)
+   {
+      riskDist = FixedSLPts * _Point;
+      sl = (dir==1) ? entryP - riskDist : entryP + riskDist;
+      if(dir==1){ tp1=entryP+riskDist*TP1_RR; tp2=entryP+riskDist*TP2_RR; tp3=entryP+riskDist*TP3_RR; }
+      else      { tp1=entryP-riskDist*TP1_RR; tp2=entryP-riskDist*TP2_RR; tp3=entryP-riskDist*TP3_RR; }
+   }
+
+   // Emergency SL
    if(sl <= 0 || (dir==1 && sl>=entryP) || (dir==-1 && sl<=entryP))
    {
       double atrBuf[1];

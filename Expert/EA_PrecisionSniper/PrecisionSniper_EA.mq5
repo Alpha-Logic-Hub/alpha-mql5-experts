@@ -21,11 +21,12 @@ input int               C_ATR         = 14;
 
 input group "=== STOP LOSS ==="
 input double   SLMult        = 2.0;
-input bool              StructureSL   = true;
-input int               SwingLB       = 10;
+input bool              StructureSL  = false;
+input int               SwingLB      = 10;
+input double            FixedSLPts   = 500;    // fixed SL in points (0=ATR)
 
 input group "=== TOMA DE GANANCIAS ==="
-input double            TP1_RR        = 1.0;
+input double            TP1_RR = 2.0;
 input double            TP2_RR        = 3.0;
 input double            TP3_RR        = 4.0;
 input bool              UseTrail      = true;
@@ -66,13 +67,13 @@ input bool              UseSound      = true;
 input bool              UseAutoBE     = true;
 input int               BE_TriggerTP  = 1;
 input double            BE_BufferPts  = 5;
-input double            BE_Dollars    = 1.0;   // BE trigger: $ profit (0=use TP)
-input double            TargetDollars = 4.0;   // close trade at $ profit (0=use RR)
+input double            BE_Dollars    = 0.0;   // BE trigger: $ profit (0=off)
+input double            TargetDollars = 0.0;   // close trade at $ profit (0=use RR)
 input bool              UseSmartTrail = true;
 input double   SmartTrailATR = 2.5;
 
 input group "=== DISCORD ==="
-input bool              DiscordEnabled = true;
+input bool              DiscordEnabled = false;
 input string            DiscordWebhook = "https://discord.com/api/webhooks/1513560144754114650/XreJetMTyqYYzblDVoQwfcQ-N6IY2i8vybZJZn5Z5eKlmuFl6Y5dTfVeSeYoCaIjT3rt";
 
 //+------------------------------------------------------------------+
