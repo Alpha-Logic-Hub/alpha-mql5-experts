@@ -37,6 +37,7 @@ bool   g_useSound      = true;
 bool   g_useAutoBE     = true;
 int    g_beTriggerTP   = 1;
 double g_beBufferPts   = 5;
+double g_beDollars     = 0;       // $ profit to trigger BE
 bool   g_useSmartTrail  = true;
 double g_smartTrailATR  = 1.5;
 
@@ -387,6 +388,18 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
       if(barHigh >= p.tp1 && !p.tp1h){ p.tp1h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.entry; PlaySnd("alert.wav"); }
       if(barHigh >= p.tp2 && !p.tp2h){ p.tp2h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.tp1;   PlaySnd("alert.wav"); }
       if(barHigh >= p.tp3 && !p.tp3h){ p.tp3h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.tp2;   PlaySnd("alert.wav"); }
+      // Dollar BE: lock to entry when PnL reaches target
+      if(g_beDollars > 0 && !p.beLocked)
+      {
+         double tV = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+         double tS = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+         if(tS > 0)
+         {
+            double pnl = (barHigh - p.entry) / tS * tV * p.lotSize;
+            if(pnl >= g_beDollars)
+               { p.trail = p.entry + g_beBufferPts*_Point; p.beLocked = true; }
+         }
+      }
       if(g_useAutoBE && !p.beLocked && !g_useSmartTrail)
       {
          bool trig = false;
@@ -408,6 +421,18 @@ void Multi_ManageTrade(int stratIdx, double barHigh, double barLow)
       if(barLow <= p.tp1 && !p.tp1h){ p.tp1h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.entry; PlaySnd("alert.wav"); }
       if(barLow <= p.tp2 && !p.tp2h){ p.tp2h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.tp1;   PlaySnd("alert.wav"); }
       if(barLow <= p.tp3 && !p.tp3h){ p.tp3h=true; if(UseTrail && !g_useSmartTrail) p.trail=p.tp2;   PlaySnd("alert.wav"); }
+      // Dollar BE: lock to entry when PnL reaches target
+      if(g_beDollars > 0 && !p.beLocked)
+      {
+         double tV = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+         double tS = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+         if(tS > 0)
+         {
+            double pnl = (p.entry - barLow) / tS * tV * p.lotSize;
+            if(pnl >= g_beDollars)
+               { p.trail = p.entry - g_beBufferPts*_Point; p.beLocked = true; }
+         }
+      }
       if(g_useAutoBE && !p.beLocked && !g_useSmartTrail)
       {
          bool trig = false;
